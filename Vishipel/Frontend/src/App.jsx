@@ -1,34 +1,58 @@
+
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Layout } from 'antd';
 
+// ── Components dùng chung ──────────────────────────────────────────────────────
 import HeaderComponent from './components/Header';
 import FooterComponent from './components/Footer';
 
-import Home from './pages/Home';
-import Product from './pages/Product';
-import About from './pages/About';
-import Contact from './pages/Contact';
+// ── Pages ─────────────────────────────────────────────────────────────────────
+import Home     from './pages/Home';
+import Product  from './pages/Product';
+import About    from './pages/About';
+import Contact  from './pages/Contact';
+import Login    from './pages/Login';
+import Register from './pages/Register';
 
 const { Content } = Layout;
 
-function App() {
+// ─── Trang toàn màn hình (không có Header/Footer) ─────────────────────────────
+const FULLSCREEN_ROUTES = ['/login', '/register'];
+
+const AppLayout = ({ children }) => {
+  const location = useLocation();
+  const isFullscreen = FULLSCREEN_ROUTES.includes(location.pathname);
+
+  if (isFullscreen) {
+    return <>{children}</>;
+  }
+
   return (
-    <Router>
-      <Layout style={{ minHeight: '100vh' }}>
-        <HeaderComponent />
-        <Content style={{ marginTop: '70px' }}>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/products" element={<Product />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/contact" element={<Contact />} />
-          </Routes>
-        </Content>
-        <FooterComponent />
-      </Layout>
-    </Router>
+    <Layout style={{ minHeight: '100vh' }}>
+      <HeaderComponent />
+      <Content>
+        {children}
+      </Content>
+      <FooterComponent />
+    </Layout>
   );
-}
+};
+
+const App = () => (
+  <BrowserRouter>
+    <AppLayout>
+      <Routes>
+        <Route path="/"         element={<Home />} />
+        <Route path="/products" element={<Product />} />
+        <Route path="/about"    element={<About />} />
+        <Route path="/contact"  element={<Contact />} />
+        <Route path="/login"    element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="*"         element={<Navigate to="/" replace />} />
+      </Routes>
+    </AppLayout>
+  </BrowserRouter>
+);
 
 export default App;

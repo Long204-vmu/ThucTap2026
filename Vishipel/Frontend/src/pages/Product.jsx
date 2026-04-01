@@ -267,17 +267,6 @@ const ProductPage = ({ onCartChange }) => {
             </div>
             <Title level={2} style={{ color: '#fff', margin: 0 }}>Khám Phá Thiết Bị Hàng Hải</Title>
           </div>
-          <Badge count={cart.length} size="small">
-            <Button
-              icon={<ShoppingCartOutlined />}
-              size="large"
-              ghost
-              onClick={() => setDrawerOpen(true)}
-              style={{ borderRadius: 10, height: 44, fontWeight: 600 }}
-            >
-              Giỏ hàng ({cart.length})
-            </Button>
-          </Badge>
         </div>
       </div>
 
@@ -324,7 +313,16 @@ const ProductPage = ({ onCartChange }) => {
                   </Text>
                 )}
               </div>
-              <div style={{ display: 'flex', gap: 8 }}>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <Badge count={cart.length} size="small">
+                  <Button
+                    icon={<ShoppingCartOutlined />}
+                    onClick={() => setDrawerOpen(true)}
+                    style={{ borderRadius: 8, fontWeight: 600 }}
+                  >
+                    Giỏ hàng
+                  </Button>
+                </Badge>
                 <Button
                   icon={<AppstoreOutlined />}
                   type={viewMode === 'grid' ? 'primary' : 'default'}
