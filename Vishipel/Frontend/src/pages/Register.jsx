@@ -8,7 +8,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Form, Input, Button, Select, Steps, Alert, Progress, Tag } from 'antd';
+import { Form, Input, Button, Alert, Tag } from 'antd';
 import {
   UserOutlined,
   LockOutlined,
@@ -23,23 +23,10 @@ import {
 } from '@ant-design/icons';
 import { Link, useNavigate } from 'react-router-dom';
 
-const { Option } = Select;
 
-// ─── MOCK DATA ────────────────────────────────────────────────────────────────
-const DEPARTMENTS = [
-  'Phòng Kỹ thuật',
-  'Phòng Kế toán',
-  'Ban Quản lý',
-  'Phòng Nghiệp vụ',
-  'Phòng IT',
-];
 
-const ROLES = [
-  { value: 'technician', label: 'Kỹ thuật viên' },
-  { value: 'accountant',  label: 'Kế toán' },
-  { value: 'manager',    label: 'Quản lý' },
-  { value: 'viewer',     label: 'Xem báo cáo' },
-];
+// ─────────────────────────────────────────────────────────────────────────────
+// Phòng ban & vai trò do quản trị viên cấp sau khi duyệt tài khoản
 // ─────────────────────────────────────────────────────────────────────────────
 
 // ─── Password Strength ────────────────────────────────────────────────────────
@@ -61,7 +48,7 @@ function getPasswordStrength(pwd) {
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
-const STEPS = ['Thông tin cá nhân', 'Tài khoản & Vai trò'];
+const STEPS = ['Thông tin cá nhân', 'Thiết lập tài khoản'];
 
 const Register = () => {
   const [form] = Form.useForm();
@@ -82,7 +69,7 @@ const Register = () => {
 
   const goNext = async () => {
     try {
-      const fieldsStep0 = ['fullName', 'email', 'phone', 'department'];
+      const fieldsStep0 = ['fullName', 'email', 'phone'];
       await form.validateFields(fieldsStep0);
       setCurrentStep(1);
     } catch { /* validation will show errors */ }
@@ -97,10 +84,9 @@ const Register = () => {
       //   fullName:   values.fullName,
       //   email:      values.email,
       //   phone:      values.phone,
-      //   department: values.department,
-      //   role:       values.role,
       //   username:   values.username,
       //   password:   values.password,
+      //   // department & role sẽ do quản trị viên cấp sau khi duyệt tài khoản
       // });
       // if (res.data.success) { setSuccess(true); setTimeout(() => navigate('/login'), 2000); }
 
@@ -340,7 +326,7 @@ const Register = () => {
             <p style={{ color: '#8c8c8c', fontSize: 14, margin: 0 }}>
               {currentStep === 0
                 ? 'Bước 1/2 — Nhập thông tin của bạn để tiếp tục'
-                : 'Bước 2/2 — Tạo thông tin đăng nhập và chọn vai trò'}
+                : 'Bước 2/2 — Tạo thông tin đăng nhập cho tài khoản'}
             </p>
           </div>
 
@@ -420,20 +406,6 @@ const Register = () => {
                 />
               </Form.Item>
 
-              <Form.Item
-                name="department"
-                label={<Label>Phòng ban</Label>}
-                rules={[{ required: true, message: 'Vui lòng chọn phòng ban!' }]}
-              >
-                <Select
-                  placeholder="Chọn phòng ban"
-                  size="large"
-                  style={{ ...inputStyle, width: '100%' }}
-                >
-                  {DEPARTMENTS.map(d => <Option key={d} value={d}>{d}</Option>)}
-                </Select>
-              </Form.Item>
-
               <Button
                 type="primary"
                 size="large"
@@ -474,17 +446,7 @@ const Register = () => {
                 />
               </Form.Item>
 
-              <Form.Item
-                name="role"
-                label={<Label>Vai trò</Label>}
-                rules={[{ required: true, message: 'Vui lòng chọn vai trò!' }]}
-              >
-                <Select placeholder="Chọn vai trò của bạn" size="large">
-                  {ROLES.map(r => (
-                    <Option key={r.value} value={r.value}>{r.label}</Option>
-                  ))}
-                </Select>
-              </Form.Item>
+            
 
               <Form.Item
                 name="password"
