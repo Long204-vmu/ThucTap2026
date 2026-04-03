@@ -117,29 +117,60 @@ const HeaderComponent = () => {
         }}
       >
         {/* ── Logo ── */}
-        <Link to="/" style={{ display:'flex', alignItems:'center', gap:'12px', textDecoration:'none', flexShrink:0 }}>
-          <div style={{
-            background: '#0057FF',
-            padding: '7px 15px',
-            borderRadius: '7px',
-            color: '#fff',
-            fontWeight: '700',
-            fontSize: '15px',
-            letterSpacing: '0.5px',
-          }}>
-            VISHIPEL
+        <Link
+          to="/"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            textDecoration: 'none',
+            flexShrink: 0,
+          }}
+        >
+          {/* Logo image từ thư mục public */}
+          <img
+            src="/image/logo.jpg"
+            alt="Vishipel EMS Logo"
+            style={{
+              height: '46px',
+              width: 'auto',
+              objectFit: 'contain',
+              display: 'block',
+            }}
+          />
+          {/* Badge EMS bên cạnh logo */}
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              lineHeight: 1.15,
+              borderLeft: '2px solid rgba(0,87,255,0.2)',
+              paddingLeft: '10px',
+            }}
+          >
+            <span
+              style={{
+                fontSize: '11px',
+                fontWeight: '700',
+                color: '#0057FF',
+                letterSpacing: '2px',
+                textTransform: 'uppercase',
+              }}
+            >
+              EMS
+            </span>
+            <span
+              style={{
+                fontSize: '9.5px',
+                color: '#8a94a6',
+                fontWeight: '500',
+                letterSpacing: '0.4px',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              Quản Lý Thiết Bị
+            </span>
           </div>
-          <span style={{ color:'#0057FF', fontWeight:'700', fontSize:'20px', letterSpacing:'-0.3px' }}>
-            <span style={{
-              display: 'inline-block',
-              width: '6px', height: '6px',
-              borderRadius: '50%',
-              background: '#00C2FF',
-              marginLeft: '4px',
-              verticalAlign: 'middle',
-              animation: 'pulse-dot 2s ease-in-out infinite',
-            }} />
-          </span>
         </Link>
 
         {/* ── Desktop Nav ── */}
@@ -162,15 +193,15 @@ const HeaderComponent = () => {
         {/* ── Desktop Buttons ── */}
         {!isMobile && (
           <Space size={12}>
-            <Link to="/login" style={{ textDecoration:'none' }}>
+            <Link to="/login" style={{ textDecoration: 'none' }}>
               <button
                 style={{
-                  display:'flex', alignItems:'center', gap:'8px',
-                  padding:'10px 28px',
-                  borderRadius:'11px', border:'none',
+                  display: 'flex', alignItems: 'center', gap: '8px',
+                  padding: '10px 28px',
+                  borderRadius: '11px', border: 'none',
                   background: loginHovered ? '#003FBF' : '#0057FF',
-                  color:'#fff', fontSize:'15.5px', fontWeight:'600',
-                  cursor:'pointer', transition:'all 0.2s ease',
+                  color: '#fff', fontSize: '15.5px', fontWeight: '600',
+                  cursor: 'pointer', transition: 'all 0.2s ease',
                   transform: loginHovered ? 'translateY(-1px)' : 'none',
                   boxShadow: loginHovered ? '0 4px 18px rgba(0,87,255,0.35)' : 'none',
                   whiteSpace: 'nowrap',
@@ -178,21 +209,21 @@ const HeaderComponent = () => {
                 onMouseEnter={() => setLoginHovered(true)}
                 onMouseLeave={() => setLoginHovered(false)}
               >
-                <LoginOutlined style={{ fontSize:'16px' }} />
+                <LoginOutlined style={{ fontSize: '16px' }} />
                 Đăng Nhập
               </button>
             </Link>
 
-            <Link to="/register" style={{ textDecoration:'none' }}>
+            <Link to="/register" style={{ textDecoration: 'none' }}>
               <button
                 style={{
-                  display:'flex', alignItems:'center', gap:'8px',
-                  padding:'10px 28px',
-                  borderRadius:'11px', border:'2px solid #0057FF',
+                  display: 'flex', alignItems: 'center', gap: '8px',
+                  padding: '10px 28px',
+                  borderRadius: '11px', border: '2px solid #0057FF',
                   background: regHovered ? '#0057FF' : 'transparent',
                   color: regHovered ? '#fff' : '#0057FF',
-                  fontSize:'15.5px', fontWeight:'600',
-                  cursor:'pointer', transition:'all 0.2s ease',
+                  fontSize: '15.5px', fontWeight: '600',
+                  cursor: 'pointer', transition: 'all 0.2s ease',
                   transform: regHovered ? 'translateY(-1px)' : 'none',
                   boxShadow: regHovered ? '0 4px 18px rgba(0,87,255,0.25)' : 'none',
                   whiteSpace: 'nowrap',
@@ -200,7 +231,7 @@ const HeaderComponent = () => {
                 onMouseEnter={() => setRegHovered(true)}
                 onMouseLeave={() => setRegHovered(false)}
               >
-                <UserAddOutlined style={{ fontSize:'16px' }} />
+                <UserAddOutlined style={{ fontSize: '16px' }} />
                 Đăng Ký
               </button>
             </Link>
@@ -229,26 +260,40 @@ const HeaderComponent = () => {
         onClose={() => setDrawerOpen(false)}
         placement="right"
         width={280}
-        closeIcon={<CloseOutlined style={{ fontSize:'18px', color:'#0057FF' }} />}
+        closeIcon={<CloseOutlined style={{ fontSize: '18px', color: '#0057FF' }} />}
         title={
-          <Link to="/" style={{ display:'flex', alignItems:'center', gap:'8px', textDecoration:'none' }}>
-            <div style={{
-              background:'#0057FF', padding:'5px 10px',
-              borderRadius:'6px', color:'#fff',
-              fontWeight:'700', fontSize:'13px',
-            }}>VISHIPEL</div>
-            <span style={{ color:'#0057FF', fontWeight:'700', fontSize:'16px' }}>EMS_NAV</span>
+          <Link
+            to="/"
+            style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}
+          >
+            <img
+              src="/logo.png"
+              alt="Vishipel EMS Logo"
+              style={{ height: '34px', width: 'auto', objectFit: 'contain' }}
+            />
+            <span
+              style={{
+                color: '#0057FF',
+                fontWeight: '700',
+                fontSize: '13px',
+                letterSpacing: '1.5px',
+                textTransform: 'uppercase',
+              }}
+            >
+              EMS
+            </span>
           </Link>
         }
         styles={{
-          body: { padding: '16px 12px', display:'flex', flexDirection:'column', gap:'4px' },
-          header: { borderBottom: '1px solid rgba(0,87,255,0.1)', padding:'16px 20px' },
+          body: { padding: '16px 12px', display: 'flex', flexDirection: 'column', gap: '4px' },
+          header: { borderBottom: '1px solid rgba(0,87,255,0.1)', padding: '16px 20px' },
         }}
       >
         {/* Mobile nav links */}
         {navItems.map(({ key, to, label }) => (
           <MobileNavLink
-            key={key} to={to}
+            key={key}
+            to={to}
             isActive={location.pathname === to}
             onClick={() => setDrawerOpen(false)}
           >
@@ -257,39 +302,32 @@ const HeaderComponent = () => {
         ))}
 
         {/* Mobile action buttons */}
-        <div style={{ marginTop:'24px', display:'flex', flexDirection:'column', gap:'10px' }}>
-          <Link to="/login" style={{ textDecoration:'none' }} onClick={() => setDrawerOpen(false)}>
+        <div style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <Link to="/login" style={{ textDecoration: 'none' }} onClick={() => setDrawerOpen(false)}>
             <button style={{
-              width:'100%', display:'flex', alignItems:'center',
-              justifyContent:'center', gap:'8px',
-              padding:'13px', borderRadius:'11px', border:'none',
-              background:'#0057FF', color:'#fff',
-              fontSize:'16px', fontWeight:'600', cursor:'pointer',
+              width: '100%', display: 'flex', alignItems: 'center',
+              justifyContent: 'center', gap: '8px',
+              padding: '13px', borderRadius: '11px', border: 'none',
+              background: '#0057FF', color: '#fff',
+              fontSize: '16px', fontWeight: '600', cursor: 'pointer',
             }}>
               <LoginOutlined /> Đăng Nhập
             </button>
           </Link>
 
-          <Link to="/register" style={{ textDecoration:'none' }} onClick={() => setDrawerOpen(false)}>
+          <Link to="/register" style={{ textDecoration: 'none' }} onClick={() => setDrawerOpen(false)}>
             <button style={{
-              width:'100%', display:'flex', alignItems:'center',
-              justifyContent:'center', gap:'8px',
-              padding:'13px', borderRadius:'11px',
-              border:'2px solid #0057FF', background:'transparent',
-              color:'#0057FF', fontSize:'16px', fontWeight:'600', cursor:'pointer',
+              width: '100%', display: 'flex', alignItems: 'center',
+              justifyContent: 'center', gap: '8px',
+              padding: '13px', borderRadius: '11px',
+              border: '2px solid #0057FF', background: 'transparent',
+              color: '#0057FF', fontSize: '16px', fontWeight: '600', cursor: 'pointer',
             }}>
               <UserAddOutlined /> Đăng Ký
             </button>
           </Link>
         </div>
       </Drawer>
-
-      <style>{`
-        @keyframes pulse-dot {
-          0%, 100% { opacity: 1; transform: scale(1); }
-          50%       { opacity: 0.4; transform: scale(0.65); }
-        }
-      `}</style>
     </>
   );
 };
