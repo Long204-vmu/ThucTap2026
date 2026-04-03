@@ -1,110 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { Layout, Space } from 'antd';
-import { LoginOutlined, UserAddOutlined } from '@ant-design/icons';
+import { Layout, Space, Drawer } from 'antd';
+import { LoginOutlined, UserAddOutlined, MenuOutlined, CloseOutlined } from '@ant-design/icons';
 import { Link, useLocation } from 'react-router-dom';
 
 const { Header: AntHeader } = Layout;
 
-const styles = {
-  header: (scrolled) => ({
-    position: 'fixed',
-    zIndex: 1000,
-    width: '100%',
-    height: '68px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: '0 5%',
-    background: 'rgba(255, 255, 255, 0.95)',
-    backdropFilter: 'blur(16px)',
-    WebkitBackdropFilter: 'blur(16px)',
-    borderBottom: '1px solid rgba(0,0,0,0.07)',
-    boxShadow: scrolled ? '0 4px 24px rgba(0,87,255,0.10)' : 'none',
-    transition: 'box-shadow 0.3s ease, background 0.3s ease',
-  }),
+const navItems = [
+  { key: 'home',     to: '/',         label: 'Trang Chủ' },
+  { key: 'products', to: '/products', label: 'Sản Phẩm' },
+  { key: 'about',    to: '/about',    label: 'Giới Thiệu' },
+  { key: 'contact',  to: '/contact',  label: 'Liên Hệ' },
+];
 
-  logo: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '10px',
-    textDecoration: 'none',
-    flexShrink: 0,
-  },
-
-  logoBadge: {
-    background: '#0057FF',
-    padding: '5px 12px',
-    borderRadius: '6px',
-    color: '#fff',
-    fontWeight: '700',
-    fontSize: '13px',
-    letterSpacing: '0.5px',
-    transition: 'transform 0.2s ease',
-  },
-
-  logoName: {
-    color: '#0057FF',
-    fontWeight: '700',
-    fontSize: '17px',
-    letterSpacing: '-0.3px',
-  },
-
-  navWrapper: {
-    flex: 1,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '4px',
-  },
-
-  navLink: (isActive) => ({
-    position: 'relative',
-    padding: '8px 16px',
-    fontSize: '14.5px',
-    fontWeight: isActive ? '600' : '500',
-    color: isActive ? '#0057FF' : '#5A6478',
-    textDecoration: 'none',
-    borderRadius: '8px',
-    transition: 'color 0.2s ease, background 0.2s ease',
-    display: 'inline-block',
-  }),
-
-  loginBtn: (hovered) => ({
-    display: 'flex',
-    alignItems: 'center',
-    gap: '6px',
-    padding: '8px 20px',
-    borderRadius: '10px',
-    border: 'none',
-    background: hovered ? '#003FBF' : '#0057FF',
-    color: '#fff',
-    fontSize: '14px',
-    fontWeight: '600',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease',
-    transform: hovered ? 'translateY(-1px)' : 'none',
-    boxShadow: hovered ? '0 4px 16px rgba(0,87,255,0.3)' : 'none',
-  }),
-
-  registerBtn: (hovered) => ({
-    display: 'flex',
-    alignItems: 'center',
-    gap: '6px',
-    padding: '8px 20px',
-    borderRadius: '10px',
-    border: '1.5px solid #0057FF',
-    background: hovered ? '#0057FF' : 'transparent',
-    color: hovered ? '#fff' : '#0057FF',
-    fontSize: '14px',
-    fontWeight: '600',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease',
-    transform: hovered ? 'translateY(-1px)' : 'none',
-    boxShadow: hovered ? '0 4px 16px rgba(0,87,255,0.2)' : 'none',
-  }),
-};
-
-/* Animated underline cho nav items */
+/* ── Desktop NavLink ── */
 const NavLink = ({ to, children, isActive }) => {
   const [hovered, setHovered] = useState(false);
   const showLine = isActive || hovered;
@@ -112,7 +20,18 @@ const NavLink = ({ to, children, isActive }) => {
   return (
     <Link
       to={to}
-      style={styles.navLink(isActive)}
+      style={{
+        position: 'relative',
+        padding: '10px 24px',
+        fontSize: '16px',
+        fontWeight: isActive ? '700' : '500',
+        color: isActive ? '#0057FF' : '#5A6478',
+        textDecoration: 'none',
+        borderRadius: '9px',
+        transition: 'color 0.2s ease, background 0.2s ease',
+        display: 'inline-block',
+        whiteSpace: 'nowrap',
+      }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
@@ -120,10 +39,10 @@ const NavLink = ({ to, children, isActive }) => {
       <span
         style={{
           position: 'absolute',
-          bottom: '4px',
-          left: showLine ? '16px' : '50%',
-          right: showLine ? '16px' : '50%',
-          height: '2px',
+          bottom: '5px',
+          left: showLine ? '24px' : '50%',
+          right: showLine ? '24px' : '50%',
+          height: '2.5px',
           borderRadius: '2px',
           background: '#0057FF',
           transition: 'left 0.25s ease, right 0.25s ease',
@@ -133,94 +52,245 @@ const NavLink = ({ to, children, isActive }) => {
   );
 };
 
+/* ── Mobile NavLink ── */
+const MobileNavLink = ({ to, children, isActive, onClick }) => (
+  <Link
+    to={to}
+    onClick={onClick}
+    style={{
+      display: 'block',
+      padding: '16px 20px',
+      fontSize: '17px',
+      fontWeight: isActive ? '700' : '500',
+      color: isActive ? '#0057FF' : '#3a4560',
+      textDecoration: 'none',
+      borderRadius: '10px',
+      background: isActive ? 'rgba(0,87,255,0.07)' : 'transparent',
+      borderLeft: isActive ? '3px solid #0057FF' : '3px solid transparent',
+      transition: 'all 0.2s ease',
+    }}
+  >
+    {children}
+  </Link>
+);
+
 const HeaderComponent = () => {
-  const [scrolled, setScrolled] = useState(false);
+  const [scrolled, setScrolled]         = useState(false);
   const [loginHovered, setLoginHovered] = useState(false);
-  const [registerHovered, setRegisterHovered] = useState(false);
+  const [regHovered, setRegHovered]     = useState(false);
+  const [drawerOpen, setDrawerOpen]     = useState(false);
+  const [isMobile, setIsMobile]         = useState(window.innerWidth < 768);
   const location = useLocation();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10);
+    const onResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
+    window.addEventListener('resize', onResize);
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onResize);
+    };
   }, []);
 
-  const navItems = [
-    { key: 'home',     to: '/',         label: 'Trang Chủ' },
-    { key: 'products', to: '/products', label: 'Sản Phẩm' },
-    { key: 'about',    to: '/about',    label: 'Giới Thiệu' },
-    { key: 'contact',  to: '/contact',  label: 'Liên Hệ' },
-  ];
+  /* Đóng drawer khi chuyển route */
+  useEffect(() => { setDrawerOpen(false); }, [location.pathname]);
 
   return (
-    <AntHeader style={styles.header(scrolled)}>
-
-      {/* ── Logo ── */}
-      <Link to="/" style={styles.logo}>
-        <div style={styles.logoBadge}>VISHIPEL</div>
-        <span style={styles.logoName}>
-          EMS_NAV
-          <span
-            style={{
+    <>
+      <AntHeader
+        style={{
+          position: 'fixed',
+          zIndex: 1000,
+          width: '100%',
+          height: '76px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '0 5%',
+          background: 'rgba(255,255,255,0.95)',
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
+          borderBottom: '1px solid rgba(0,0,0,0.07)',
+          boxShadow: scrolled ? '0 4px 24px rgba(0,87,255,0.10)' : 'none',
+          transition: 'box-shadow 0.3s ease',
+        }}
+      >
+        {/* ── Logo ── */}
+        <Link to="/" style={{ display:'flex', alignItems:'center', gap:'12px', textDecoration:'none', flexShrink:0 }}>
+          <div style={{
+            background: '#0057FF',
+            padding: '7px 15px',
+            borderRadius: '7px',
+            color: '#fff',
+            fontWeight: '700',
+            fontSize: '15px',
+            letterSpacing: '0.5px',
+          }}>
+            VISHIPEL
+          </div>
+          <span style={{ color:'#0057FF', fontWeight:'700', fontSize:'20px', letterSpacing:'-0.3px' }}>
+            <span style={{
               display: 'inline-block',
-              width: '5px',
-              height: '5px',
+              width: '6px', height: '6px',
               borderRadius: '50%',
               background: '#00C2FF',
-              marginLeft: '3px',
+              marginLeft: '4px',
               verticalAlign: 'middle',
               animation: 'pulse-dot 2s ease-in-out infinite',
+            }} />
+          </span>
+        </Link>
+
+        {/* ── Desktop Nav ── */}
+        {!isMobile && (
+          <nav style={{
+            flex: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '16px',
+          }}>
+            {navItems.map(({ key, to, label }) => (
+              <NavLink key={key} to={to} isActive={location.pathname === to}>
+                {label}
+              </NavLink>
+            ))}
+          </nav>
+        )}
+
+        {/* ── Desktop Buttons ── */}
+        {!isMobile && (
+          <Space size={12}>
+            <Link to="/login" style={{ textDecoration:'none' }}>
+              <button
+                style={{
+                  display:'flex', alignItems:'center', gap:'8px',
+                  padding:'10px 28px',
+                  borderRadius:'11px', border:'none',
+                  background: loginHovered ? '#003FBF' : '#0057FF',
+                  color:'#fff', fontSize:'15.5px', fontWeight:'600',
+                  cursor:'pointer', transition:'all 0.2s ease',
+                  transform: loginHovered ? 'translateY(-1px)' : 'none',
+                  boxShadow: loginHovered ? '0 4px 18px rgba(0,87,255,0.35)' : 'none',
+                  whiteSpace: 'nowrap',
+                }}
+                onMouseEnter={() => setLoginHovered(true)}
+                onMouseLeave={() => setLoginHovered(false)}
+              >
+                <LoginOutlined style={{ fontSize:'16px' }} />
+                Đăng Nhập
+              </button>
+            </Link>
+
+            <Link to="/register" style={{ textDecoration:'none' }}>
+              <button
+                style={{
+                  display:'flex', alignItems:'center', gap:'8px',
+                  padding:'10px 28px',
+                  borderRadius:'11px', border:'2px solid #0057FF',
+                  background: regHovered ? '#0057FF' : 'transparent',
+                  color: regHovered ? '#fff' : '#0057FF',
+                  fontSize:'15.5px', fontWeight:'600',
+                  cursor:'pointer', transition:'all 0.2s ease',
+                  transform: regHovered ? 'translateY(-1px)' : 'none',
+                  boxShadow: regHovered ? '0 4px 18px rgba(0,87,255,0.25)' : 'none',
+                  whiteSpace: 'nowrap',
+                }}
+                onMouseEnter={() => setRegHovered(true)}
+                onMouseLeave={() => setRegHovered(false)}
+              >
+                <UserAddOutlined style={{ fontSize:'16px' }} />
+                Đăng Ký
+              </button>
+            </Link>
+          </Space>
+        )}
+
+        {/* ── Mobile Hamburger ── */}
+        {isMobile && (
+          <button
+            onClick={() => setDrawerOpen(true)}
+            style={{
+              background: 'none', border: 'none', cursor: 'pointer',
+              padding: '8px', borderRadius: '8px',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: '#0057FF',
             }}
-          />
-        </span>
-      </Link>
+          >
+            <MenuOutlined style={{ fontSize: '24px' }} />
+          </button>
+        )}
+      </AntHeader>
 
-      {/* ── Navigation ── */}
-      <nav style={styles.navWrapper}>
+      {/* ── Mobile Drawer ── */}
+      <Drawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        placement="right"
+        width={280}
+        closeIcon={<CloseOutlined style={{ fontSize:'18px', color:'#0057FF' }} />}
+        title={
+          <Link to="/" style={{ display:'flex', alignItems:'center', gap:'8px', textDecoration:'none' }}>
+            <div style={{
+              background:'#0057FF', padding:'5px 10px',
+              borderRadius:'6px', color:'#fff',
+              fontWeight:'700', fontSize:'13px',
+            }}>VISHIPEL</div>
+            <span style={{ color:'#0057FF', fontWeight:'700', fontSize:'16px' }}>EMS_NAV</span>
+          </Link>
+        }
+        styles={{
+          body: { padding: '16px 12px', display:'flex', flexDirection:'column', gap:'4px' },
+          header: { borderBottom: '1px solid rgba(0,87,255,0.1)', padding:'16px 20px' },
+        }}
+      >
+        {/* Mobile nav links */}
         {navItems.map(({ key, to, label }) => (
-          <NavLink key={key} to={to} isActive={location.pathname === to}>
+          <MobileNavLink
+            key={key} to={to}
+            isActive={location.pathname === to}
+            onClick={() => setDrawerOpen(false)}
+          >
             {label}
-          </NavLink>
+          </MobileNavLink>
         ))}
-      </nav>
 
-      {/* ── Actions ── */}
-      <Space size={8}>
+        {/* Mobile action buttons */}
+        <div style={{ marginTop:'24px', display:'flex', flexDirection:'column', gap:'10px' }}>
+          <Link to="/login" style={{ textDecoration:'none' }} onClick={() => setDrawerOpen(false)}>
+            <button style={{
+              width:'100%', display:'flex', alignItems:'center',
+              justifyContent:'center', gap:'8px',
+              padding:'13px', borderRadius:'11px', border:'none',
+              background:'#0057FF', color:'#fff',
+              fontSize:'16px', fontWeight:'600', cursor:'pointer',
+            }}>
+              <LoginOutlined /> Đăng Nhập
+            </button>
+          </Link>
 
-        {/* Nút Đăng Nhập */}
-        <Link to="/login" style={{ textDecoration: 'none' }}>
-          <button
-            style={styles.loginBtn(loginHovered)}
-            onMouseEnter={() => setLoginHovered(true)}
-            onMouseLeave={() => setLoginHovered(false)}
-          >
-            <LoginOutlined style={{ fontSize: '14px' }} />
-            Đăng Nhập
-          </button>
-        </Link>
+          <Link to="/register" style={{ textDecoration:'none' }} onClick={() => setDrawerOpen(false)}>
+            <button style={{
+              width:'100%', display:'flex', alignItems:'center',
+              justifyContent:'center', gap:'8px',
+              padding:'13px', borderRadius:'11px',
+              border:'2px solid #0057FF', background:'transparent',
+              color:'#0057FF', fontSize:'16px', fontWeight:'600', cursor:'pointer',
+            }}>
+              <UserAddOutlined /> Đăng Ký
+            </button>
+          </Link>
+        </div>
+      </Drawer>
 
-        {/* Nút Đăng Ký */}
-        <Link to="/register" style={{ textDecoration: 'none' }}>
-          <button
-            style={styles.registerBtn(registerHovered)}
-            onMouseEnter={() => setRegisterHovered(true)}
-            onMouseLeave={() => setRegisterHovered(false)}
-          >
-            <UserAddOutlined style={{ fontSize: '14px' }} />
-            Đăng Ký
-          </button>
-        </Link>
-
-      </Space>
-
-      {/* Keyframe cho hiệu ứng pulse ở logo */}
       <style>{`
         @keyframes pulse-dot {
           0%, 100% { opacity: 1; transform: scale(1); }
           50%       { opacity: 0.4; transform: scale(0.65); }
         }
       `}</style>
-    </AntHeader>
+    </>
   );
 };
 

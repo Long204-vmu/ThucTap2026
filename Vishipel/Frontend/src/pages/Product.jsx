@@ -21,6 +21,7 @@ import {
   EyeOutlined, ArrowLeftOutlined, PhoneOutlined,
   CheckCircleOutlined, SafetyCertificateOutlined,
   ThunderboltOutlined, GlobalOutlined,
+  LeftOutlined, RightOutlined,
 } from '@ant-design/icons';
 
 const { Sider, Content } = Layout;
@@ -33,7 +34,10 @@ const MOCK_PRODUCTS = [
     name: 'Radar JMA-5200',
     category: 'radar',
     price: 30000000,
-    img: 'https://images.unsplash.com/photo-1569263979104-865ab7cd8d13?q=80&w=600&fit=crop',
+    images: [
+      '/image/JMA-5200-1.jpg',
+      '/image/JMA-5200-2.jpg',
+    ],
     brand: 'JRC',
     status: 'Còn hàng',
     rating: 4.5,
@@ -54,34 +58,40 @@ const MOCK_PRODUCTS = [
   },
   {
     id: 2,
-    name: 'AIS FA-170',
-    category: 'ais',
+    name: 'Bộ đàm IC-M324',
+    category: 'spare', // Chuyển về danh mục phụ kiện/liên lạc
     price: 12000000,
-    img: 'https://images.unsplash.com/photo-1517070208541-6ddc4d3efbcb?q=80&w=600&fit=crop',
-    brand: 'Furuno',
+    images: [
+      '/image/IC-M324-1.jpg',
+      '/image/IC-M324-2.jpg',
+    ],
+    brand: 'Icom', // Sửa từ Furuno thành Icom
     status: 'Còn hàng',
     rating: 4.8,
     reviews: 27,
-    shortDesc: 'Thiết bị AIS Class A tích hợp màn hình, IMO type-approved.',
-    description: `Furuno FA-170 là transponder AIS Class A được chứng nhận IMO, đáp ứng đầy đủ yêu cầu SOLAS. Tích hợp màn hình hiển thị thông tin tàu lân cận, hỗ trợ kết nối với radar và ECDIS qua giao thức chuẩn NMEA.`,
+    shortDesc: 'Bộ đàm cố định VHF hàng hải, tích hợp tính năng định danh số (DSC) lớp D.',
+    description: `Icom IC-M324 là dòng bộ đàm VHF cố định mạnh mẽ, sở hữu giao diện người dùng trực quan và khả năng chống nước chuẩn IPX7. Thiết bị tích hợp tính năng gọi chọn số chuẩn Class D (DSC), giúp tăng cường an toàn liên lạc trên biển.`,
     specs: [
-      { label: 'Loại', value: 'Class A Transponder' },
-      { label: 'Công suất phát', value: '12.5 W' },
-      { label: 'Kênh', value: '87B / 88B (dual channel)' },
-      { label: 'Màn hình', value: '5" LCD tích hợp' },
-      { label: 'Cổng kết nối', value: 'RS-232C × 5, LAN × 1' },
-      { label: 'Nguồn', value: '12–24 VDC' },
+      { label: 'Dải tần số', value: 'VHF (156.025–157.425 MHz)' },
+      { label: 'Công suất phát', value: '25 W / 1 W' },
+      { label: 'Chống nước', value: 'IPX7 (độ sâu 1m trong 30 phút)' },
+      { label: 'Màn hình', value: 'LCD Ma trận điểm độ tương phản cao' },
+      { label: 'Tính năng nổi bật', value: 'DSC Class D, AquaQuake™ thoát nước loa' },
+      { label: 'Nguồn', value: '13.8 VDC' },
     ],
-    warranty: '18 tháng',
+    warranty: '12 tháng', // Thường bảo hành 12 tháng theo chuẩn hãng
     origin: 'Nhật Bản',
-    certifications: ['IMO', 'SOLAS', 'IEC 62287-1'],
+    certifications: ['ITU-R M493-13', 'IPX7'],
   },
   {
     id: 3,
     name: 'Máy đo sâu FE-800',
     category: 'sensor',
     price: 25000000,
-    img: 'https://images.unsplash.com/photo-1454496522488-7a8e488e8606?q=80&w=600&fit=crop',
+    images: [
+      '/images/FE-800.jpg',
+      '/images/FE-800-1.jpg',
+    ],
     brand: 'Furuno',
     status: 'Còn hàng',
     rating: 4.3,
@@ -105,7 +115,11 @@ const MOCK_PRODUCTS = [
     name: 'Hải đồ ECDIS JAN-9201',
     category: 'all',
     price: 45000000,
-    img: 'https://images.unsplash.com/photo-1500514960786-8de7943729e2?q=80&w=600&fit=crop',
+    images: [
+      '/images/ecdis-jan9201-1.jpg',
+      '/images/ecdis-jan9201-2.jpg',
+      '/images/ecdis-jan9201-3.jpg',
+    ],
     brand: 'JRC',
     status: 'Sắp về',
     rating: 4.9,
@@ -129,7 +143,10 @@ const MOCK_PRODUCTS = [
     name: 'Cảm biến gió WS-200',
     category: 'sensor',
     price: 8000000,
-    img: 'https://images.pexels.com/photos/103135/pexels-photo-103135.jpeg?auto=compress&w=600',
+    images: [
+      '/images/wind-ws200-1.jpg',
+      '/images/wind-ws200-2.jpg',
+    ],
     brand: 'Furuno',
     status: 'Còn hàng',
     rating: 4.1,
@@ -153,7 +170,11 @@ const MOCK_PRODUCTS = [
     name: 'Radar JMA-5310',
     category: 'radar',
     price: 38000000,
-    img: 'https://images.unsplash.com/photo-1549497538-303791108f94?q=80&w=600&fit=crop',
+    images: [
+      '/images/radar-jma5310-1.jpg',
+      '/images/radar-jma5310-2.jpg',
+      '/images/radar-jma5310-3.jpg',
+    ],
     brand: 'JRC',
     status: 'Còn hàng',
     rating: 4.7,
@@ -177,7 +198,10 @@ const MOCK_PRODUCTS = [
     name: 'AIS FA-150',
     category: 'ais',
     price: 9500000,
-    img: 'https://images.unsplash.com/photo-1517070208541-6ddc4d3efbcb?q=80&w=600&fit=crop',
+    images: [
+      '/images/ais-fa150-1.jpg',
+      '/images/ais-fa150-2.jpg',
+    ],
     brand: 'Furuno',
     status: 'Còn hàng',
     rating: 4.4,
@@ -201,7 +225,10 @@ const MOCK_PRODUCTS = [
     name: 'Ăng-ten AV-17HB',
     category: 'spare',
     price: 2500000,
-    img: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=600&fit=crop',
+    images: [
+      '/images/antenna-av17hb-1.jpg',
+      '/images/antenna-av17hb-2.jpg',
+    ],
     brand: 'JRC',
     status: 'Còn hàng',
     rating: 4.0,
@@ -334,7 +361,7 @@ const ProductCardGrid = ({ item, onViewDetail }) => {
         <div style={{ overflow: 'hidden', height: 180, position: 'relative' }}>
           <img
             alt={item.name}
-            src={item.img}
+            src={item.images[0]}
             style={{
               width: '100%', height: '100%', objectFit: 'cover',
               transform: hovered ? 'scale(1.06)' : 'scale(1)',
@@ -393,6 +420,143 @@ const ProductCardSkeleton = () => (
   </Card>
 );
 
+// ─── IMAGE SLIDER ─────────────────────────────────────────────────────────────
+const ImageSlider = ({ images = [], alt = '' }) => {
+  const [current, setCurrent] = useState(0);
+  const total = images.length;
+
+  const prev = () => setCurrent(i => (i - 1 + total) % total);
+  const next = () => setCurrent(i => (i + 1) % total);
+
+  if (total === 0) return null;
+  if (total === 1) {
+    return (
+      <img
+        src={images[0]}
+        alt={alt}
+        style={{ width: '100%', height: 380, objectFit: 'cover', display: 'block' }}
+      />
+    );
+  }
+
+  return (
+    <div style={{ position: 'relative', userSelect: 'none' }}>
+      {/* Main image */}
+      <img
+        key={current}
+        src={images[current]}
+        alt={`${alt} - ảnh ${current + 1}`}
+        style={{
+          width: '100%', height: 380, objectFit: 'cover', display: 'block',
+          transition: 'opacity 0.3s ease',
+        }}
+      />
+
+      {/* Arrow Left */}
+      <button
+        onClick={prev}
+        style={{
+          position: 'absolute', top: '50%', left: 12,
+          transform: 'translateY(-50%)',
+          width: 40, height: 40, borderRadius: '50%',
+          background: 'rgba(0,0,0,0.45)', border: 'none',
+          cursor: 'pointer', display: 'flex', alignItems: 'center',
+          justifyContent: 'center', color: '#fff', fontSize: 16,
+          transition: 'background 0.2s',
+          zIndex: 2,
+        }}
+        onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.7)'}
+        onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,0,0,0.45)'}
+      >
+        <LeftOutlined />
+      </button>
+
+      {/* Arrow Right */}
+      <button
+        onClick={next}
+        style={{
+          position: 'absolute', top: '50%', right: 12,
+          transform: 'translateY(-50%)',
+          width: 40, height: 40, borderRadius: '50%',
+          background: 'rgba(0,0,0,0.45)', border: 'none',
+          cursor: 'pointer', display: 'flex', alignItems: 'center',
+          justifyContent: 'center', color: '#fff', fontSize: 16,
+          transition: 'background 0.2s',
+          zIndex: 2,
+        }}
+        onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.7)'}
+        onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,0,0,0.45)'}
+      >
+        <RightOutlined />
+      </button>
+
+      {/* Dot indicators */}
+      <div
+        style={{
+          position: 'absolute', bottom: 12, left: '50%',
+          transform: 'translateX(-50%)',
+          display: 'flex', gap: 6, zIndex: 2,
+        }}
+      >
+        {images.map((_, i) => (
+          <div
+            key={i}
+            onClick={() => setCurrent(i)}
+            style={{
+              width: i === current ? 22 : 8,
+              height: 8, borderRadius: 4,
+              background: i === current ? '#1677ff' : 'rgba(255,255,255,0.75)',
+              cursor: 'pointer',
+              transition: 'all 0.25s ease',
+              boxShadow: '0 1px 4px rgba(0,0,0,0.3)',
+            }}
+          />
+        ))}
+      </div>
+
+      {/* Counter badge */}
+      <div
+        style={{
+          position: 'absolute', top: 12, right: 12,
+          background: 'rgba(0,0,0,0.5)', color: '#fff',
+          fontSize: 12, fontWeight: 600,
+          padding: '2px 10px', borderRadius: 20, zIndex: 2,
+        }}
+      >
+        {current + 1} / {total}
+      </div>
+
+      {/* Thumbnail strip */}
+      <div
+        style={{
+          display: 'flex', gap: 8, padding: '10px 0 0',
+          justifyContent: 'center',
+        }}
+      >
+        {images.map((src, i) => (
+          <div
+            key={i}
+            onClick={() => setCurrent(i)}
+            style={{
+              width: 64, height: 48, borderRadius: 8, overflow: 'hidden',
+              cursor: 'pointer', flexShrink: 0,
+              border: i === current ? '2px solid #1677ff' : '2px solid transparent',
+              transition: 'border-color 0.2s',
+              boxShadow: i === current ? '0 0 0 2px #e6f4ff' : '0 1px 4px rgba(0,0,0,0.12)',
+            }}
+          >
+            <img
+              src={src}
+              alt={`thumb-${i + 1}`}
+              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 // ─── PRODUCT DETAIL PAGE ──────────────────────────────────────────────────────
 const ProductDetail = ({ product, onBack, onAddCart, isInCart, onRequestConsult }) => {
   if (!product) return null;
@@ -433,16 +597,13 @@ const ProductDetail = ({ product, onBack, onAddCart, isInCart, onRequestConsult 
                 position: 'relative',
               }}
             >
-              <img
-                src={product.img}
-                alt={product.name}
-                style={{ width: '100%', height: 380, objectFit: 'cover', display: 'block' }}
-              />
+              <ImageSlider images={product.images} alt={product.name} />
               <Tag
                 color={product.status === 'Còn hàng' ? 'green' : 'orange'}
                 style={{
                   position: 'absolute', top: 16, left: 16,
                   fontWeight: 700, fontSize: 12, padding: '4px 10px',
+                  zIndex: 3,
                 }}
               >
                 {product.status}
@@ -888,7 +1049,7 @@ const CartDrawer = ({ open, cart, onClose, onRemove }) => (
           key={item.id}
           style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '12px 0', borderBottom: '1px solid #f5f5f5' }}
         >
-          <img src={item.img} alt={item.name} style={{ width: 56, height: 56, objectFit: 'cover', borderRadius: 8 }} />
+          <img src={item.images[0]} alt={item.name} style={{ width: 56, height: 56, objectFit: 'cover', borderRadius: 8 }} />
           <div style={{ flex: 1 }}>
             <div style={{ fontWeight: 600, fontSize: 14 }}>{item.name}</div>
             <div style={{ color: '#1677ff', fontWeight: 700, fontSize: 14 }}>
