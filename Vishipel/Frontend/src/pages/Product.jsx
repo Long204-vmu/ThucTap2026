@@ -10,6 +10,7 @@
  */
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import axios from 'axios';
 import {
   Layout, Row, Col, Card, Button, Typography, Input,
   Tag, Skeleton, Alert, Empty, Pagination, Badge,
@@ -27,228 +28,6 @@ import {
 const { Sider, Content } = Layout;
 const { Title, Text, Paragraph } = Typography;
 
-// ─── MOCK DATA ────────────────────────────────────────────────────────────────
-const MOCK_PRODUCTS = [
-  {
-    id: 1,
-    name: 'Radar JMA-5200',
-    category: 'radar',
-    price: 30000000,
-    images: [
-      '/image/JMA-5200-1.jpg',
-      '/image/JMA-5200-2.jpg',
-    ],
-    brand: 'JRC',
-    status: 'Còn hàng',
-    rating: 4.5,
-    reviews: 12,
-    shortDesc: 'Radar hàng hải dải X-band, phù hợp tàu cỡ vừa và lớn.',
-    description: `Radar JMA-5200 là dòng radar hàng hải X-band hiệu năng cao của JRC, được thiết kế cho các tàu cỡ vừa và lớn hoạt động trong mọi điều kiện thời tiết. Tích hợp công nghệ xử lý tín hiệu kỹ thuật số tiên tiến, cho phép phát hiện mục tiêu nhỏ ngay cả trong mưa lớn và sóng cao.`,
-    specs: [
-      { label: 'Tần số', value: '9410 MHz (X-band)' },
-      { label: 'Công suất phát', value: '10 kW' },
-      { label: 'Tầm quan sát', value: 'Tối đa 96 hải lý' },
-      { label: 'Màn hình', value: '19" LCD màu, độ phân giải 1280×1024' },
-      { label: 'Chuẩn kết nối', value: 'NMEA 0183, NMEA 2000' },
-      { label: 'Nhiệt độ hoạt động', value: '-15°C ~ +55°C' },
-    ],
-    warranty: '24 tháng',
-    origin: 'Nhật Bản',
-    certifications: ['IMO', 'SOLAS', 'IEC 62388'],
-  },
-  {
-    id: 2,
-    name: 'Bộ đàm IC-M324',
-    category: 'spare', // Chuyển về danh mục phụ kiện/liên lạc
-    price: 12000000,
-    images: [
-      '/image/IC-M324-1.jpg',
-      '/image/IC-M324-2.jpg',
-    ],
-    brand: 'Icom', // Sửa từ Furuno thành Icom
-    status: 'Còn hàng',
-    rating: 4.8,
-    reviews: 27,
-    shortDesc: 'Bộ đàm cố định VHF hàng hải, tích hợp tính năng định danh số (DSC) lớp D.',
-    description: `Icom IC-M324 là dòng bộ đàm VHF cố định mạnh mẽ, sở hữu giao diện người dùng trực quan và khả năng chống nước chuẩn IPX7. Thiết bị tích hợp tính năng gọi chọn số chuẩn Class D (DSC), giúp tăng cường an toàn liên lạc trên biển.`,
-    specs: [
-      { label: 'Dải tần số', value: 'VHF (156.025–157.425 MHz)' },
-      { label: 'Công suất phát', value: '25 W / 1 W' },
-      { label: 'Chống nước', value: 'IPX7 (độ sâu 1m trong 30 phút)' },
-      { label: 'Màn hình', value: 'LCD Ma trận điểm độ tương phản cao' },
-      { label: 'Tính năng nổi bật', value: 'DSC Class D, AquaQuake™ thoát nước loa' },
-      { label: 'Nguồn', value: '13.8 VDC' },
-    ],
-    warranty: '12 tháng', // Thường bảo hành 12 tháng theo chuẩn hãng
-    origin: 'Nhật Bản',
-    certifications: ['ITU-R M493-13', 'IPX7'],
-  },
-  {
-    id: 3,
-    name: 'Máy đo sâu FE-800',
-    category: 'sensor',
-    price: 25000000,
-    images: [
-      '/images/FE-800.jpg',
-      '/images/FE-800-1.jpg',
-    ],
-    brand: 'Furuno',
-    status: 'Còn hàng',
-    rating: 4.3,
-    reviews: 9,
-    shortDesc: 'Máy đo sâu hồi âm đơn tần, độ chính xác cao, màn hình màu.',
-    description: `FE-800 là máy đo sâu hồi âm đơn tần của Furuno, phù hợp cho tàu đánh cá và tàu thương mại cỡ nhỏ. Màn hình màu 5.7" hiển thị rõ nét ngay dưới ánh sáng mặt trời. Phát hiện đáy biển chính xác ở độ sâu lên đến 1000m.`,
-    specs: [
-      { label: 'Tần số hoạt động', value: '50 / 200 kHz' },
-      { label: 'Độ sâu tối đa', value: '1000 m' },
-      { label: 'Màn hình', value: '5.7" TFT màu' },
-      { label: 'Công suất phát', value: '600 W (RMS)' },
-      { label: 'Giao thức', value: 'NMEA 0183' },
-      { label: 'Cấp bảo vệ', value: 'IPX5' },
-    ],
-    warranty: '18 tháng',
-    origin: 'Nhật Bản',
-    certifications: ['IEC 60945'],
-  },
-  {
-    id: 4,
-    name: 'Hải đồ ECDIS JAN-9201',
-    category: 'all',
-    price: 45000000,
-    images: [
-      '/images/ecdis-jan9201-1.jpg',
-      '/images/ecdis-jan9201-2.jpg',
-      '/images/ecdis-jan9201-3.jpg',
-    ],
-    brand: 'JRC',
-    status: 'Sắp về',
-    rating: 4.9,
-    reviews: 5,
-    shortDesc: 'Hệ thống hải đồ điện tử ECDIS chuẩn IMO, màn hình 19".',
-    description: `JAN-9201 là hệ thống hải đồ điện tử (ECDIS) thế hệ mới của JRC, tương thích đầy đủ với chuẩn IHO S-57/S-63. Giao diện trực quan, tích hợp dữ liệu AIS, radar overlay và route planning thông minh giúp sĩ quan hàng hải vận hành an toàn và hiệu quả.`,
-    specs: [
-      { label: 'Màn hình', value: '19" LCD, 1280×1024' },
-      { label: 'Chuẩn hải đồ', value: 'IHO S-57, S-63' },
-      { label: 'Kết nối', value: 'NMEA 0183/2000, Ethernet' },
-      { label: 'CPU', value: 'Intel Core i5 tích hợp' },
-      { label: 'Lưu trữ', value: 'SSD 256 GB' },
-      { label: 'Nhiệt độ', value: '-15°C ~ +55°C' },
-    ],
-    warranty: '24 tháng',
-    origin: 'Nhật Bản',
-    certifications: ['IMO', 'SOLAS', 'IEC 61174'],
-  },
-  {
-    id: 5,
-    name: 'Cảm biến gió WS-200',
-    category: 'sensor',
-    price: 8000000,
-    images: [
-      '/images/wind-ws200-1.jpg',
-      '/images/wind-ws200-2.jpg',
-    ],
-    brand: 'Furuno',
-    status: 'Còn hàng',
-    rating: 4.1,
-    reviews: 14,
-    shortDesc: 'Cảm biến tốc độ và hướng gió siêu âm, không có bộ phận chuyển động.',
-    description: `WS-200 sử dụng công nghệ siêu âm để đo tốc độ và hướng gió mà không cần bộ phận cơ học chuyển động, giúp tăng độ bền và giảm bảo trì. Phù hợp lắp đặt trên cột buồm hoặc thượng tầng tàu.`,
-    specs: [
-      { label: 'Nguyên lý', value: 'Siêu âm (Ultrasonic)' },
-      { label: 'Tốc độ gió', value: '0 – 75 m/s' },
-      { label: 'Hướng gió', value: '0° – 360°' },
-      { label: 'Giao thức', value: 'NMEA 0183' },
-      { label: 'Nguồn', value: '12–24 VDC' },
-      { label: 'Cấp bảo vệ', value: 'IP67' },
-    ],
-    warranty: '12 tháng',
-    origin: 'Nhật Bản',
-    certifications: ['IEC 60945'],
-  },
-  {
-    id: 6,
-    name: 'Radar JMA-5310',
-    category: 'radar',
-    price: 38000000,
-    images: [
-      '/images/radar-jma5310-1.jpg',
-      '/images/radar-jma5310-2.jpg',
-      '/images/radar-jma5310-3.jpg',
-    ],
-    brand: 'JRC',
-    status: 'Còn hàng',
-    rating: 4.7,
-    reviews: 8,
-    shortDesc: 'Radar X-band cao cấp tích hợp ARPA, phù hợp tàu lớn.',
-    description: `JMA-5310 là phiên bản nâng cấp của dòng JMA-5200, tích hợp thêm hệ thống ARPA (Automatic Radar Plotting Aid) giúp theo dõi và dự báo quỹ đạo tối đa 40 mục tiêu đồng thời. Đây là lựa chọn lý tưởng cho tàu hàng cỡ lớn và tàu chở dầu.`,
-    specs: [
-      { label: 'Tần số', value: '9410 MHz (X-band)' },
-      { label: 'Công suất phát', value: '25 kW' },
-      { label: 'Tầm quan sát', value: 'Tối đa 120 hải lý' },
-      { label: 'ARPA', value: '40 mục tiêu' },
-      { label: 'Màn hình', value: '21" LCD màu' },
-      { label: 'Chuẩn kết nối', value: 'NMEA 0183, NMEA 2000, IEC 61162' },
-    ],
-    warranty: '24 tháng',
-    origin: 'Nhật Bản',
-    certifications: ['IMO', 'SOLAS', 'IEC 62388'],
-  },
-  {
-    id: 7,
-    name: 'AIS FA-150',
-    category: 'ais',
-    price: 9500000,
-    images: [
-      '/images/ais-fa150-1.jpg',
-      '/images/ais-fa150-2.jpg',
-    ],
-    brand: 'Furuno',
-    status: 'Còn hàng',
-    rating: 4.4,
-    reviews: 19,
-    shortDesc: 'Transponder AIS Class B giá tốt, phù hợp tàu nhỏ và tàu cá.',
-    description: `FA-150 là transponder AIS Class B của Furuno dành cho tàu nhỏ, tàu cá và tàu thể thao. Nhỏ gọn, dễ lắp đặt, tiêu thụ điện năng thấp. Tương thích với hầu hết plotters và màn hình hàng hải trên thị trường.`,
-    specs: [
-      { label: 'Loại', value: 'Class B Transponder' },
-      { label: 'Công suất phát', value: '2 W' },
-      { label: 'Kênh', value: '87B / 88B' },
-      { label: 'Giao thức', value: 'NMEA 0183' },
-      { label: 'Nguồn', value: '12–24 VDC' },
-      { label: 'Kích thước', value: '130 × 150 × 40 mm' },
-    ],
-    warranty: '12 tháng',
-    origin: 'Nhật Bản',
-    certifications: ['IEC 62287-2'],
-  },
-  {
-    id: 8,
-    name: 'Ăng-ten AV-17HB',
-    category: 'spare',
-    price: 2500000,
-    images: [
-      '/images/antenna-av17hb-1.jpg',
-      '/images/antenna-av17hb-2.jpg',
-    ],
-    brand: 'JRC',
-    status: 'Còn hàng',
-    rating: 4.0,
-    reviews: 31,
-    shortDesc: 'Ăng-ten VHF băng rộng, chắc chắn, chống ăn mòn muối biển.',
-    description: `AV-17HB là ăng-ten VHF chất lượng cao dành cho môi trường hàng hải. Vỏ bọc sợi thủy tinh chịu tia UV và ăn mòn muối biển, phù hợp lắp trên mọi loại tàu. Tương thích với tất cả bộ đàm VHF hàng hải.`,
-    specs: [
-      { label: 'Tần số', value: '156–174 MHz' },
-      { label: 'Gain', value: '3 dBi' },
-      { label: 'Trở kháng', value: '50 Ω' },
-      { label: 'Kết nối', value: 'PL-259' },
-      { label: 'Chiều dài', value: '1.2 m' },
-      { label: 'Vật liệu', value: 'Sợi thủy tinh + thép không gỉ' },
-    ],
-    warranty: '12 tháng',
-    origin: 'Nhật Bản',
-    certifications: ['IEC 60945'],
-  },
-];
-
 const CATEGORIES = [
   { key: 'all',    label: 'Tất cả sản phẩm', color: 'default' },
   { key: 'radar',  label: 'Máy Radar',        color: 'blue'    },
@@ -257,12 +36,12 @@ const CATEGORIES = [
   { key: 'spare',  label: 'Phụ kiện',         color: 'orange'  },
 ];
 
-const PAGE_SIZE = 6;
+const PAGE_SIZE = 8;
 
 const formatPrice = (n) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
 
-// ─── HOOK: Fetch products ─────────────────────────────────────────────────────
+// ─── HOOK: Fetch products từ Backend ──────────────────────────────────────────
 function useProducts(category, search) {
   const [allProducts, setAllProducts] = useState([]);
   const [loading, setLoading]         = useState(true);
@@ -272,25 +51,56 @@ function useProducts(category, search) {
     const fetchProducts = async () => {
       try {
         setLoading(true);
-        // 🔌 API INTEGRATION:
-        // const params = new URLSearchParams();
-        // if (category !== 'all') params.set('category', category);
-        // if (search) params.set('q', search);
-        // const res = await axios.get(`/api/products?${params}`);
-        // setAllProducts(res.data.items);
-        await new Promise(r => setTimeout(r, 500));
-        setAllProducts(MOCK_PRODUCTS);
+        
+        // 1. Gọi API lấy toàn bộ sản phẩm
+        const res = await axios.get('/api/Products');
+
+        // 2. Sơ chế dữ liệu (Mapping)
+        const realProducts = res.data.map(item => {
+          // Ép kiểu các chuỗi JSON từ SQL Server về dạng mảng/object
+          const imagesArray = item.imagesJson ? JSON.parse(item.imagesJson) : [];
+          const specsArray  = item.specsJson  ? JSON.parse(item.specsJson)  : [];
+          const certsArray  = item.certificationsJson ? JSON.parse(item.certificationsJson) : [];
+
+          return {
+            id: item.id,
+            name: item.name,
+            model: item.model,
+            // CỰC KỲ QUAN TRỌNG: Dùng 'slug' (radar, ais) để bộ lọc UI hoạt động đúng
+            category: item.category ? item.category.slug : 'all',
+            // Dùng 'name' và 'colorCode' để hiển thị thẻ Tag
+            type: item.category ? item.category.name : 'Thiết bị',
+            typeColor: item.category ? item.category.colorCode : 'default',
+            // LƯU Ý: price PHẢI GIỮ LÀ SỐ để hàm giảm giá và tính tổng giỏ hàng hoạt động
+            price: item.price, 
+            images: imagesArray.length > 0 ? imagesArray : ['https://via.placeholder.com/600x400?text=No+Image'],
+            brand: item.brand,
+            status: item.status,
+            rating: item.rating,
+            reviews: item.reviewCount,
+            shortDesc: item.shortDescription,
+            description: item.description,
+            specs: specsArray,
+            warranty: item.warranty,
+            origin: item.origin,
+            certifications: certsArray,
+          };
+        });
+
+        setAllProducts(realProducts);
         setError(null);
       } catch (err) {
-        setError('Không thể tải danh sách sản phẩm.');
+        setError('Không thể tải danh sách sản phẩm. Vui lòng kiểm tra kết nối.');
         console.error('[Product] fetchProducts error:', err);
       } finally {
         setLoading(false);
       }
     };
+    
     fetchProducts();
-  }, []);
+  }, []); // Chỉ gọi API 1 lần khi load trang
 
+  // Logic Lọc (Filter) và Tìm kiếm (Search) giữ nguyên ở Frontend
   const filtered = useMemo(() => {
     return allProducts.filter(p => {
       const matchCat    = category === 'all' || p.category === category;
@@ -301,6 +111,7 @@ function useProducts(category, search) {
 
   return { filtered, loading, error };
 }
+
 
 // ─── FILTER SIDEBAR ───────────────────────────────────────────────────────────
 const FilterSidebar = ({ active, onSelect, search, onSearch }) => (

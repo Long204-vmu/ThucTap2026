@@ -11,6 +11,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Layout, Carousel, Row, Col, Card, Tag, Skeleton, Alert, Button, Statistic } from 'antd';
 import { ArrowRightOutlined, SafetyCertificateOutlined, ThunderboltOutlined, GlobalOutlined } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
+import axios from 'axios';
 
 const { Content } = Layout;
 
@@ -63,19 +64,41 @@ function useHomeData() {
       try {
         setLoading(true);
 
-        // 🔌 API INTEGRATION — thay khối dưới bằng:
-        // const [bannerRes, productRes] = await Promise.all([
-        //   axios.get('/api/banners'),
-        //   axios.get('/api/products/featured'),
-        // ]);
-        // setBanners(bannerRes.data);
-        // setProducts(productRes.data);
+        // 1. Gọi API THẬT từ Backend
+        const res = await axios.get('/api/Products');
+        
+        // 2. Chuyển đổi (Map) dữ liệu từ DB cho khớp với định dạng Card của UI cũ
+        const realProducts = res.data.map(item => {
+          // Ép kiểu chuỗi JSON thành mảng (array)
+          const imagesArray = item.imagesJson ? JSON.parse(item.imagesJson) : [];
+          
+          // Format giá tiền (từ 30000000 thành "30.000.000 ₫")
+          const formattedPrice = new Intl.NumberFormat('vi-VN', { 
+            style: 'currency', 
+            currency: 'VND' 
+          }).format(item.price);
 
-        await new Promise(r => setTimeout(r, 600)); // giả lập network delay
-        setBanners(MOCK_BANNERS);
-        setProducts(MOCK_PRODUCTS);
+          return {
+            id: item.id,
+            name: item.name,
+            model: item.model,
+            // Lấy tên Category từ DB (nhờ .Include() ở backend), nếu null thì để mặc định
+            type: item.category ? item.category.name : 'Thiết bị',
+            typeColor: item.category ? item.category.colorCode : 'blue',
+            // Lấy ảnh đầu tiên trong mảng, nếu mảng rỗng thì dùng ảnh mặc định
+            img: imagesArray.length > 0 ? imagesArray[0] : 'https://via.placeholder.com/600x400?text=No+Image',
+            price: formattedPrice,
+            // Giữ lại các trường gốc để dùng cho sau này (như trang Chi tiết)
+            ...item
+          };
+        });
+
+        // 3. Cập nhật State
+        setBanners(MOCK_BANNERS); // Tạm thời vẫn xài Banner giả
+        setProducts(realProducts); // <--- Sản phẩm THẬT lên sóng!
+
       } catch (err) {
-        setError('Không thể tải dữ liệu. Vui lòng thử lại.');
+        setError('Không thể tải dữ liệu từ máy chủ. Vui lòng kiểm tra lại kết nối.');
         console.error('[Home] fetchData error:', err);
       } finally {
         setLoading(false);

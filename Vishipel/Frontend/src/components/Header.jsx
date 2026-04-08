@@ -101,6 +101,8 @@ const HeaderComponent = () => {
       <AntHeader
         style={{
           position: 'fixed',
+          top: 0,
+          left: 0,
           zIndex: 1000,
           width: '100%',
           height: '76px',
@@ -108,7 +110,7 @@ const HeaderComponent = () => {
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '0 5%',
-          background: 'rgba(255,255,255,0.95)',
+          background: 'rgba(255,255,255,1)',
           backdropFilter: 'blur(16px)',
           WebkitBackdropFilter: 'blur(16px)',
           borderBottom: '1px solid rgba(0,0,0,0.07)',
@@ -259,7 +261,7 @@ const HeaderComponent = () => {
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
         placement="right"
-        width={280}
+        size="large"
         closeIcon={<CloseOutlined style={{ fontSize: '18px', color: '#0057FF' }} />}
         title={
           <Link
