@@ -21,16 +21,27 @@ namespace Vishipel.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Product>>> GetProducts()
         {
-            // Lấy toàn bộ sản phẩm từ Database
-            // Có thể dùng .Include(p => p.Category) nếu muốn lấy kèm thông tin Category
-            var products = await _context.Products.ToListAsync();
+            // Lấy tất cả sản phẩm, nhớ kèm theo (Include) thông tin Danh mục
+            return await _context.Products
+                .Include(p => p.Category)
+                .ToListAsync();
+        }
 
-            if (products == null || !products.Any())
+        // HÀM 2: Lấy MỘT sản phẩm theo ID (Dùng cho trang Chi tiết)
+        // GET: api/Products/5
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Product>> GetProduct(int id)
+        {
+            var product = await _context.Products
+                .Include(p => p.Category)
+                .FirstOrDefaultAsync(p => p.Id == id);
+
+            if (product == null)
             {
-                return NotFound("Chưa có sản phẩm nào trong kho.");
+                return NotFound();
             }
 
-            return Ok(products);
+            return product;
         }
     }
 }

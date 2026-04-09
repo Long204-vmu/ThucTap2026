@@ -4,12 +4,14 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import { Layout } from 'antd';
 
 // ── Components dùng chung ──────────────────────────────────────────────────────
-import HeaderComponent from './components/Header';
-import FooterComponent from './components/Footer';
+import HeaderComponent from './components/layout/Header';
+import FooterComponent from './components/layout/Footer';
 
 // ── Pages ─────────────────────────────────────────────────────────────────────
 import Home     from './pages/Home';
 import Product  from './pages/Product';
+import ProductDetail from './pages/ProductDetail';
+import ServicePage from './pages/Service';
 import About    from './pages/About';
 import Contact  from './pages/Contact';
 import Login    from './pages/Login';
@@ -40,11 +42,12 @@ const AppLayout = ({ children }) => {
 };
 
 const App = () => (
-  <BrowserRouter>
     <AppLayout>
       <Routes>
         <Route path="/"         element={<Home />} />
         <Route path="/products" element={<Product />} />
+        <Route path="/products/:id" element={<ProductDetail />}  />
+        <Route path="/services" element={<ServicePage />} />
         <Route path="/about"    element={<About />} />
         <Route path="/contact"  element={<Contact />} />
         <Route path="/login"    element={<Login />} />
@@ -52,7 +55,6 @@ const App = () => (
         <Route path="*"         element={<Navigate to="/" replace />} />
       </Routes>
     </AppLayout>
-  </BrowserRouter>
 );
 
 export default App;

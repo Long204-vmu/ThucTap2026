@@ -1,47 +1,22 @@
-/**
- * Product.jsx — Trang sản phẩm VISHIPEL EMS_NAV
- * ──────────────────────────────────────────────
- * ✅ API-ready: Tìm comment "🔌 API" để kết nối backend
- * ✅ Filter + Search hoạt động phía client
- * ✅ Loading skeleton + Empty state + Error state
- * ✅ Pagination
- * ✅ Cart state (dễ nâng lên Context/Redux)
- * ✅ Trang chi tiết sản phẩm (ProductDetail) với nút Tư vấn & Giỏ hàng
- */
-
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import axios from 'axios';
-import {
-  Layout, Row, Col, Card, Button, Typography, Input,
-  Tag, Skeleton, Alert, Empty, Pagination, Badge,
-  Drawer, message, Tooltip, Divider, Rate, Breadcrumb,
-} from 'antd';
-import {
-  FilterOutlined, ShoppingCartOutlined, SearchOutlined,
-  AppstoreOutlined, BarsOutlined, CloseOutlined,
-  EyeOutlined, ArrowLeftOutlined, PhoneOutlined,
-  CheckCircleOutlined, SafetyCertificateOutlined,
-  ThunderboltOutlined, GlobalOutlined,
-  LeftOutlined, RightOutlined,
-} from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
+import { Layout, Row, Col, Typography, Alert, Empty, Pagination, Badge, Button, message } from 'antd';
+import { ShoppingCartOutlined } from '@ant-design/icons';
+
+// Import các mảnh ghép
+import FilterSidebar from '../components/features/product/FilterSidebar';
+import CartDrawer from '../components/features/product/CartDrawer';
+import ProductCard from '../components/features/product/ProductCard';
+import ProductSkeleton from '../components/features/product/ProductSkeleton';
 
 const { Sider, Content } = Layout;
-const { Title, Text, Paragraph } = Typography;
-
-const CATEGORIES = [
-  { key: 'all',    label: 'Tất cả sản phẩm', color: 'default' },
-  { key: 'radar',  label: 'Máy Radar',        color: 'blue'    },
-  { key: 'ais',    label: 'Thiết bị AIS',     color: 'cyan'    },
-  { key: 'sensor', label: 'Cảm biến & Đo sâu',color: 'green'   },
-  { key: 'spare',  label: 'Phụ kiện',         color: 'orange'  },
-];
+const { Title, Text } = Typography;
 
 const PAGE_SIZE = 8;
+const BACKEND_URL = 'https://localhost:7010'; // Nhớ đổi port cho đúng
 
-const formatPrice = (n) =>
-  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
-
-// ─── HOOK: Fetch products từ Backend ──────────────────────────────────────────
+// ─── HOOK: Lấy danh sách sản phẩm ───
 function useProducts(category, search) {
   const [allProducts, setAllProducts] = useState([]);
   const [loading, setLoading]         = useState(true);
@@ -51,56 +26,36 @@ function useProducts(category, search) {
     const fetchProducts = async () => {
       try {
         setLoading(true);
-        
-        // 1. Gọi API lấy toàn bộ sản phẩm
         const res = await axios.get('/api/Products');
 
-        // 2. Sơ chế dữ liệu (Mapping)
         const realProducts = res.data.map(item => {
-          // Ép kiểu các chuỗi JSON từ SQL Server về dạng mảng/object
           const imagesArray = item.imagesJson ? JSON.parse(item.imagesJson) : [];
-          const specsArray  = item.specsJson  ? JSON.parse(item.specsJson)  : [];
-          const certsArray  = item.certificationsJson ? JSON.parse(item.certificationsJson) : [];
+          const formattedPrice = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.price);
 
           return {
             id: item.id,
             name: item.name,
             model: item.model,
-            // CỰC KỲ QUAN TRỌNG: Dùng 'slug' (radar, ais) để bộ lọc UI hoạt động đúng
             category: item.category ? item.category.slug : 'all',
-            // Dùng 'name' và 'colorCode' để hiển thị thẻ Tag
             type: item.category ? item.category.name : 'Thiết bị',
             typeColor: item.category ? item.category.colorCode : 'default',
-            // LƯU Ý: price PHẢI GIỮ LÀ SỐ để hàm giảm giá và tính tổng giỏ hàng hoạt động
-            price: item.price, 
-            images: imagesArray.length > 0 ? imagesArray : ['https://via.placeholder.com/600x400?text=No+Image'],
-            brand: item.brand,
-            status: item.status,
-            rating: item.rating,
-            reviews: item.reviewCount,
-            shortDesc: item.shortDescription,
-            description: item.description,
-            specs: specsArray,
-            warranty: item.warranty,
-            origin: item.origin,
-            certifications: certsArray,
+            price: item.price, // Giữ dạng số để tính tổng giỏ hàng
+            displayPrice: formattedPrice, // Chuỗi để hiển thị
+            img: imagesArray.length > 0 ? `${BACKEND_URL}${imagesArray[0]}` : 'https://via.placeholder.com/600x400?text=No+Image',
+            ...item
           };
         });
 
         setAllProducts(realProducts);
-        setError(null);
       } catch (err) {
         setError('Không thể tải danh sách sản phẩm. Vui lòng kiểm tra kết nối.');
-        console.error('[Product] fetchProducts error:', err);
       } finally {
         setLoading(false);
       }
     };
-    
     fetchProducts();
-  }, []); // Chỉ gọi API 1 lần khi load trang
+  }, []);
 
-  // Logic Lọc (Filter) và Tìm kiếm (Search) giữ nguyên ở Frontend
   const filtered = useMemo(() => {
     return allProducts.filter(p => {
       const matchCat    = category === 'all' || p.category === category;
@@ -112,507 +67,18 @@ function useProducts(category, search) {
   return { filtered, loading, error };
 }
 
-
-// ─── FILTER SIDEBAR ───────────────────────────────────────────────────────────
-const FilterSidebar = ({ active, onSelect, search, onSearch }) => (
-  <div style={{ padding: '24px 20px' }}>
-    <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
-      <FilterOutlined style={{ color: '#1677ff' }} />
-      Bộ lọc
-    </div>
-    <Input
-      placeholder="Tìm thiết bị..."
-      prefix={<SearchOutlined style={{ color: '#bbb' }} />}
-      value={search}
-      onChange={e => onSearch(e.target.value)}
-      allowClear
-      style={{ marginBottom: 20, borderRadius: 8 }}
-    />
-    <div style={{ fontWeight: 600, fontSize: 12, color: '#8c8c8c', letterSpacing: 1, marginBottom: 10, textTransform: 'uppercase' }}>
-      Danh mục
-    </div>
-    {CATEGORIES.map(cat => (
-      <div
-        key={cat.key}
-        onClick={() => onSelect(cat.key)}
-        style={{
-          padding: '10px 14px',
-          borderRadius: 8,
-          cursor: 'pointer',
-          marginBottom: 4,
-          background: active === cat.key ? '#e6f4ff' : 'transparent',
-          color: active === cat.key ? '#1677ff' : '#333',
-          fontWeight: active === cat.key ? 600 : 400,
-          fontSize: 14,
-          transition: 'all 0.2s',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-        }}
-      >
-        {cat.label}
-        {active === cat.key && (
-          <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#1677ff' }} />
-        )}
-      </div>
-    ))}
-  </div>
-);
-
-// ─── PRODUCT CARD ─────────────────────────────────────────────────────────────
-const ProductCardGrid = ({ item, onViewDetail }) => {
-  const [hovered, setHovered] = useState(false);
-
-  return (
-    <Card
-      hoverable
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      cover={
-        <div style={{ overflow: 'hidden', height: 180, position: 'relative' }}>
-          <img
-            alt={item.name}
-            src={item.images[0]}
-            style={{
-              width: '100%', height: '100%', objectFit: 'cover',
-              transform: hovered ? 'scale(1.06)' : 'scale(1)',
-              transition: 'transform 0.4s ease',
-            }}
-          />
-          <Tag
-            color={item.status === 'Còn hàng' ? 'green' : 'orange'}
-            style={{ position: 'absolute', top: 10, left: 10, fontWeight: 600, fontSize: 11 }}
-          >
-            {item.status}
-          </Tag>
-        </div>
-      }
-      style={{
-        borderRadius: 12, overflow: 'hidden',
-        border: hovered ? '1px solid #1677ff' : '1px solid #f0f0f0',
-        boxShadow: hovered ? '0 8px 28px rgba(22,119,255,0.12)' : '0 2px 8px rgba(0,0,0,0.05)',
-        transition: 'all 0.3s ease',
-      }}
-    >
-      <div style={{ fontSize: 11, color: '#8c8c8c', marginBottom: 4, fontWeight: 500 }}>
-        {item.brand}
-      </div>
-      <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4, color: '#001529' }}>
-        {item.name}
-      </div>
-      <div style={{ marginBottom: 6 }}>
-        <Rate disabled defaultValue={item.rating} style={{ fontSize: 11 }} />
-        <Text type="secondary" style={{ fontSize: 11, marginLeft: 4 }}>({item.reviews})</Text>
-      </div>
-      <div style={{ fontSize: 12, color: '#666', marginBottom: 10, lineHeight: 1.5, minHeight: 36 }}>
-        {item.shortDesc}
-      </div>
-      <div style={{ color: '#1677ff', fontWeight: 700, fontSize: 17, marginBottom: 14 }}>
-        {formatPrice(item.price)}
-      </div>
-      <Button
-        type="primary"
-        icon={<EyeOutlined />}
-        onClick={() => onViewDetail(item)}
-        block
-        style={{ borderRadius: 8, fontWeight: 600, height: 38 }}
-      >
-        Xem chi tiết
-      </Button>
-    </Card>
-  );
-};
-
-// ─── SKELETON ─────────────────────────────────────────────────────────────────
-const ProductCardSkeleton = () => (
-  <Card style={{ borderRadius: 12, overflow: 'hidden' }}>
-    <Skeleton.Image active style={{ width: '100%', height: 180 }} />
-    <Skeleton active paragraph={{ rows: 3 }} style={{ marginTop: 12 }} />
-  </Card>
-);
-
-// ─── IMAGE SLIDER ─────────────────────────────────────────────────────────────
-const ImageSlider = ({ images = [], alt = '' }) => {
-  const [current, setCurrent] = useState(0);
-  const total = images.length;
-
-  const prev = () => setCurrent(i => (i - 1 + total) % total);
-  const next = () => setCurrent(i => (i + 1) % total);
-
-  if (total === 0) return null;
-  if (total === 1) {
-    return (
-      <img
-        src={images[0]}
-        alt={alt}
-        style={{ width: '100%', height: 380, objectFit: 'cover', display: 'block' }}
-      />
-    );
-  }
-
-  return (
-    <div style={{ position: 'relative', userSelect: 'none' }}>
-      {/* Main image */}
-      <img
-        key={current}
-        src={images[current]}
-        alt={`${alt} - ảnh ${current + 1}`}
-        style={{
-          width: '100%', height: 380, objectFit: 'cover', display: 'block',
-          transition: 'opacity 0.3s ease',
-        }}
-      />
-
-      {/* Arrow Left */}
-      <button
-        onClick={prev}
-        style={{
-          position: 'absolute', top: '50%', left: 12,
-          transform: 'translateY(-50%)',
-          width: 40, height: 40, borderRadius: '50%',
-          background: 'rgba(0,0,0,0.45)', border: 'none',
-          cursor: 'pointer', display: 'flex', alignItems: 'center',
-          justifyContent: 'center', color: '#fff', fontSize: 16,
-          transition: 'background 0.2s',
-          zIndex: 2,
-        }}
-        onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.7)'}
-        onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,0,0,0.45)'}
-      >
-        <LeftOutlined />
-      </button>
-
-      {/* Arrow Right */}
-      <button
-        onClick={next}
-        style={{
-          position: 'absolute', top: '50%', right: 12,
-          transform: 'translateY(-50%)',
-          width: 40, height: 40, borderRadius: '50%',
-          background: 'rgba(0,0,0,0.45)', border: 'none',
-          cursor: 'pointer', display: 'flex', alignItems: 'center',
-          justifyContent: 'center', color: '#fff', fontSize: 16,
-          transition: 'background 0.2s',
-          zIndex: 2,
-        }}
-        onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.7)'}
-        onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,0,0,0.45)'}
-      >
-        <RightOutlined />
-      </button>
-
-      {/* Dot indicators */}
-      <div
-        style={{
-          position: 'absolute', bottom: 12, left: '50%',
-          transform: 'translateX(-50%)',
-          display: 'flex', gap: 6, zIndex: 2,
-        }}
-      >
-        {images.map((_, i) => (
-          <div
-            key={i}
-            onClick={() => setCurrent(i)}
-            style={{
-              width: i === current ? 22 : 8,
-              height: 8, borderRadius: 4,
-              background: i === current ? '#1677ff' : 'rgba(255,255,255,0.75)',
-              cursor: 'pointer',
-              transition: 'all 0.25s ease',
-              boxShadow: '0 1px 4px rgba(0,0,0,0.3)',
-            }}
-          />
-        ))}
-      </div>
-
-      {/* Counter badge */}
-      <div
-        style={{
-          position: 'absolute', top: 12, right: 12,
-          background: 'rgba(0,0,0,0.5)', color: '#fff',
-          fontSize: 12, fontWeight: 600,
-          padding: '2px 10px', borderRadius: 20, zIndex: 2,
-        }}
-      >
-        {current + 1} / {total}
-      </div>
-
-      {/* Thumbnail strip */}
-      <div
-        style={{
-          display: 'flex', gap: 8, padding: '10px 0 0',
-          justifyContent: 'center',
-        }}
-      >
-        {images.map((src, i) => (
-          <div
-            key={i}
-            onClick={() => setCurrent(i)}
-            style={{
-              width: 64, height: 48, borderRadius: 8, overflow: 'hidden',
-              cursor: 'pointer', flexShrink: 0,
-              border: i === current ? '2px solid #1677ff' : '2px solid transparent',
-              transition: 'border-color 0.2s',
-              boxShadow: i === current ? '0 0 0 2px #e6f4ff' : '0 1px 4px rgba(0,0,0,0.12)',
-            }}
-          >
-            <img
-              src={src}
-              alt={`thumb-${i + 1}`}
-              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-            />
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-// ─── PRODUCT DETAIL PAGE ──────────────────────────────────────────────────────
-const ProductDetail = ({ product, onBack, onAddCart, isInCart, onRequestConsult }) => {
-  if (!product) return null;
-
-  return (
-    <div style={{ padding: '0 0 60px' }}>
-
-      {/* Breadcrumb */}
-      <div style={{ background: '#fff', borderBottom: '1px solid #f0f0f0', padding: '12px 5%' }}>
-        <Breadcrumb
-          items={[
-            { title: 'Trang chủ' },
-            { title: <span style={{ cursor: 'pointer', color: '#1677ff' }} onClick={onBack}>Sản phẩm</span> },
-            { title: product.name },
-          ]}
-        />
-      </div>
-
-      <div style={{ padding: '32px 5%' }}>
-        {/* Back button */}
-        <Button
-          icon={<ArrowLeftOutlined />}
-          onClick={onBack}
-          style={{ marginBottom: 24, borderRadius: 8 }}
-        >
-          Quay lại danh sách
-        </Button>
-
-        <Row gutter={[40, 32]}>
-          {/* ── LEFT: Ảnh sản phẩm ── */}
-          <Col xs={24} md={10}>
-            <div
-              style={{
-                borderRadius: 16,
-                overflow: 'hidden',
-                border: '1px solid #f0f0f0',
-                boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-                position: 'relative',
-              }}
-            >
-              <ImageSlider images={product.images} alt={product.name} />
-              <Tag
-                color={product.status === 'Còn hàng' ? 'green' : 'orange'}
-                style={{
-                  position: 'absolute', top: 16, left: 16,
-                  fontWeight: 700, fontSize: 12, padding: '4px 10px',
-                  zIndex: 3,
-                }}
-              >
-                {product.status}
-              </Tag>
-            </div>
-
-            {/* Nhãn chứng nhận */}
-            <div
-              style={{
-                marginTop: 16, background: '#f6ffed',
-                border: '1px solid #b7eb8f', borderRadius: 10, padding: '12px 16px',
-              }}
-            >
-              <div style={{ fontWeight: 600, fontSize: 13, color: '#389e0d', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
-                <SafetyCertificateOutlined />
-                Chứng nhận & Tiêu chuẩn
-              </div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                {product.certifications.map(c => (
-                  <Tag key={c} color="green" style={{ fontWeight: 600 }}>{c}</Tag>
-                ))}
-              </div>
-            </div>
-          </Col>
-
-          {/* ── RIGHT: Thông tin sản phẩm ── */}
-          <Col xs={24} md={14}>
-            {/* Brand & tên */}
-            <div style={{ fontSize: 12, color: '#8c8c8c', fontWeight: 600, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 4 }}>
-              {product.brand}
-            </div>
-            <Title level={2} style={{ margin: '0 0 8px', color: '#001529' }}>
-              {product.name}
-            </Title>
-
-            {/* Rating */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-              <Rate disabled defaultValue={product.rating} style={{ fontSize: 14 }} />
-              <Text type="secondary" style={{ fontSize: 13 }}>
-                {product.rating}/5 ({product.reviews} đánh giá)
-              </Text>
-            </div>
-
-            {/* Giá */}
-            <div
-              style={{
-                background: 'linear-gradient(135deg, #e6f4ff 0%, #f0f5ff 100%)',
-                borderRadius: 12, padding: '16px 20px', marginBottom: 20,
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              }}
-            >
-              <div>
-                <div style={{ fontSize: 12, color: '#8c8c8c', marginBottom: 2 }}>Giá niêm yết</div>
-                <div style={{ color: '#1677ff', fontWeight: 800, fontSize: 26 }}>
-                  {formatPrice(product.price)}
-                </div>
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: 12, color: '#8c8c8c', marginBottom: 2 }}>Bảo hành</div>
-                <div style={{ fontWeight: 700, color: '#52c41a', fontSize: 15 }}>
-                  {product.warranty}
-                </div>
-              </div>
-            </div>
-
-            {/* Mô tả */}
-            <Paragraph style={{ color: '#444', lineHeight: 1.75, marginBottom: 20, fontSize: 14 }}>
-              {product.description}
-            </Paragraph>
-
-            {/* Thông tin nhanh */}
-            <div style={{ display: 'flex', gap: 16, marginBottom: 24, flexWrap: 'wrap' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#555' }}>
-                <GlobalOutlined style={{ color: '#1677ff' }} />
-                Xuất xứ: <strong>{product.origin}</strong>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#555' }}>
-                <CheckCircleOutlined style={{ color: '#52c41a' }} />
-                Chính hãng 100%
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#555' }}>
-                <ThunderboltOutlined style={{ color: '#fa8c16' }} />
-                Giao hàng toàn quốc
-              </div>
-            </div>
-
-            {/* ── 2 NÚT CHÍNH ── */}
-            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-              <Button
-                size="large"
-                icon={<PhoneOutlined />}
-                onClick={() => onRequestConsult(product)}
-                style={{
-                  flex: 1, minWidth: 180, height: 48, borderRadius: 10, fontWeight: 700,
-                  borderColor: '#1677ff', color: '#1677ff', fontSize: 15,
-                  background: '#fff',
-                }}
-              >
-                Yêu cầu tư vấn
-              </Button>
-              <Button
-                type="primary"
-                size="large"
-                icon={<ShoppingCartOutlined />}
-                onClick={() => onAddCart(product)}
-                disabled={product.status !== 'Còn hàng'}
-                style={{
-                  flex: 1, minWidth: 180, height: 48, borderRadius: 10, fontWeight: 700,
-                  fontSize: 15,
-                  ...(isInCart ? { background: '#52c41a', borderColor: '#52c41a' } : {}),
-                }}
-              >
-                {isInCart ? 'Đã thêm vào giỏ' : 'Thêm vào giỏ hàng'}
-              </Button>
-            </div>
-
-            {product.status !== 'Còn hàng' && (
-              <Alert
-                message="Sản phẩm đang sắp về kho — vui lòng liên hệ để đặt trước"
-                type="warning"
-                showIcon
-                style={{ marginTop: 12, borderRadius: 8 }}
-              />
-            )}
-          </Col>
-        </Row>
-
-        {/* ── THÔNG SỐ KỸ THUẬT ── */}
-        <div
-          style={{
-            marginTop: 40, background: '#fff', borderRadius: 16,
-            border: '1px solid #f0f0f0', overflow: 'hidden',
-            boxShadow: '0 2px 12px rgba(0,0,0,0.05)',
-          }}
-        >
-          <div
-            style={{
-              background: '#001529', padding: '16px 24px',
-              display: 'flex', alignItems: 'center', gap: 10,
-            }}
-          >
-            <ThunderboltOutlined style={{ color: '#1677ff', fontSize: 16 }} />
-            <span style={{ color: '#fff', fontWeight: 700, fontSize: 16 }}>
-              Thông số kỹ thuật
-            </span>
-          </div>
-          <div style={{ padding: '8px 0' }}>
-            {product.specs.map((spec, i) => (
-              <div
-                key={spec.label}
-                style={{
-                  display: 'flex', alignItems: 'center',
-                  padding: '13px 24px',
-                  background: i % 2 === 0 ? '#fafafa' : '#fff',
-                  borderBottom: i < product.specs.length - 1 ? '1px solid #f5f5f5' : 'none',
-                }}
-              >
-                <div style={{ width: '40%', fontWeight: 600, color: '#555', fontSize: 14 }}>
-                  {spec.label}
-                </div>
-                <div style={{ width: '60%', color: '#222', fontSize: 14 }}>
-                  {spec.value}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* ── GHI CHÚ PHÍA DƯỚI ── */}
-        <div
-          style={{
-            marginTop: 24, borderRadius: 12, padding: '16px 20px',
-            background: '#fffbe6', border: '1px solid #ffe58f',
-          }}
-        >
-          <Text style={{ fontSize: 13, color: '#7c5800' }}>
-            ⚠️ Giá và thông số kỹ thuật có thể thay đổi mà không báo trước. Vui lòng liên hệ bộ phận kinh doanh để được xác nhận chính xác trước khi đặt hàng.
-          </Text>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
+// ─── MAIN COMPONENT ───
 const ProductPage = ({ onCartChange }) => {
+  const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState('all');
   const [search, setSearch]                 = useState('');
-  const [viewMode, setViewMode]             = useState('grid');
   const [page, setPage]                     = useState(1);
   const [cart, setCart]                     = useState([]);
   const [drawerOpen, setDrawerOpen]         = useState(false);
 
-  // ── State mới: trang chi tiết ──
-  const [selectedProduct, setSelectedProduct] = useState(null); // null = danh sách, obj = chi tiết
-
   const { filtered, loading, error } = useProducts(activeCategory, search);
 
+  // Reset trang về 1 khi đổi bộ lọc
   useEffect(() => { setPage(1); }, [activeCategory, search]);
 
   const paginated = useMemo(
@@ -641,148 +107,49 @@ const ProductPage = ({ onCartChange }) => {
     });
   };
 
-  const handleRequestConsult = (product) => {
-    // 🔌 API: gửi yêu cầu tư vấn về backend hoặc mở modal form
-    message.success({
-      content: `Yêu cầu tư vấn cho "${product.name}" đã được gửi. Chúng tôi sẽ liên hệ sớm!`,
-      duration: 3,
-    });
-  };
-
-  const cartIds = new Set(cart.map(p => p.id));
-  const activeLabel = CATEGORIES.find(c => c.key === activeCategory)?.label ?? 'Tất cả';
-
-  // ── Nếu đang xem chi tiết ──
-  if (selectedProduct) {
-    return (
-      <div style={{ marginTop: 68, minHeight: '100vh', background: '#f5f7fa' }}>
-        {/* Page header */}
-        <div style={{ background: '#001529', padding: '28px 5%' }}>
-          <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, marginBottom: 4, letterSpacing: 1 }}>
-            VISHIPEL / SẢN PHẨM / CHI TIẾT
-          </div>
-          <Title level={3} style={{ color: '#fff', margin: 0 }}>
-            {selectedProduct.name}
-          </Title>
-        </div>
-
-        {/* Cart button floating */}
-        <div style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 100 }}>
-          <Badge count={cart.length} size="small">
-            <Button
-              type="primary"
-              shape="circle"
-              icon={<ShoppingCartOutlined />}
-              size="large"
-              onClick={() => setDrawerOpen(true)}
-              style={{ width: 52, height: 52, fontSize: 20, boxShadow: '0 4px 16px rgba(22,119,255,0.35)' }}
-            />
-          </Badge>
-        </div>
-
-        <ProductDetail
-          product={selectedProduct}
-          onBack={() => setSelectedProduct(null)}
-          onAddCart={handleAddCart}
-          isInCart={cartIds.has(selectedProduct.id)}
-          onRequestConsult={handleRequestConsult}
-        />
-
-        {/* Cart Drawer */}
-        <CartDrawer
-          open={drawerOpen}
-          cart={cart}
-          onClose={() => setDrawerOpen(false)}
-          onRemove={handleRemoveCart}
-        />
-      </div>
-    );
-  }
-
-  // ── Trang danh sách sản phẩm ──
   return (
     <div style={{ marginTop: 68, minHeight: '100vh', background: '#f5f7fa' }}>
-
+      
       {/* Page header */}
       <div style={{ background: '#001529', padding: '36px 5%' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-          <div>
-            <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, marginBottom: 4, letterSpacing: 1 }}>
-              VISHIPEL / SẢN PHẨM
-            </div>
-            <Title level={2} style={{ color: '#fff', margin: 0 }}>Khám Phá Thiết Bị Hàng Hải</Title>
-          </div>
+        <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, marginBottom: 4, letterSpacing: 1 }}>
+          VISHIPEL / SẢN PHẨM
         </div>
+        <Title level={2} style={{ color: '#fff', margin: 0 }}>Khám Phá Thiết Bị Hàng Hải</Title>
       </div>
 
-      {error && (
-        <Alert message={error} type="error" showIcon closable style={{ margin: '16px 5%', borderRadius: 10 }} />
-      )}
+      {error && <Alert message={error} type="error" showIcon closable style={{ margin: '16px 5%', borderRadius: 10 }} />}
 
       <div style={{ padding: '24px 5%' }}>
         <Layout style={{ background: 'transparent', gap: 20 }}>
-
+          
           {/* Sidebar */}
-          <Sider
-            width={260}
-            style={{
-              background: '#fff', borderRadius: 12,
-              border: '1px solid #f0f0f0', height: 'fit-content', flexShrink: 0,
-            }}
-          >
-            <FilterSidebar
-              active={activeCategory}
-              onSelect={setActiveCategory}
-              search={search}
-              onSearch={setSearch}
-            />
+          <Sider width={260} style={{ background: '#fff', borderRadius: 12, border: '1px solid #f0f0f0', height: 'fit-content', flexShrink: 0 }}>
+            <FilterSidebar active={activeCategory} onSelect={setActiveCategory} search={search} onSearch={setSearch} />
           </Sider>
 
           {/* Product list */}
           <Content>
             {/* Toolbar */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 8 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
               <div>
-                <Text strong style={{ fontSize: 15 }}>{activeLabel}</Text>
-                {!loading && (
-                  <Text type="secondary" style={{ marginLeft: 8 }}>
-                    ({filtered.length} sản phẩm)
-                  </Text>
-                )}
+                <Text strong style={{ fontSize: 15 }}>
+                  {activeCategory === 'all' ? 'Tất cả sản phẩm' : CATEGORIES.find(c => c.key === activeCategory)?.label}
+                </Text>
+                {!loading && <Text type="secondary" style={{ marginLeft: 8 }}>({filtered.length} sản phẩm)</Text>}
               </div>
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                <Badge count={cart.length} size="small">
-                  <Button
-                    icon={<ShoppingCartOutlined />}
-                    onClick={() => setDrawerOpen(true)}
-                    style={{ borderRadius: 8, fontWeight: 600 }}
-                  >
-                    Giỏ hàng
-                  </Button>
-                </Badge>
-                <Button
-                  icon={<AppstoreOutlined />}
-                  type={viewMode === 'grid' ? 'primary' : 'default'}
-                  onClick={() => setViewMode('grid')}
-                  style={{ borderRadius: 8 }}
-                />
-                <Button
-                  icon={<BarsOutlined />}
-                  type={viewMode === 'list' ? 'primary' : 'default'}
-                  onClick={() => setViewMode('list')}
-                  style={{ borderRadius: 8 }}
-                />
-              </div>
+              
+              <Badge count={cart.length} size="small">
+                <Button icon={<ShoppingCartOutlined />} onClick={() => setDrawerOpen(true)} style={{ borderRadius: 8, fontWeight: 600 }}>
+                  Giỏ hàng
+                </Button>
+              </Badge>
             </div>
 
-            {/* Grid */}
+            {/* Grid Sản Phẩm */}
             {loading ? (
               <Row gutter={[20, 20]}>
-                {[1, 2, 3, 4, 5, 6].map(n => (
-                  <Col xs={24} sm={12} md={viewMode === 'grid' ? 8 : 24} key={n}>
-                    <ProductCardSkeleton />
-                  </Col>
-                ))}
+                {[1, 2, 3, 4, 5, 6, 7, 8].map(n => <ProductSkeleton key={n} />)}
               </Row>
             ) : filtered.length === 0 ? (
               <Empty description="Không tìm thấy sản phẩm phù hợp" style={{ padding: '60px 0' }}>
@@ -792,23 +159,15 @@ const ProductPage = ({ onCartChange }) => {
               <>
                 <Row gutter={[20, 20]}>
                   {paginated.map(item => (
-                    <Col xs={24} sm={12} md={viewMode === 'grid' ? 8 : 24} key={item.id}>
-                      <ProductCardGrid
-                        item={item}
-                        onViewDetail={setSelectedProduct}
-                      />
+                    <Col xs={24} sm={12} md={8} xl={6} key={item.id}>
+                      {/* Tái sử dụng ProductCard, ghi đè thuộc tính price để hiện chuỗi */}
+                      <ProductCard item={{...item, price: item.displayPrice}} />
                     </Col>
                   ))}
                 </Row>
+                
                 <div style={{ textAlign: 'center', marginTop: 40 }}>
-                  <Pagination
-                    current={page}
-                    total={filtered.length}
-                    pageSize={PAGE_SIZE}
-                    onChange={setPage}
-                    showSizeChanger={false}
-                    style={{ display: 'inline-block' }}
-                  />
+                  <Pagination current={page} total={filtered.length} pageSize={PAGE_SIZE} onChange={setPage} showSizeChanger={false} />
                 </div>
               </>
             )}
@@ -816,68 +175,9 @@ const ProductPage = ({ onCartChange }) => {
         </Layout>
       </div>
 
-      <CartDrawer
-        open={drawerOpen}
-        cart={cart}
-        onClose={() => setDrawerOpen(false)}
-        onRemove={handleRemoveCart}
-      />
+      <CartDrawer open={drawerOpen} cart={cart} onClose={() => setDrawerOpen(false)} onRemove={handleRemoveCart} />
     </div>
   );
 };
-
-// ─── CART DRAWER ──────────────────────────────────────────────────────────────
-const CartDrawer = ({ open, cart, onClose, onRemove }) => (
-  <Drawer
-    title={<span><ShoppingCartOutlined /> Giỏ hàng ({cart.length})</span>}
-    placement="right"
-    onClose={onClose}
-    open={open}
-    width={360}
-    footer={
-      cart.length > 0 && (
-        <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
-            <Text strong>Tổng cộng:</Text>
-            <Text strong style={{ color: '#1677ff', fontSize: 16 }}>
-              {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(
-                cart.reduce((s, p) => s + p.price, 0)
-              )}
-            </Text>
-          </div>
-          <Button type="primary" block size="large" style={{ borderRadius: 10, height: 46, fontWeight: 600 }}>
-            Đặt hàng
-          </Button>
-        </div>
-      )
-    }
-  >
-    {cart.length === 0 ? (
-      <Empty description="Giỏ hàng trống" style={{ paddingTop: 60 }} />
-    ) : (
-      cart.map(item => (
-        <div
-          key={item.id}
-          style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '12px 0', borderBottom: '1px solid #f5f5f5' }}
-        >
-          <img src={item.images[0]} alt={item.name} style={{ width: 56, height: 56, objectFit: 'cover', borderRadius: 8 }} />
-          <div style={{ flex: 1 }}>
-            <div style={{ fontWeight: 600, fontSize: 14 }}>{item.name}</div>
-            <div style={{ color: '#1677ff', fontWeight: 700, fontSize: 14 }}>
-              {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.price)}
-            </div>
-          </div>
-          <Button
-            type="text"
-            icon={<CloseOutlined />}
-            size="small"
-            onClick={() => onRemove(item.id)}
-            danger
-          />
-        </div>
-      ))
-    )}
-  </Drawer>
-);
 
 export default ProductPage;
