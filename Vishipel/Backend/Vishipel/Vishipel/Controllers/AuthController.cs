@@ -1,0 +1,113 @@
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+using Microsoft.IdentityModel.Tokens;
+using Vishipel.Data;
+using Vishipel.Models;
+using Vishipel.DTOs;
+
+namespace Vishipel.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class AuthController : ControllerBase
+    {
+        private readonly AppDbContext _context;
+        private readonly IConfiguration _configuration;
+
+        public AuthController(AppDbContext context, IConfiguration configuration)
+        {
+            _context = context;
+            _configuration = configuration;
+        }
+
+        // 1. API ĐĂNG KÝ (Nhận RegisterDto, Lưu User)
+        [HttpPost("register")]
+        public async Task<IActionResult> Register(RegisterDto request)
+        {
+            // Kiểm tra trùng lặp
+            if (await _context.Users.AnyAsync(u => u.Username == request.Username))
+                return BadRequest(new { message = "Tên đăng nhập đã tồn tại!" });
+
+            if (await _context.Users.AnyAsync(u => u.Email == request.Email))
+                return BadRequest(new { message = "Email này đã được sử dụng!" });
+
+            // Tạo User mới, băm nát mật khẩu bằng BCrypt
+            var user = new User
+            {
+                FullName = request.FullName,
+                Email = request.Email,
+                Phone = request.Phone,
+                Username = request.Username,
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password)
+                // Role và IsApproved sẽ tự lấy giá trị mặc định trong Model của bạn
+            };
+
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { success = true, message = "Đăng ký thành công. Vui lòng chờ xét duyệt." });
+        }
+
+        // 2. API ĐĂNG NHẬP (Nhận LoginDto, Trả về JWT)
+        [HttpPost("login")]
+        public async Task<IActionResult> Login(LoginDto request)
+        {
+            // Tìm user
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == request.Username);
+            if (user == null)
+                return Unauthorized(new { message = "Sai tên đăng nhập hoặc mật khẩu." });
+
+            // So sánh mật khẩu băm
+            if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
+                return Unauthorized(new { message = "Sai tên đăng nhập hoặc mật khẩu." });
+
+            // Tạm thời comment dòng này lại để bạn test tính năng Đăng nhập. 
+            // Khi nào làm xong trang Quản trị duyệt user, hãy mở comment ra nhé!
+            /*
+            if (!user.IsApproved)
+                return BadRequest(new { message = "Tài khoản của bạn đang chờ Quản trị viên phê duyệt." });
+            */
+
+            // Tạo Token
+            var token = CreateToken(user);
+
+            // Trả về Token và thông tin cơ bản cho Frontend
+            return Ok(new
+            {
+                token = token,
+                user = new { user.Id, user.FullName, user.Username, user.Role, user.IsApproved }
+            });
+        }
+
+        // 3. HÀM TẠO CHỮ KÝ JWT
+        private string CreateToken(User user)
+        {
+            // Cài cắm các thông tin công khai (Claims) vào ruột Token
+            List<Claim> claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Name, user.Username),
+                new Claim(ClaimTypes.Role, user.Role),
+                new Claim("FullName", user.FullName)
+            };
+
+            // Lấy khóa bí mật từ appsettings.json
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration.GetSection("Jwt:Key").Value!));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
+
+            // Cấu hình Token (Sống trong 1 ngày)
+            var token = new JwtSecurityToken(
+                issuer: _configuration.GetSection("Jwt:Issuer").Value,
+                audience: _configuration.GetSection("Jwt:Audience").Value,
+                claims: claims,
+                expires: DateTime.Now.AddDays(1),
+                signingCredentials: creds
+            );
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+    }
+}

@@ -1,8 +1,8 @@
 -- Tạo Database (Nếu chưa có)
--- CREATE DATABASE VishipelEMS;
--- GO
--- USE VishipelEMS;
--- GO
+CREATE DATABASE VishipelEMS;
+GO
+USE VishipelEMS;
+GO
 
 -- =========================================
 -- 1. Bảng Danh mục thiết bị
@@ -76,3 +76,26 @@ CREATE TABLE SupportRequests (
     Status VARCHAR(50) DEFAULT 'New',   -- 'New', 'In-Progress', 'Resolved'
     CreatedAt DATETIME DEFAULT GETDATE()
 );
+-- Chèn Danh mục
+INSERT INTO Categories (Slug, Name, ColorCode) VALUES 
+('radar', N'Máy Radar', 'blue'),
+('ais', N'Thiết bị AIS', 'cyan'),
+('sensor', N'Cảm biến & Đo sâu', 'green'),
+('spare', N'Phụ kiện', 'orange');
+
+-- Chèn Sản phẩm mẫu (Radar JMA-5200)
+INSERT INTO Products (CategoryId, Name, Model, Brand, Price, Status, ShortDescription, Description, Warranty, Origin, ImagesJson, SpecsJson, CertificationsJson)
+VALUES (
+    1, -- Thuộc danh mục radar
+    N'Radar JMA-5200', 'JMA-5200', 'JRC', 30000000, N'Còn hàng',
+    N'Radar hàng hải dải X-band, phù hợp tàu cỡ vừa và lớn.',
+    N'Radar JMA-5200 là dòng radar hàng hải X-band hiệu năng cao của JRC...',
+    N'24 tháng', N'Nhật Bản',
+    '["/image/JMA-5200-1.jpg", "/image/JMA-5200-2.jpg"]',
+    '[{"label": "Tần số", "value": "9410 MHz (X-band)"}, {"label": "Công suất phát", "value": "10 kW"}]',
+    '["IMO", "SOLAS", "IEC 62388"]'
+);
+
+-- Chèn 1 Admin (Lưu ý: Mật khẩu này đang để tạm, thực tế phải hash bằng BCrypt)
+INSERT INTO Users (FullName, Email, Username, PasswordHash, Role, IsApproved)
+VALUES (N'Quản trị viên', 'admin@vishipel.com.vn', 'admin', '123456', 'Admin', 1);

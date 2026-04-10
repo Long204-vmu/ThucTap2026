@@ -16,6 +16,8 @@ import About    from './pages/About';
 import Contact  from './pages/Contact';
 import Login    from './pages/Login';
 import Register from './pages/Register';
+import AddProduct from './pages/admin/AddProduct'; 
+import ProtectedRoute from './components/common/ProtectedRoute';
 
 const { Content } = Layout;
 
@@ -53,6 +55,14 @@ const App = () => (
         <Route path="/login"    element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="*"         element={<Navigate to="/" replace />} />
+        <Route 
+          path="/admin/products/add" 
+          element={
+            <ProtectedRoute allowedRoles={['Admin', 'Manager']}>
+              <AddProduct />
+            </ProtectedRoute>
+          } 
+        />
       </Routes>
     </AppLayout>
 );

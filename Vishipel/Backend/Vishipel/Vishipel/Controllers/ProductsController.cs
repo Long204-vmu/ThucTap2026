@@ -43,5 +43,14 @@ namespace Vishipel.Controllers
 
             return product;
         }
+        [HttpGet("newest")]
+        public async Task<ActionResult<IEnumerable<Product>>> GetNewestProducts()
+        {
+            return await _context.Products
+                .Include(p => p.Category)
+                .OrderByDescending(p => p.Id) // SQL sẽ tự sắp xếp
+                .Take(4) // SQL sẽ chỉ gửi đúng 4 cái về Frontend
+                .ToListAsync();
+        }
     }
 }

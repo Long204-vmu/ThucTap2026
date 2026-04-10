@@ -27,7 +27,8 @@ function useHomeData() {
         
         const realProducts = res.data.map(item => {
           const imagesArray = item.imagesJson ? JSON.parse(item.imagesJson) : [];
-          const formattedPrice = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.price);
+          
+          // ĐÃ XÓA: logic tính toán và format Giá (formattedPrice)
 
           return {
             id: item.id,
@@ -36,7 +37,7 @@ function useHomeData() {
             type: item.category ? item.category.name : 'Thiết bị',
             typeColor: item.category ? item.category.colorCode : 'blue',
             img: imagesArray.length > 0 ? `${BACKEND_URL}${imagesArray[0]}` : 'https://via.placeholder.com/600x400?text=No+Image',
-            price: formattedPrice,
+            status: item.status, // Đưa Trạng thái vào thay thế cho Giá
             ...item
           };
         });
