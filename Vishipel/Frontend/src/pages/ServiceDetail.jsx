@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import { 
   Row, Col, Button, Typography, Tag, Spin, Empty, 
   Breadcrumb, message, Alert, Card, Divider 
@@ -14,9 +13,10 @@ import {
 
 // Tái sử dụng Slider ảnh
 import ImageSlider from '../components/features/product/ImageSlider';
+import { BACKEND_ORIGIN } from '../config/api';
+import { getServiceById } from '../services/serviceService';
 
 const { Title, Text, Paragraph } = Typography;
-const BACKEND_URL = 'https://localhost:7010';
 
 const ServiceDetail = () => {
   const { id } = useParams();
@@ -28,14 +28,14 @@ const ServiceDetail = () => {
     const fetchDetail = async () => {
       try {
         setLoading(true);
-        const res = await axios.get(`/api/Services/${id}`);
+        const res = await getServiceById(id);
         const data = res.data;
         
         // Chuẩn hóa ảnh
         data.images = data.imagesJson 
           ? JSON.parse(data.imagesJson).map(img => {
               const fileName = img.split('/').pop();
-              return `${BACKEND_URL}/image/${fileName}`;
+              return `${BACKEND_ORIGIN}/image/${fileName}`;
             }) 
           : ['https://via.placeholder.com/600x400?text=Service+Image'];
           

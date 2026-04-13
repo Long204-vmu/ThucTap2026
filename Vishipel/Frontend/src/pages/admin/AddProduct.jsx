@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Form, Input, Button, Select, Card, Row, Col, Upload, message, Typography, Divider, Spin, Space } from 'antd';
-import { UploadOutlined, SaveOutlined, ArrowLeftOutlined, PlusOutlined, MinusCircleOutlined } from '@ant-design/icons';
-import axios from 'axios';
+import { Form, Input, Button, Select, Card, Row, Col, message, Typography, Divider, Spin } from 'antd';
+import { SaveOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { useNavigate, useParams, Link } from 'react-router-dom';
+import { getAllCategories } from '../../services/categoryService';
+import { createProduct, getProductById, updateProduct } from '../../services/productService';
+import ImageUploader from '../../components/common/ImageUploader';
+import DynamicSpecsSection from '../../components/common/DynamicSpecsSection';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
-const { Dragger } = Upload;
 
 const AddProduct = () => {
   const [form] = Form.useForm();
@@ -24,15 +26,17 @@ const AddProduct = () => {
     const initData = async () => {
       setFetchingData(true);
       try {
-        const catRes = await axios.get('/api/Categories');
+        const catRes = await getAllCategories();
         setCategories(catRes.data);
 
         if (isEditMode) {
-          const prodRes = await axios.get(`/api/Products/${id}`);
+          const prodRes = await getProductById(id);
           const product = prodRes.data;
+          const existingImages = product.imagesJson ? JSON.parse(product.imagesJson) : [];
 
           // Lấy mảng thông số từ Database (nếu có) để Form.List tự động vẽ ra
           const specsArray = product.specsJson ? JSON.parse(product.specsJson) : [];
+          setUploadedImages(existingImages);
 
           form.setFieldsValue({
             ...product,
@@ -75,11 +79,11 @@ const AddProduct = () => {
 
       if (isEditMode) {
         // Gọi PUT để cập nhật
-        await axios.put(`/api/Products/${id}`, submitData);
+        await updateProduct(id, submitData);
         message.success('Cập nhật thiết bị thành công!');
       } else {
         // Gọi POST để thêm mới
-        await axios.post('/api/Products', submitData);
+        await createProduct(submitData);
         message.success('Thêm mới thiết bị thành công!');
       }
       
@@ -124,61 +128,13 @@ const AddProduct = () => {
                 <Form.Item name="description" label="Bài viết chi tiết"><TextArea rows={6} /></Form.Item>
               </Card>
 
-              {/* KHỐI THÔNG SỐ ĐỘNG LINH HOẠT (FORM.LIST) */}
-              <Card bordered={false} style={{ borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                  <Title level={5} style={{ margin: 0, color: '#1677ff' }}>Thông số kỹ thuật linh hoạt</Title>
-                </div>
-                <div style={{ color: '#8c8c8c', marginBottom: 24, fontSize: 13 }}>
-                  Bạn có thể chủ động thêm các cặp thông số (Ví dụ: Trái điền "Tần số", Phải điền "9410 MHz").
-                </div>
-                
-                <Form.List name="dynamicSpecs">
-                  {(fields, { add, remove }) => (
-                    <>
-                      {fields.map(({ key, name, ...restField }) => (
-                        <Space key={key} style={{ display: 'flex', marginBottom: 16 }} align="start">
-                          
-                          {/* Ô nhập Tên thông số (Cột trái) */}
-                          <Form.Item
-                            {...restField}
-                            name={[name, 'label']}
-                            rules={[{ required: true, message: 'Nhập tên thông số' }]}
-                            style={{ margin: 0, width: 250 }}
-                          >
-                            <Input placeholder="Tên thông số (VD: Tần số)" size="large" />
-                          </Form.Item>
-
-                          {/* Ô nhập Giá trị thông số (Cột phải) */}
-                          <Form.Item
-                            {...restField}
-                            name={[name, 'value']}
-                            rules={[{ required: true, message: 'Nhập giá trị' }]}
-                            style={{ margin: 0, width: 450 }}
-                          >
-                            <Input placeholder="Giá trị (VD: 9410 MHz)" size="large" />
-                          </Form.Item>
-
-                          {/* Nút xóa dòng */}
-                          <Button 
-                            type="text" 
-                            danger 
-                            icon={<MinusCircleOutlined style={{ fontSize: 20 }} />} 
-                            onClick={() => remove(name)} 
-                            style={{ marginTop: 4 }}
-                          />
-                        </Space>
-                      ))}
-                      
-                      <Form.Item style={{ marginTop: 16 }}>
-                        <Button type="dashed" onClick={() => add()} block icon={<PlusOutlined />} size="large" style={{ borderRadius: 8, borderColor: '#1677ff', color: '#1677ff', background: '#e6f4ff' }}>
-                          Thêm thông số kỹ thuật
-                        </Button>
-                      </Form.Item>
-                    </>
-                  )}
-                </Form.List>
-              </Card>
+              <DynamicSpecsSection
+                title="Thông số kỹ thuật linh hoạt"
+                description='Bạn có thể chủ động thêm các cặp thông số (Ví dụ: Trái điền "Tần số", Phải điền "9410 MHz").'
+                addButtonText="Thêm thông số kỹ thuật"
+                labelPlaceholder="Tên thông số (VD: Tần số)"
+                valuePlaceholder="Giá trị (VD: 9410 MHz)"
+              />
             </Col>
 
             <Col xs={24} lg={8}>
@@ -214,30 +170,10 @@ const AddProduct = () => {
               <Card bordered={false} style={{ borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
                <Title level={5} style={{ marginBottom: 20 }}>Hình ảnh sản phẩm</Title>
                 <Form.Item>
-                  <Dragger 
-                    name="file" 
-                    multiple={false}
-                    action={`${axios.defaults.baseURL || 'https://localhost:7010'}/api/Upload/image`} // Gọi tới API Upload vừa tạo
-                    listType="picture"
-                    onChange={(info) => {
-                      const { status, response } = info.file;
-                      if (status === 'done') {
-                        message.success(`Tải ảnh ${info.file.name} lên thành công.`);
-                        // Nhận URL từ Backend và đẩy vào mảng
-                        setUploadedImages([response.url]); 
-                      } else if (status === 'error') {
-                        message.error(`Tải ảnh ${info.file.name} thất bại.`);
-                      }
-                    }}
-                    onRemove={() => {
-                       // Xóa ảnh khỏi mảng nếu user bấm nút xóa trên giao diện
-                       setUploadedImages([]);
-                    }}
-                  >
-                    <p className="ant-upload-drag-icon"><UploadOutlined style={{ color: '#0057FF' }} /></p>
-                    <p className="ant-upload-text">Kéo thả để tải ảnh lên</p>
-                    <p className="ant-upload-hint">Chỉ chấp nhận file .jpg, .png</p>
-                  </Dragger>
+                  <ImageUploader
+                    initialImages={uploadedImages}
+                    onImagesChange={setUploadedImages}
+                  />
                 </Form.Item>
               </Card>
             </Col>

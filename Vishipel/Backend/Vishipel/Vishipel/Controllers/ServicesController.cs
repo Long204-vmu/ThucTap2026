@@ -65,6 +65,7 @@ namespace Vishipel.Controllers
         }
         // DELETE: api/Services/5
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin, Manager")]
         public async Task<IActionResult> DeleteService(int id)
         {
             var Service = await _context.Services.FindAsync(id);
@@ -77,7 +78,7 @@ namespace Vishipel.Controllers
                 {
                     // Lấy IWebHostEnvironment từ DI (nhớ tiêm IWebHostEnvironment vào constructor của ServicesController nhé)
                     // Hoặc lấy trực tiếp đường dẫn gốc nếu bạn biết rõ
-                    var imageList = System.Text.Json.JsonSerializer.Deserialize<List<string>>(Service.ImagesJson);
+                    var imageList = System.Text.Json.JsonSerializer.Deserialize<List<string>>(Service.ImagesJson) ?? new List<string>();
                     foreach (var imgPath in imageList)
                     {
                         // imgPath đang có dạng "/image/ten-file.jpg"
@@ -99,6 +100,7 @@ namespace Vishipel.Controllers
         }
         // PUT: api/Services/5
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin, Manager")]
         public async Task<IActionResult> PutService(int id, Service Service)
         {
             // Quan trọng: Kiểm tra ID ở URL và ID trong dữ liệu gửi lên phải khớp nhau

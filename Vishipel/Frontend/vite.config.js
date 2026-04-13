@@ -8,7 +8,6 @@ export default defineConfig({
     react(),
     babel({ presets: [reactCompilerPreset()] })
   ],
-  plugins: [react()],
   server: {
     proxy: {
       '/api': {

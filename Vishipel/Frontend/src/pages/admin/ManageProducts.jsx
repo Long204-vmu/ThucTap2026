@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Button, Space, Popconfirm, message, Tag, Typography } from 'antd';
 import { EditOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons';
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { deleteProduct, getProducts } from '../../services/productService';
 
 const { Title } = Typography;
 
@@ -15,7 +15,7 @@ const ManageProducts = () => {
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const res = await axios.get('/api/Products');
+      const res = await getProducts();
       // Sắp xếp ID giảm dần (mới nhất lên đầu)
       setProducts(res.data.sort((a, b) => b.id - a.id));
     } catch (err) {
@@ -30,7 +30,7 @@ const ManageProducts = () => {
   // 2. Hàm Xóa thiết bị
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`/api/Products/${id}`);
+      await deleteProduct(id);
       message.success('Đã xóa thiết bị thành công');
       fetchProducts(); // Tải lại bảng sau khi xóa
     } catch (err) {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Button, Space, Popconfirm, message, Tag, Typography, Modal, Form, Input, Select, Tabs } from 'antd';
 import { EditOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons';
-import axios from 'axios';
+import { createCategory, deleteCategory, getAllCategories, updateCategory } from '../../services/categoryService';
 
 const { Title, Text } = Typography;
 
@@ -17,7 +17,7 @@ const ManageCategories = () => {
   const fetchCategories = async () => {
     setLoading(true);
     try {
-      const res = await axios.get('/api/Categories');
+      const res = await getAllCategories();
       setCategories(res.data);
     } catch (err) {
       message.error('Không thể tải danh sách danh mục');
@@ -50,10 +50,10 @@ const ManageCategories = () => {
       };
 
       if (editingId) {
-        await axios.put(`/api/Categories/${editingId}`, { id: editingId, ...dataToSubmit });
+        await updateCategory(editingId, { id: editingId, ...dataToSubmit });
         message.success('Cập nhật danh mục thành công!');
       } else {
-        await axios.post('/api/Categories', dataToSubmit);
+        await createCategory(dataToSubmit);
         message.success('Thêm danh mục mới thành công!');
       }
       setIsModalOpen(false);
@@ -67,7 +67,7 @@ const ManageCategories = () => {
   // 4. Xử lý Xóa
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`/api/Categories/${id}`);
+      await deleteCategory(id);
       message.success('Đã xóa danh mục thành công');
       fetchCategories();
     } catch (err) {

@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 import { message, Form, Input, Button, Checkbox, Alert, Divider } from 'antd';
 import { UserOutlined, LockOutlined, EyeInvisibleOutlined, EyeTwoTone, SafetyCertificateOutlined, ArrowRightOutlined } from '@ant-design/icons';
 import { Link, useNavigate } from 'react-router-dom';
 import AuthLayout from '../components/common/AuthLayout';
+import { login } from '../services/authService';
 
 const FEATURES = [
   { icon: '🛡️', text: 'Bảo mật đa lớp theo chuẩn ISO 27001' },
@@ -22,7 +22,7 @@ const Login = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await axios.post('/api/Auth/login', { username: values.username, password: values.password });
+      const res = await login({ username: values.username, password: values.password });
       const { token, user } = res.data;
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));

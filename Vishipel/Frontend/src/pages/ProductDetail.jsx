@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import { 
   Row, Col, Button, Typography, Tag, Spin, Empty, 
   Breadcrumb, message, Alert 
@@ -13,11 +12,10 @@ import {
 
 // Import component slider ảnh
 import ImageSlider from '../components/features/product/ImageSlider';
+import { BACKEND_ORIGIN } from '../config/api';
+import { getProductById } from '../services/productService';
 
 const { Title, Text, Paragraph } = Typography;
-
-// KHAI BÁO ĐỊA CHỈ BACKEND (Đổi port cho đúng với máy bạn)
-const BACKEND_URL = 'https://localhost:7010';
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -31,14 +29,14 @@ const ProductDetail = () => {
       try {
         setLoading(true);
         // Gọi API lấy dữ liệu theo ID
-        const res = await axios.get(`/api/Products/${id}`);
+        const res = await getProductById(id);
         const data = res.data;
         
         // Parse dữ liệu JSON từ SQL Server và gắn tiền tố ảnh
         data.images = data.imagesJson 
           ? JSON.parse(data.imagesJson).map(img => {
               const fileName = img.split('/').pop();
-              return `${BACKEND_URL}/image/${fileName}`;
+              return `${BACKEND_ORIGIN}/image/${fileName}`;
             }) 
           : ['https://via.placeholder.com/600x400?text=No+Image'];
           

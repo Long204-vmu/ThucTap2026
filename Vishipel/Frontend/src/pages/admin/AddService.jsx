@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Form, Input, Button, Select, Card, Row, Col, Upload, message, Typography, Divider, Spin, Space } from 'antd';
-import { UploadOutlined, SaveOutlined, ArrowLeftOutlined, PlusOutlined, MinusCircleOutlined } from '@ant-design/icons';
-import axios from 'axios';
+import { Form, Input, Button, Select, Card, Row, Col, message, Typography, Divider, Spin } from 'antd';
+import { SaveOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { useNavigate, useParams, Link } from 'react-router-dom';
+import { getAllCategories } from '../../services/categoryService';
+import { createService, getServiceById, updateService } from '../../services/serviceService';
+import ImageUploader from '../../components/common/ImageUploader';
+import DynamicSpecsSection from '../../components/common/DynamicSpecsSection';
 
 const { Title } = Typography;
 const { TextArea } = Input;
-const { Dragger } = Upload;
 
 const AddService = () => {
   const [form] = Form.useForm();
@@ -24,16 +26,18 @@ const AddService = () => {
       setFetchingData(true);
       try {
         // Gọi API lấy toàn bộ danh mục
-        const catRes = await axios.get('/api/Categories');
+        const catRes = await getAllCategories();
         
         // ĐỔ TRỰC TIẾP DỮ LIỆU VÀO STATE (KHÔNG DÙNG FILTER NỮA)
         setCategories(catRes.data);
 
         if (isEditMode) {
-          const res = await axios.get(`/api/Services/${id}`);
+          const res = await getServiceById(id);
           const serviceData = res.data;
+          const existingImages = serviceData.imagesJson ? JSON.parse(serviceData.imagesJson) : [];
 
           const specsArray = serviceData.specsJson ? JSON.parse(serviceData.specsJson) : [];
+          setUploadedImages(existingImages);
           
           form.setFieldsValue({
             ...serviceData,
@@ -69,10 +73,10 @@ const AddService = () => {
       };
 
       if (isEditMode) {
-        await axios.put(`/api/Services/${id}`, submitData);
+        await updateService(id, submitData);
         message.success('Cập nhật dịch vụ thành công!');
       } else {
-        await axios.post('/api/Services', submitData);
+        await createService(submitData);
         message.success('Thêm mới dịch vụ thành công!');
       }
       navigate('/admin/services'); 
@@ -108,32 +112,12 @@ const AddService = () => {
                 <Form.Item name="description" label="Nội dung chi tiết quy trình thực hiện"><TextArea rows={6} /></Form.Item>
               </Card>
 
-              {/* Thông số động (Phạm vi, Thời gian, Bảo hành...) */}
-              <Card bordered={false} style={{ borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
-                <Title level={5} style={{ margin: '0 0 16px', color: '#1677ff' }}>Thông tin quy trình / Triển khai</Title>
-                <Form.List name="dynamicSpecs">
-                  {(fields, { add, remove }) => (
-                    <>
-                      {fields.map(({ key, name, ...restField }) => (
-                        <Space key={key} style={{ display: 'flex', marginBottom: 16 }} align="start">
-                          <Form.Item {...restField} name={[name, 'label']} rules={[{ required: true }]} style={{ margin: 0, width: 250 }}>
-                            <Input placeholder="Tiêu đề (VD: Thời gian)" size="large" />
-                          </Form.Item>
-                          <Form.Item {...restField} name={[name, 'value']} rules={[{ required: true }]} style={{ margin: 0, width: 450 }}>
-                            <Input placeholder="Nội dung (VD: 24 tiếng)" size="large" />
-                          </Form.Item>
-                          <Button type="text" danger icon={<MinusCircleOutlined style={{ fontSize: 20 }} />} onClick={() => remove(name)} style={{ marginTop: 4 }}/>
-                        </Space>
-                      ))}
-                      <Form.Item style={{ marginTop: 16 }}>
-                        <Button type="dashed" onClick={() => add()} block icon={<PlusOutlined />} size="large">
-                          Thêm thông tin triển khai
-                        </Button>
-                      </Form.Item>
-                    </>
-                  )}
-                </Form.List>
-              </Card>
+              <DynamicSpecsSection
+                title="Thông tin quy trình / Triển khai"
+                addButtonText="Thêm thông tin triển khai"
+                labelPlaceholder="Tiêu đề (VD: Thời gian)"
+                valuePlaceholder="Nội dung (VD: 24 tiếng)"
+              />
             </Col>
 
             {/* CỘT PHẢI */}
@@ -172,20 +156,10 @@ const AddService = () => {
               <Card bordered={false} style={{ borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
                 <Title level={5} style={{ marginBottom: 20 }}>Hình ảnh minh họa</Title>
                 <Form.Item>
-                  <Dragger 
-                    name="file" 
-                    multiple={false}
-                    action={`${axios.defaults.baseURL || 'https://localhost:7010'}/api/Upload/image`}
-                    onChange={(info) => {
-                      if (info.file.status === 'done') {
-                        message.success(`Tải ảnh thành công.`);
-                        setUploadedImages([info.file.response.url]); 
-                      }
-                    }}
-                  >
-                    <p className="ant-upload-drag-icon"><UploadOutlined style={{ color: '#0057FF' }} /></p>
-                    <p className="ant-upload-text">Kéo thả để tải ảnh lên</p>
-                  </Dragger>
+                  <ImageUploader
+                    initialImages={uploadedImages}
+                    onImagesChange={setUploadedImages}
+                  />
                 </Form.Item>
               </Card>
             </Col>

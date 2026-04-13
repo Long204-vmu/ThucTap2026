@@ -94,14 +94,20 @@ namespace Vishipel.Controllers
                 new Claim("FullName", user.FullName)
             };
 
-            // Lấy khóa bí mật từ appsettings.json
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration.GetSection("Jwt:Key").Value!));
+            // Ưu tiên lấy từ biến môi trường để tránh hardcode secret trong source
+            var jwtKey = Environment.GetEnvironmentVariable("JWT__KEY")
+                ?? _configuration["Jwt:Key"]
+                ?? throw new InvalidOperationException("Missing Jwt:Key (or JWT__KEY env var).");
+            var jwtIssuer = _configuration["Jwt:Issuer"] ?? "VishipelBackend";
+            var jwtAudience = _configuration["Jwt:Audience"] ?? "VishipelFrontend";
+
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
 
             // Cấu hình Token (Sống trong 1 ngày)
             var token = new JwtSecurityToken(
-                issuer: _configuration.GetSection("Jwt:Issuer").Value,
-                audience: _configuration.GetSection("Jwt:Audience").Value,
+                issuer: jwtIssuer,
+                audience: jwtAudience,
                 claims: claims,
                 expires: DateTime.Now.AddDays(1),
                 signingCredentials: creds

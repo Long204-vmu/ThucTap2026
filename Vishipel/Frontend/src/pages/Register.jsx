@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 import { Form, Input, Button, Alert } from 'antd';
 import { UserOutlined, LockOutlined, MailOutlined, PhoneOutlined, IdcardOutlined, EyeInvisibleOutlined, EyeTwoTone, CheckCircleFilled, ArrowLeftOutlined, ArrowRightOutlined } from '@ant-design/icons';
 import { Link, useNavigate } from 'react-router-dom';
 import AuthLayout from '../components/common/AuthLayout';
+import { register } from '../services/authService';
 
 function getPasswordStrength(pwd) {
   if (!pwd) return { score: 0, label: '', color: '' };
@@ -46,7 +46,7 @@ const Register = () => {
     setLoading(true);
     setError(null);
     try {
-      await axios.post('/api/Auth/register', {
+      await register({
         fullName: values.fullName, email: values.email, phone: values.phone,
         username: values.username, password: values.password,
       });

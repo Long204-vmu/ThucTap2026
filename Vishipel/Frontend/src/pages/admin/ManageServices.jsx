@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Button, Space, Popconfirm, message, Tag, Typography } from 'antd';
 import { EditOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons';
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { deleteService, getServices } from '../../services/serviceService';
 
 const { Title, Text } = Typography;
 
@@ -16,7 +16,7 @@ const ManageServices = () => {
     setLoading(true);
     try {
       // Gọi tới API Services mới mà bạn sẽ tạo ở Backend
-      const res = await axios.get('/api/Services');
+      const res = await getServices();
       // Sắp xếp ID giảm dần để hiện các dịch vụ mới tạo lên đầu
       setServices(res.data.sort((a, b) => b.id - a.id));
     } catch (err) {
@@ -34,7 +34,7 @@ const ManageServices = () => {
   // 2. Hàm Xóa dịch vụ
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`/api/Services/${id}`);
+      await deleteService(id);
       message.success('Đã xóa dịch vụ thành công');
       fetchServices(); // Tải lại dữ liệu sau khi xóa
     } catch (err) {

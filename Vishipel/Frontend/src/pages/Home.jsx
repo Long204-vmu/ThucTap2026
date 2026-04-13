@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Layout, Row, Col, Tag, Alert, Button } from 'antd';
 import { ArrowRightOutlined } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
+import { BACKEND_ORIGIN } from '../config/api';
+import { getProducts } from '../services/productService';
 
 // Nhập các mảnh ghép chúng ta vừa tạo
 import HeroBanner from '../components/features/home/HeroBanner';
@@ -11,7 +12,6 @@ import ProductCard from '../components/features/product/ProductCard';
 import ProductSkeleton from '../components/features/product/ProductSkeleton';
 
 const { Content } = Layout;
-const BACKEND_URL = 'https://localhost:7010'; // Đổi port cho khớp với backend của bạn
 
 // HOOK: Fetch dữ liệu
 function useHomeData() {
@@ -23,7 +23,7 @@ function useHomeData() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const res = await axios.get('/api/Products');
+        const res = await getProducts();
         
         const realProducts = res.data.map(item => {
           const imagesArray = item.imagesJson ? JSON.parse(item.imagesJson) : [];
@@ -32,7 +32,7 @@ function useHomeData() {
           if (imagesArray.length > 0) {
               const rawPath = imagesArray[0];
               const fileName = rawPath.split('/').pop(); // Tự động lấy tên file (VD: radar-jma5310-1.jpg)
-              finalImgUrl = `${BACKEND_URL}/image/${fileName}`; // Ép thêm /image/ vào trước
+              finalImgUrl = `${BACKEND_ORIGIN}/image/${fileName}`; // Ép thêm /image/ vào trước
           }
           
           return {
@@ -41,7 +41,7 @@ function useHomeData() {
             model: item.model,
             type: item.category ? item.category.name : 'Thiết bị',
             typeColor: item.category ? item.category.colorCode : 'blue',
-            img: imagesArray.length > 0 ? `${BACKEND_URL}${imagesArray[0]}` : 'https://via.placeholder.com/600x400?text=No+Image',
+            img: imagesArray.length > 0 ? `${BACKEND_ORIGIN}${imagesArray[0]}` : 'https://via.placeholder.com/600x400?text=No+Image',
             status: item.status, // Đưa Trạng thái vào thay thế cho Giá
             ...item
           };

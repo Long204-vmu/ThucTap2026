@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using Vishipel.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -6,6 +7,14 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
+var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
+    ?? builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException("Missing ConnectionStrings:DefaultConnection.");
+var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "VishipelBackend";
+var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "VishipelFrontend";
+var jwtKey = Environment.GetEnvironmentVariable("JWT__KEY")
+    ?? builder.Configuration["Jwt:Key"]
+    ?? throw new InvalidOperationException("Missing Jwt:Key (or JWT__KEY env var).");
 
 // 1. ĐĂNG KÝ CORS (Tách riêng ra độc lập)
 builder.Services.AddCors(options =>
@@ -31,7 +40,7 @@ builder.Services.AddSwaggerGen();
 
 // 4. ĐĂNG KÝ APP DBCONTEXT 
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(connectionString));
 
 // 5. ĐĂNG KÝ MÁY QUÉT JWT (AUTHENTICATION)
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -43,10 +52,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateAudience = true,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"],
-            ValidAudience = builder.Configuration["Jwt:Audience"],
-            // Thêm dấu ! ở cuối để báo với C# rằng giá trị này chắc chắn không null
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
+            ValidIssuer = jwtIssuer,
+            ValidAudience = jwtAudience,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
         };
     });
 
@@ -57,6 +65,29 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+}
+else
+{
+    app.UseExceptionHandler(errorApp =>
+    {
+        errorApp.Run(async context =>
+        {
+            var exceptionHandlerPathFeature = context.Features.Get<IExceptionHandlerPathFeature>();
+            var logger = context.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger("GlobalException");
+
+            if (exceptionHandlerPathFeature?.Error != null)
+            {
+                logger.LogError(exceptionHandlerPathFeature.Error, "Unhandled exception at {Path}", exceptionHandlerPathFeature.Path);
+            }
+
+            context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+            context.Response.ContentType = "application/json";
+            await context.Response.WriteAsJsonAsync(new
+            {
+                message = "Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau."
+            });
+        });
+    });
 }
 
 app.UseHttpsRedirection();

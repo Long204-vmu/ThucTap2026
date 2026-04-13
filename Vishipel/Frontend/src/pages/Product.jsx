@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { Layout, Row, Col, Typography, Alert, Empty, Pagination, Badge, Button, message } from 'antd';
 import { ShoppingCartOutlined } from '@ant-design/icons';
@@ -9,12 +8,13 @@ import FilterSidebar from '../components/features/product/FilterSidebar';
 import CartDrawer from '../components/features/product/CartDrawer';
 import ProductCard from '../components/features/product/ProductCard';
 import ProductSkeleton from '../components/features/product/ProductSkeleton';
+import apiClient from '../services/apiClient';
+import { BACKEND_ORIGIN } from '../config/api';
 
 const { Sider, Content } = Layout;
 const { Title, Text } = Typography;
 
 const PAGE_SIZE = 8;
-const BACKEND_URL = 'https://localhost:7010'; // Nhớ đổi port cho đúng
 
 // ─── HOOK: Lấy danh sách sản phẩm và danh mục ───
 function useProductData(category, search) {
@@ -30,8 +30,8 @@ function useProductData(category, search) {
         
         // 1. GỌI SONG SONG 2 API (SẢN PHẨM VÀ DANH MỤC TYPE=PRODUCT)
         const [prodRes, catRes] = await Promise.all([
-            axios.get('/api/Products'),
-            axios.get('/api/Categories?type=Product') // Lấy chuẩn danh mục thiết bị
+            apiClient.get('/api/Products'),
+            apiClient.get('/api/Categories?type=Product') // Lấy chuẩn danh mục thiết bị
         ]);
 
         // 2. CHUẨN BỊ DANH SÁCH DANH MỤC TRƯỚC
@@ -64,7 +64,7 @@ function useProductData(category, search) {
           if (imagesArray.length > 0) {
               const rawPath = imagesArray[0];
               const fileName = rawPath.split('/').pop();
-              finalImgUrl = `${BACKEND_URL}/image/${fileName}`;
+              finalImgUrl = `${BACKEND_ORIGIN}/image/${fileName}`;
           }
           
           return {

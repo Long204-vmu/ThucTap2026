@@ -2,13 +2,13 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Layout, Row, Col, Typography, Input, Card, Tag, Button, Empty, Pagination, Spin } from 'antd';
 import { SearchOutlined, FilterOutlined, ArrowRightOutlined, PhoneOutlined } from '@ant-design/icons';
 import { useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
+import apiClient from '../services/apiClient';
+import { BACKEND_ORIGIN } from '../config/api';
 
 const { Sider, Content } = Layout;
 const { Title, Text } = Typography;
 
 const PAGE_SIZE = 6;
-const BACKEND_URL = 'https://localhost:7010';
 
 const Service = () => {
   const navigate = useNavigate();
@@ -27,20 +27,20 @@ const Service = () => {
       try {
         setLoading(true);
         
-        const catRes = await axios.get('/api/Categories?type=Service');
+        const catRes = await apiClient.get('/api/Categories?type=Service');
         const serviceCats = catRes.data.filter(c => c.name.toLowerCase().includes('dịch vụ'));
         const mappedCats = serviceCats.map(c => ({ key: String(c.id), label: c.name }));
         setCategories([{ key: 'all', label: 'Tất cả dịch vụ' }, ...mappedCats]);
 
         // GỌI THẲNG API CỦA BẢNG DỊCH VỤ MỚI TẠO
-        const res = await axios.get('/api/Services');
+        const res = await apiClient.get('/api/Services');
         
         const formattedServices = res.data.map(item => {
           const imagesArray = item.imagesJson ? JSON.parse(item.imagesJson) : [];
           let finalImgUrl = 'https://via.placeholder.com/600x400?text=Service';
           if (imagesArray.length > 0) {
               const fileName = imagesArray[0].split('/').pop();
-              finalImgUrl = `${BACKEND_URL}/image/${fileName}`;
+              finalImgUrl = `${BACKEND_ORIGIN}/image/${fileName}`;
           }
 
           return {
@@ -114,12 +114,14 @@ const Service = () => {
               Danh mục chuyên môn
             </div>
             
-            {loading ? <Spin size="small" style={{ marginLeft: '50%' }} /> : categories.map(cat => (
-              <div style={{ 
+            <div
+              style={{ 
               maxHeight: '280px', // Giới hạn chiều cao
               overflowY: 'auto',  // Tự sinh thanh cuộn dọc nếu vượt quá
               paddingRight: '8px' // Chừa 1 chút lề cho thanh cuộn khỏi đè vào chữ
-            }} className="custom-scrollbar">
+              }}
+              className="custom-scrollbar"
+            >
 
               {loading ? <Spin size="small" style={{ marginLeft: '50%' }} /> : categories.map(cat => (
                 <div
@@ -138,7 +140,6 @@ const Service = () => {
               ))}
 
             </div>
-            ))}
           </Sider>
 
           {/* CỘT PHẢI: DANH SÁCH DỊCH VỤ */}
