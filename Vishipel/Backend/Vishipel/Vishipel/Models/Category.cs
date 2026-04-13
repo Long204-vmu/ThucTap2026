@@ -12,5 +12,6 @@ namespace Vishipel.Models
 
         // Navigation property
         public ICollection<Product>? Products { get; set; }
+        public string CategoryType { get; set; } = "Product";
     }
 }

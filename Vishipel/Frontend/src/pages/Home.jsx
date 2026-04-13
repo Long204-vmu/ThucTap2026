@@ -28,8 +28,13 @@ function useHomeData() {
         const realProducts = res.data.map(item => {
           const imagesArray = item.imagesJson ? JSON.parse(item.imagesJson) : [];
           
-          // ĐÃ XÓA: logic tính toán và format Giá (formattedPrice)
-
+          let finalImgUrl = 'https://via.placeholder.com/600x400?text=No+Image';
+          if (imagesArray.length > 0) {
+              const rawPath = imagesArray[0];
+              const fileName = rawPath.split('/').pop(); // Tự động lấy tên file (VD: radar-jma5310-1.jpg)
+              finalImgUrl = `${BACKEND_URL}/image/${fileName}`; // Ép thêm /image/ vào trước
+          }
+          
           return {
             id: item.id,
             name: item.name,

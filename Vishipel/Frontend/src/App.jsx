@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Layout } from 'antd';
@@ -18,6 +17,11 @@ import Login    from './pages/Login';
 import Register from './pages/Register';
 import AddProduct from './pages/admin/AddProduct'; 
 import ProtectedRoute from './components/common/ProtectedRoute';
+import ManageProducts from './pages/admin/ManageProducts';
+import ServiceDetail from './pages/ServiceDetail';
+import ManageServices from './pages/admin/ManageServices';
+import AddService from './pages/admin/AddService';
+import ManageCategories from './pages/admin/ManageCategories';
 
 const { Content } = Layout;
 
@@ -46,6 +50,7 @@ const AppLayout = ({ children }) => {
 const App = () => (
     <AppLayout>
       <Routes>
+        {/* CÁC TRANG DÀNH CHO KHÁCH */}
         <Route path="/"         element={<Home />} />
         <Route path="/products" element={<Product />} />
         <Route path="/products/:id" element={<ProductDetail />}  />
@@ -55,14 +60,31 @@ const App = () => (
         <Route path="/login"    element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="*"         element={<Navigate to="/" replace />} />
+        <Route path="/services/:id" element={<ServiceDetail />} />
+        
+        {/* CÁC TRANG QUẢN TRỊ (Bị khóa bởi ProtectedRoute) */}
+        
+        {/* 1. Trang Quản lý Danh sách */}
+        <Route 
+          path="/admin/products" 
+          element={<ProtectedRoute allowedRoles={['Admin', 'Manager']}><ManageProducts /></ProtectedRoute>} 
+        />
+        
+        {/* 2. Trang Thêm mới */}
         <Route 
           path="/admin/products/add" 
-          element={
-            <ProtectedRoute allowedRoles={['Admin', 'Manager']}>
-              <AddProduct />
-            </ProtectedRoute>
-          } 
+          element={<ProtectedRoute allowedRoles={['Admin', 'Manager']}><AddProduct /></ProtectedRoute>} 
         />
+        
+        {/* 3. Trang Sửa thiết bị (Có truyền ID) */}
+        <Route 
+          path="/admin/products/edit/:id" 
+          element={<ProtectedRoute allowedRoles={['Admin', 'Manager']}><AddProduct /></ProtectedRoute>} 
+        />
+        <Route path="/admin/services" element={<ProtectedRoute allowedRoles={['Admin']}><ManageServices /></ProtectedRoute>} />
+        <Route path="/admin/services/add" element={<ProtectedRoute allowedRoles={['Admin', 'Manager']}><AddService /></ProtectedRoute>} />
+        <Route path="/admin/services/edit/:id" element={<ProtectedRoute allowedRoles={['Admin', 'Manager']}><AddService /></ProtectedRoute>} />
+        <Route path="/admin/categories" element={<ProtectedRoute allowedRoles={['Admin']}><ManageCategories /></ProtectedRoute>} />
       </Routes>
     </AppLayout>
 );

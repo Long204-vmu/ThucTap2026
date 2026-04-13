@@ -8,46 +8,46 @@ namespace Vishipel.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class ProductsController : ControllerBase
+    public class ServicesController : ControllerBase
     {
         private readonly AppDbContext _context;
 
         // Constructor: Yêu cầu ASP.NET "bơm" AppDbContext vào đây
-        public ProductsController(AppDbContext context)
+        public ServicesController(AppDbContext context)
         {
             _context = context;
         }
 
-        // GET: api/products
+        // GET: api/Services
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Product>>> GetProducts()
+        public async Task<ActionResult<IEnumerable<Service>>> GetServices()
         {
             // Lấy tất cả sản phẩm, nhớ kèm theo (Include) thông tin Danh mục
-            return await _context.Products
+            return await _context.Services
                 .Include(p => p.Category)
                 .ToListAsync();
         }
 
         // HÀM 2: Lấy MỘT sản phẩm theo ID (Dùng cho trang Chi tiết)
-        // GET: api/Products/5
+        // GET: api/Services/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Product>> GetProduct(int id)
+        public async Task<ActionResult<Service>> GetService(int id)
         {
-            var product = await _context.Products
+            var Service = await _context.Services
                 .Include(p => p.Category)
                 .FirstOrDefaultAsync(p => p.Id == id);
 
-            if (product == null)
+            if (Service == null)
             {
                 return NotFound();
             }
 
-            return product;
+            return Service;
         }
         [HttpGet("newest")]
-        public async Task<ActionResult<IEnumerable<Product>>> GetNewestProducts()
+        public async Task<ActionResult<IEnumerable<Service>>> GetNewestServices()
         {
-            return await _context.Products
+            return await _context.Services
                 .Include(p => p.Category)
                 .OrderByDescending(p => p.Id) // SQL sẽ tự sắp xếp
                 .Take(4) // SQL sẽ chỉ gửi đúng 4 cái về Frontend
@@ -57,27 +57,27 @@ namespace Vishipel.Controllers
         // HÀM THÊM SẢN PHẨM MỚI (CHỈ ADMIN VÀ MANAGER MỚI ĐƯỢC VÀO)
         [HttpPost]
         [Authorize(Roles = "Admin, Manager")]
-        public async Task<ActionResult<Product>> PostProduct(Product product)
+        public async Task<ActionResult<Service>> PostService(Service Service)
         {
-            _context.Products.Add(product);
+            _context.Services.Add(Service);
             await _context.SaveChangesAsync();
-            return CreatedAtAction("GetProduct", new { id = product.Id }, product);
+            return CreatedAtAction("GetService", new { id = Service.Id }, Service);
         }
-        // DELETE: api/Products/5
+        // DELETE: api/Services/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteProduct(int id)
+        public async Task<IActionResult> DeleteService(int id)
         {
-            var product = await _context.Products.FindAsync(id);
-            if (product == null) return NotFound();
+            var Service = await _context.Services.FindAsync(id);
+            if (Service == null) return NotFound();
 
             // --- BƯỚC MỚI: XÓA ẢNH VẬT LÝ TRONG THƯ MỤC wwwroot/image ---
-            if (!string.IsNullOrEmpty(product.ImagesJson) && product.ImagesJson != "[]")
+            if (!string.IsNullOrEmpty(Service.ImagesJson) && Service.ImagesJson != "[]")
             {
                 try
                 {
-                    // Lấy IWebHostEnvironment từ DI (nhớ tiêm IWebHostEnvironment vào constructor của ProductsController nhé)
+                    // Lấy IWebHostEnvironment từ DI (nhớ tiêm IWebHostEnvironment vào constructor của ServicesController nhé)
                     // Hoặc lấy trực tiếp đường dẫn gốc nếu bạn biết rõ
-                    var imageList = System.Text.Json.JsonSerializer.Deserialize<List<string>>(product.ImagesJson);
+                    var imageList = System.Text.Json.JsonSerializer.Deserialize<List<string>>(Service.ImagesJson);
                     foreach (var imgPath in imageList)
                     {
                         // imgPath đang có dạng "/image/ten-file.jpg"
@@ -92,23 +92,23 @@ namespace Vishipel.Controllers
             }
             // -------------------------------------------------------------
 
-            _context.Products.Remove(product);
+            _context.Services.Remove(Service);
             await _context.SaveChangesAsync();
 
             return NoContent();
         }
-        // PUT: api/Products/5
+        // PUT: api/Services/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutProduct(int id, Product product)
+        public async Task<IActionResult> PutService(int id, Service Service)
         {
             // Quan trọng: Kiểm tra ID ở URL và ID trong dữ liệu gửi lên phải khớp nhau
-            if (id != product.Id)
+            if (id != Service.Id)
             {
                 return BadRequest("ID không khớp.");
             }
 
             // Đánh dấu thực thể này là đã bị thay đổi để Entity Framework cập nhật vào SQL
-            _context.Entry(product).State = EntityState.Modified;
+            _context.Entry(Service).State = EntityState.Modified;
 
             try
             {
@@ -116,7 +116,7 @@ namespace Vishipel.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!ProductExists(id))
+                if (!ServiceExists(id))
                 {
                     return NotFound();
                 }
@@ -129,9 +129,9 @@ namespace Vishipel.Controllers
             return NoContent();
         }
 
-        private bool ProductExists(int id)
+        private bool ServiceExists(int id)
         {
-            return _context.Products.Any(e => e.Id == id);
+            return _context.Services.Any(e => e.Id == id);
         }
     }
 }

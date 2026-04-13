@@ -1,49 +1,85 @@
-import React, { useState, useMemo } from 'react';
-import { Layout, Row, Col, Typography, Input, Card, Tag, Button, Empty, Pagination } from 'antd';
-import { SearchOutlined, FilterOutlined, ToolOutlined, ArrowRightOutlined, PhoneOutlined } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Layout, Row, Col, Typography, Input, Card, Tag, Button, Empty, Pagination, Spin } from 'antd';
+import { SearchOutlined, FilterOutlined, ArrowRightOutlined, PhoneOutlined } from '@ant-design/icons';
+import { useNavigate, Link } from 'react-router-dom';
+import axios from 'axios';
 
 const { Sider, Content } = Layout;
 const { Title, Text } = Typography;
 
 const PAGE_SIZE = 6;
+const BACKEND_URL = 'https://localhost:7010';
 
-// 1. DANH MỤC DỊCH VỤ
-const SERVICE_CATEGORIES = [
-  { key: 'all',          label: 'Tất cả dịch vụ',  color: 'default' },
-  { key: 'installation', label: 'Thi công & Lắp đặt', color: 'blue' },
-  { key: 'maintenance',  label: 'Bảo dưỡng & Sửa chữa',color: 'orange' },
-  { key: 'inspection',   label: 'Kiểm định vô tuyến', color: 'green' },
-  { key: 'consulting',   label: 'Tư vấn giải pháp',   color: 'cyan' },
-];
-
-// 2. DỮ LIỆU GIẢ LẬP (MOCK DATA) - Thay bằng API sau
-const MOCK_SERVICES = [
-  { id: 1, name: 'Lắp đặt Hệ thống Radar', category: 'installation', typeColor: 'blue', typeName: 'Thi công & Lắp đặt', img: 'https://images.unsplash.com/photo-1581092160562-40aa08e78837?q=80&w=600&fit=crop', price: 'Liên hệ báo giá', shortDesc: 'Thi công lắp đặt, đấu nối và hiệu chỉnh hệ thống Radar hàng hải theo tiêu chuẩn IMO.' },
-  { id: 2, name: 'Bảo dưỡng thiết bị AIS định kỳ', category: 'maintenance', typeColor: 'orange', typeName: 'Bảo dưỡng', img: 'https://images.unsplash.com/photo-1504917595217-d4bf500f4820?q=80&w=600&fit=crop', price: 'Từ 2.000.000 ₫', shortDesc: 'Kiểm tra, vệ sinh và nâng cấp phần mềm cho thiết bị nhận dạng tự động AIS.' },
-  { id: 3, name: 'Kiểm định An toàn Vô tuyến điện', category: 'inspection', typeColor: 'green', typeName: 'Kiểm định', img: 'https://images.unsplash.com/photo-1454496522488-7a8e488e8606?q=80&w=600&fit=crop', price: 'Theo quy định', shortDesc: 'Đo đạc, cấp chứng nhận an toàn kỹ thuật vô tuyến điện cho tàu biển.' },
-  { id: 4, name: 'Tư vấn Hệ thống ECDIS', category: 'consulting', typeColor: 'cyan', typeName: 'Tư vấn', img: 'https://images.unsplash.com/photo-1500514960786-8de7943729e2?q=80&w=600&fit=crop', price: 'Miễn phí', shortDesc: 'Tư vấn lựa chọn, thiết kế bản vẽ lắp đặt hệ thống hải đồ điện tử ECDIS.' },
-  { id: 5, name: 'Sửa chữa GMDSS lưu động', category: 'maintenance', typeColor: 'orange', typeName: 'Sửa chữa', img: 'https://images.unsplash.com/photo-1581092335397-9583eb92d232?q=80&w=600&fit=crop', price: 'Liên hệ báo giá', shortDesc: 'Đội ngũ kỹ sư cơ động 24/7 khắc phục sự cố thông tin liên lạc GMDSS tại cảng.' },
-];
-
-const ServicePage = () => {
+const Service = () => {
   const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState('all');
   const [search, setSearch]                 = useState('');
   const [page, setPage]                     = useState(1);
 
-  // 3. LOGIC LỌC DỮ LIỆU
-  const filteredServices = useMemo(() => {
-    return MOCK_SERVICES.filter(item => {
-      const matchCat = activeCategory === 'all' || item.category === activeCategory;
+  // State cho dữ liệu API
+  const [services, setServices] = useState([]);
+  const [categories, setCategories] = useState([{ key: 'all', label: 'Tất cả dịch vụ' }]);
+  const [loading, setLoading] = useState(true);
+
+  // 1. GỌI API LẤY DỮ LIỆU THẬT
+  useEffect(() => {
+    const fetchApiData = async () => {
+      try {
+        setLoading(true);
+        
+        const catRes = await axios.get('/api/Categories?type=Service');
+        const serviceCats = catRes.data.filter(c => c.name.toLowerCase().includes('dịch vụ'));
+        const mappedCats = serviceCats.map(c => ({ key: String(c.id), label: c.name }));
+        setCategories([{ key: 'all', label: 'Tất cả dịch vụ' }, ...mappedCats]);
+
+        // GỌI THẲNG API CỦA BẢNG DỊCH VỤ MỚI TẠO
+        const res = await axios.get('/api/Services');
+        
+        const formattedServices = res.data.map(item => {
+          const imagesArray = item.imagesJson ? JSON.parse(item.imagesJson) : [];
+          let finalImgUrl = 'https://via.placeholder.com/600x400?text=Service';
+          if (imagesArray.length > 0) {
+              const fileName = imagesArray[0].split('/').pop();
+              finalImgUrl = `${BACKEND_URL}/image/${fileName}`;
+          }
+
+          return {
+            id: item.id,
+            name: item.name,
+            categoryId: String(item.categoryId),
+            typeName: item.category?.name || 'Dịch vụ',
+            typeColor: item.category?.colorCode || 'blue',
+            img: finalImgUrl,
+            shortDesc: item.shortDescription || item.description,
+            status: item.status,
+            priceDisplay: item.priceDisplay
+          };
+        });
+
+        setServices(formattedServices);
+      } catch (err) {
+        console.error('Lỗi tải dữ liệu dịch vụ', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchApiData();
+  }, []);
+    
+
+  // 2. LOGIC LỌC DỮ LIỆU TẠI FRONTEND
+  const filteredDisplay = useMemo(() => {
+    return services.filter(item => {
+      const matchCat = activeCategory === 'all' || item.categoryId === activeCategory;
       const matchSearch = !search || item.name.toLowerCase().includes(search.toLowerCase());
       return matchCat && matchSearch;
     });
-  }, [activeCategory, search]);
+  }, [services, activeCategory, search]);
 
   const paginatedServices = useMemo(() => {
-    return filteredServices.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-  }, [filteredServices, page]);
+    return filteredDisplay.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  }, [filteredDisplay, page]);
 
   return (
     <div style={{ marginTop: 68, minHeight: '100vh', background: '#f5f7fa' }}>
@@ -77,20 +113,31 @@ const ServicePage = () => {
             <div style={{ fontWeight: 600, fontSize: 12, color: '#8c8c8c', textTransform: 'uppercase', marginBottom: 12 }}>
               Danh mục chuyên môn
             </div>
-            {SERVICE_CATEGORIES.map(cat => (
-              <div
-                key={cat.key}
-                onClick={() => { setActiveCategory(cat.key); setPage(1); }}
-                style={{
-                  padding: '12px 16px', borderRadius: 8, cursor: 'pointer', marginBottom: 6,
-                  background: activeCategory === cat.key ? '#e6f4ff' : 'transparent',
-                  color: activeCategory === cat.key ? '#1677ff' : '#444',
-                  fontWeight: activeCategory === cat.key ? 600 : 500,
-                  transition: 'all 0.2s', display: 'flex', justifyContent: 'space-between',
-                }}
-              >
-                {cat.label}
-              </div>
+            
+            {loading ? <Spin size="small" style={{ marginLeft: '50%' }} /> : categories.map(cat => (
+              <div style={{ 
+              maxHeight: '280px', // Giới hạn chiều cao
+              overflowY: 'auto',  // Tự sinh thanh cuộn dọc nếu vượt quá
+              paddingRight: '8px' // Chừa 1 chút lề cho thanh cuộn khỏi đè vào chữ
+            }} className="custom-scrollbar">
+
+              {loading ? <Spin size="small" style={{ marginLeft: '50%' }} /> : categories.map(cat => (
+                <div
+                  key={cat.key}
+                  onClick={() => { setActiveCategory(cat.key); setPage(1); }}
+                  style={{
+                    padding: '12px 16px', borderRadius: 8, cursor: 'pointer', marginBottom: 6,
+                    background: activeCategory === cat.key ? '#e6f4ff' : 'transparent',
+                    color: activeCategory === cat.key ? '#1677ff' : '#444',
+                    fontWeight: activeCategory === cat.key ? 600 : 500,
+                    transition: 'all 0.2s', display: 'flex', justifyContent: 'space-between',
+                  }}
+                >
+                  {cat.label}
+                </div>
+              ))}
+
+            </div>
             ))}
           </Sider>
 
@@ -98,12 +145,14 @@ const ServicePage = () => {
           <Content>
             <div style={{ marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <Text strong style={{ fontSize: 16 }}>
-                {activeCategory === 'all' ? 'Tất cả dịch vụ' : SERVICE_CATEGORIES.find(c => c.key === activeCategory)?.label}
-                <Text type="secondary" style={{ marginLeft: 8, fontWeight: 400 }}>({filteredServices.length} kết quả)</Text>
+                {categories.find(c => c.key === activeCategory)?.label || 'Dịch vụ'}
+                {!loading && <Text type="secondary" style={{ marginLeft: 8, fontWeight: 400 }}>({filteredDisplay.length} kết quả)</Text>}
               </Text>
             </div>
 
-            {filteredServices.length === 0 ? (
+            {loading ? (
+              <div style={{ textAlign: 'center', padding: '100px 0' }}><Spin size="large" /></div>
+            ) : filteredDisplay.length === 0 ? (
               <Empty description="Không tìm thấy dịch vụ phù hợp" style={{ padding: '60px 0', background: '#fff', borderRadius: 12 }} />
             ) : (
               <Row gutter={[24, 24]}>
@@ -119,17 +168,19 @@ const ServicePage = () => {
                       <div style={{ fontWeight: 700, fontSize: 17, marginBottom: 8, color: '#001529', minHeight: 46 }}>
                         {item.name}
                       </div>
-                      <div style={{ color: '#666', fontSize: 14, marginBottom: 16, lineHeight: 1.5, minHeight: 63 }}>
+                      <div style={{ color: '#666', fontSize: 14, marginBottom: 16, lineHeight: 1.5, minHeight: 63, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                         {item.shortDesc}
                       </div>
-                      <div style={{ color: '#1677ff', fontWeight: 700, fontSize: 16, marginBottom: 20 }}>
-                        {item.price}
+                      <div style={{ color: item.status === 'Sẵn sàng' ? '#389e0d' : '#1677ff', fontWeight: 700, fontSize: 14, marginBottom: 20 }}>
+                        {item.status || 'Đang triển khai'}
                       </div>
                       <div style={{ display: 'flex', gap: 10 }}>
                         <Button type="primary" icon={<PhoneOutlined />} style={{ flex: 1, borderRadius: 8, fontWeight: 600 }}>
                           Tư vấn ngay
                         </Button>
-                        <Button icon={<ArrowRightOutlined />} style={{ borderRadius: 8 }} onClick={() => navigate('/contact')} />
+                        <Link to={`/services/${item.id}`}>
+                           <Button icon={<ArrowRightOutlined />} style={{ borderRadius: 8 }} />
+                        </Link>
                       </div>
                     </Card>
                   </Col>
@@ -137,9 +188,9 @@ const ServicePage = () => {
               </Row>
             )}
 
-            {filteredServices.length > 0 && (
+            {filteredDisplay.length > 0 && (
               <div style={{ textAlign: 'center', marginTop: 40 }}>
-                <Pagination current={page} total={filteredServices.length} pageSize={PAGE_SIZE} onChange={setPage} showSizeChanger={false} />
+                <Pagination current={page} total={filteredDisplay.length} pageSize={PAGE_SIZE} onChange={setPage} showSizeChanger={false} />
               </div>
             )}
           </Content>
@@ -149,4 +200,4 @@ const ServicePage = () => {
   );
 };
 
-export default ServicePage;
+export default Service;

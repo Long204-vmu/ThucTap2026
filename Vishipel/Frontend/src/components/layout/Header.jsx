@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Layout, Space, Drawer, Dropdown, Avatar, Button } from 'antd';
+import { Layout, Space, Drawer, Dropdown, Avatar, Button, Divider } from 'antd';
 import { 
   LoginOutlined, 
   UserAddOutlined, 
@@ -8,7 +8,8 @@ import {
   UserOutlined, 
   LogoutOutlined, 
   PlusCircleOutlined, 
-  AppstoreOutlined 
+  AppstoreOutlined,
+  ToolOutlined
 } from '@ant-design/icons';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
 
@@ -20,7 +21,7 @@ const { Header: AntHeader } = Layout;
 
 const navItems = [
   { key: 'home',     to: '/',         label: 'Trang Chủ' },
-  { key: 'products', to: '/products', label: 'Sản Phẩm' },
+  { key: 'products', to: '/products', label: 'Thiết Bị' },
   { key: 'services', to: '/services', label: 'Dịch Vụ' },
   { key: 'about',    to: '/about',    label: 'Giới Thiệu' },
   { key: 'contact',  to: '/contact',  label: 'Liên Hệ' },
@@ -34,11 +35,9 @@ const HeaderComponent = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [isMobile, setIsMobile]     = useState(window.innerWidth < 768);
 
-  // 1. Lấy thông tin User từ "Két sắt" LocalStorage
   const userStr = localStorage.getItem('user');
   const user = userStr ? JSON.parse(userStr) : null;
 
-  // 2. Hàm Xử lý Đăng xuất
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
@@ -59,7 +58,7 @@ const HeaderComponent = () => {
 
   useEffect(() => { setDrawerOpen(false); }, [location.pathname]);
 
-  // 3. Xây dựng Menu thả xuống cho Desktop
+  // Cấu hình Menu Avatar cho Admin
   const userMenuItems = [
     {
       key: 'greeting',
@@ -72,22 +71,36 @@ const HeaderComponent = () => {
       disabled: true, 
     },
     { type: 'divider' },
-    // Phân quyền hiển thị Menu
     ...(user?.role === 'Admin' || user?.role === 'Manager' 
       ? [
+           {
+            key: 'admin-manage-categories',
+            icon: <AppstoreOutlined style={{ color: '#eb2f96' }} />, // Tùy chọn icon
+            label: <Link to="/admin/categories" style={{ fontWeight: 500 }}>Quản lý Danh mục</Link>,
+          },
           {
-            key: 'admin-add',
-            icon: <PlusCircleOutlined style={{ color: '#0057FF' }} />,
-            label: <Link to="/admin/products/add" style={{ fontWeight: 500 }}>Thêm Sản phẩm / Dịch vụ</Link>,
+            key: 'admin-manage-products',
+            icon: <AppstoreOutlined style={{ color: '#0057FF' }} />,
+            label: <Link to="/admin/products" style={{ fontWeight: 500 }}>Quản lý Thiết bị</Link>,
+          },
+          {
+            key: 'admin-add-product',
+            icon: <PlusCircleOutlined style={{ color: '#52c41a' }} />,
+            label: <Link to="/admin/products/add" style={{ fontWeight: 500 }}>Thêm Thiết bị</Link>,
+          },
+          { type: 'divider' }, // Vạch ngăn cách cho gọn mắt
+          {
+            key: 'admin-manage-services',
+            icon: <ToolOutlined style={{ color: '#fa8c16' }} />,
+            label: <Link to="/admin/services" style={{ fontWeight: 500 }}>Quản lý Dịch vụ</Link>,
+          },
+          {
+            key: 'admin-add-service',
+            icon: <PlusCircleOutlined style={{ color: '#52c41a' }} />,
+            label: <Link to="/admin/services/add" style={{ fontWeight: 500 }}>Thêm Dịch vụ</Link>,
           }
         ] 
-      : [
-          {
-            key: 'user-dashboard',
-            icon: <AppstoreOutlined style={{ color: '#52c41a' }} />,
-            label: <Link to="/dashboard" style={{ fontWeight: 500 }}>Quản lý cá nhân</Link>,
-          }
-        ]),
+      : []),
     { type: 'divider' },
     {
       key: 'logout',
@@ -110,21 +123,16 @@ const HeaderComponent = () => {
           transition: 'box-shadow 0.3s ease',
         }}
       >
-        {/* Mảnh ghép 1: Logo */}
         <BrandLogo />
 
-        {/* Mảnh ghép 2: Desktop Nav */}
         {!isMobile && (
           <nav style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '16px' }}>
             {navItems.map(({ key, to, label }) => (
-              <DesktopNavLink key={key} to={to} isActive={location.pathname === to}>
-                {label}
-              </DesktopNavLink>
+              <DesktopNavLink key={key} to={to} isActive={location.pathname === to}>{label}</DesktopNavLink>
             ))}
           </nav>
         )}
 
-        {/* Mảnh ghép 3: Auth / User Menu (Desktop) */}
         {!isMobile && (
           <div style={{ display: 'flex', alignItems: 'center' }}>
             {user ? (
@@ -143,7 +151,6 @@ const HeaderComponent = () => {
           </div>
         )}
 
-        {/* Nút bật Menu Mobile */}
         {isMobile && (
           <button onClick={() => setDrawerOpen(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '8px', color: '#0057FF' }}>
             <MenuOutlined style={{ fontSize: '24px' }} />
@@ -151,21 +158,16 @@ const HeaderComponent = () => {
         )}
       </AntHeader>
 
-      {/* Drawer Mobile */}
       <Drawer
         open={drawerOpen} onClose={() => setDrawerOpen(false)} placement="right" size="large"
         closeIcon={<CloseOutlined style={{ fontSize: '18px', color: '#0057FF' }} />}
         title={<BrandLogo onClick={() => setDrawerOpen(false)} />}
         styles={{ body: { padding: '16px 12px', display: 'flex', flexDirection: 'column', gap: '4px' }, header: { borderBottom: '1px solid rgba(0,87,255,0.1)' } }}
       >
-        {/* Navigation Mobile */}
         {navItems.map(({ key, to, label }) => (
-          <MobileNavLink key={key} to={to} isActive={location.pathname === to} onClick={() => setDrawerOpen(false)}>
-            {label}
-          </MobileNavLink>
+          <MobileNavLink key={key} to={to} isActive={location.pathname === to} onClick={() => setDrawerOpen(false)}>{label}</MobileNavLink>
         ))}
 
-        {/* Auth / User Menu Mobile */}
         <div style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {user ? (
             <>
@@ -173,17 +175,20 @@ const HeaderComponent = () => {
                 <div style={{ color: '#8c8c8c', fontSize: 12 }}>Đang đăng nhập dưới tên:</div>
                 <div style={{ color: '#001529', fontWeight: 700, fontSize: 16 }}>{user.fullName || user.username}</div>
               </div>
-
-              {/* Phân quyền Mobile */}
-              {user.role === 'Admin' || user.role === 'Manager' ? (
-                 <AuthButton to="/admin/products/add" variant="outline" onClick={() => setDrawerOpen(false)} isFullWidth icon={<PlusCircleOutlined/>}>Thêm Sản Phẩm</AuthButton>
-              ) : (
-                 <AuthButton to="/dashboard" variant="outline" onClick={() => setDrawerOpen(false)} isFullWidth icon={<AppstoreOutlined/>}>Quản lý cá nhân</AuthButton>
+              
+              {/* Menu cho Mobile khi là Admin */}
+              {(user.role === 'Admin' || user.role === 'Manager') && (
+                 <>
+                   <div style={{ fontSize: 12, fontWeight: 700, color: '#8c8c8c', marginTop: 8, textTransform: 'uppercase' }}>Phần Cứng</div>
+                   <AuthButton to="/admin/products" variant="outline" onClick={() => setDrawerOpen(false)} isFullWidth icon={<AppstoreOutlined/>}>Quản lý Thiết bị</AuthButton>
+                   <AuthButton to="/admin/products/add" variant="outline" onClick={() => setDrawerOpen(false)} isFullWidth icon={<PlusCircleOutlined/>}>Thêm Thiết Bị</AuthButton>
+                   
+                   <div style={{ fontSize: 12, fontWeight: 700, color: '#8c8c8c', marginTop: 8, textTransform: 'uppercase' }}>Dịch Vụ</div>
+                   <AuthButton to="/admin/services" variant="outline" onClick={() => setDrawerOpen(false)} isFullWidth icon={<ToolOutlined/>}>Quản lý Dịch vụ</AuthButton>
+                   <AuthButton to="/admin/services/add" variant="outline" onClick={() => setDrawerOpen(false)} isFullWidth icon={<PlusCircleOutlined/>}>Thêm Dịch Vụ</AuthButton>
+                 </>
               )}
-
-              <Button danger type="text" icon={<LogoutOutlined />} onClick={handleLogout} style={{ marginTop: 8, fontWeight: 600, height: 40 }}>
-                Đăng xuất
-              </Button>
+              <Button danger type="text" icon={<LogoutOutlined />} onClick={handleLogout} style={{ marginTop: 8, fontWeight: 600, height: 40 }}>Đăng xuất</Button>
             </>
           ) : (
             <>
@@ -194,10 +199,7 @@ const HeaderComponent = () => {
         </div>
       </Drawer>
 
-      {/* Style phụ trợ cho hover */}
-      <style>{`
-        .user-hover:hover { background: #f0f2f5; }
-      `}</style>
+      <style>{`.user-hover:hover { background: #f0f2f5; }`}</style>
     </>
   );
 };
