@@ -14,6 +14,7 @@ import {
 import ImageSlider from '../components/features/product/ImageSlider';
 import { BACKEND_ORIGIN } from '../config/api';
 import { getProductById } from '../services/productService';
+import RequestFormModal from '../components/common/RequestFormModal'; // Import Component
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -23,6 +24,8 @@ const ProductDetail = () => {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [service, setService] = useState(null);
 
   useEffect(() => {
     const fetchDetail = async () => {
@@ -63,10 +66,7 @@ const ProductDetail = () => {
   };
 
   const handleRequestConsult = () => {
-    message.success({
-      content: `Yêu cầu tư vấn cho "${product.name}" đã được gửi. Bộ phận kỹ thuật sẽ liên hệ sớm!`,
-      duration: 3,
-    });
+    setIsModalOpen(true);
   };
 
   if (loading) {
@@ -240,8 +240,15 @@ const ProductDetail = () => {
             <strong>Lưu ý:</strong> Giá cả, thông số kỹ thuật và tính năng của sản phẩm có thể được cập nhật hoặc thay đổi từ nhà sản xuất mà không cần báo trước. Quý đối tác vui lòng liên hệ bộ phận kỹ thuật của Vishipel để được xác nhận chính xác các thông tin pháp lý và kỹ thuật trước khi triển khai.
           </Text>
         </div>
-
       </div>
+      {product && (
+        <RequestFormModal 
+          isOpen={isModalOpen} 
+          onClose={() => setIsModalOpen(false)} 
+          itemName={product.name} 
+          itemType="Thiết bị" 
+        />
+      )}
     </div>
   );
 };

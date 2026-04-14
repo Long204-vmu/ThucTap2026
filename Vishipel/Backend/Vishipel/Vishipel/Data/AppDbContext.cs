@@ -11,5 +11,6 @@ namespace Vishipel.Data
         public DbSet<Product> Products { get; set; }
         public DbSet<User> Users { get; set; }
         // public DbSet<SupportRequest> SupportRequests { get; set; }
+        public DbSet<ServiceRequest> ServiceRequests { get; set; }
     }
 }

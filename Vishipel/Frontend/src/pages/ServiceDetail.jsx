@@ -15,6 +15,7 @@ import {
 import ImageSlider from '../components/features/product/ImageSlider';
 import { BACKEND_ORIGIN } from '../config/api';
 import { getServiceById } from '../services/serviceService';
+import RequestFormModal from '../components/common/RequestFormModal';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -23,6 +24,7 @@ const ServiceDetail = () => {
   const navigate = useNavigate();
   const [service, setService] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchDetail = async () => {
@@ -51,10 +53,7 @@ const ServiceDetail = () => {
   }, [id]);
 
   const handleConsult = () => {
-    message.success({
-      content: 'Yêu cầu tư vấn dịch vụ đã được gửi. Vishipel sẽ liên hệ bạn trong vòng 24h!',
-      duration: 4,
-    });
+    setIsModalOpen(true);
   };
 
   if (loading) return <div style={{ textAlign: 'center', marginTop: 150 }}><Spin size="large" tip="Đang tải quy trình dịch vụ..." /></div>;
@@ -138,6 +137,14 @@ const ServiceDetail = () => {
           </Col>
         </Row>
       </div>
+      {service && (
+        <RequestFormModal 
+          isOpen={isModalOpen} 
+          onClose={() => setIsModalOpen(false)} 
+          itemName={service.name} 
+          itemType="Dịch vụ" 
+        />
+      )}
     </div>
   );
 };

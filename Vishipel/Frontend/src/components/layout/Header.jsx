@@ -9,13 +9,15 @@ import {
   LogoutOutlined, 
   PlusCircleOutlined, 
   AppstoreOutlined,
-  ToolOutlined
+  ToolOutlined,
+  DashboardOutlined
 } from '@ant-design/icons';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
 
 import BrandLogo from '../common/Brandlogo';
 import AuthButton from '../common/AuthButton';
 import { DesktopNavLink, MobileNavLink } from '../common/Navlinks';
+import { TeamOutlined } from '@ant-design/icons';
 
 const { Header: AntHeader } = Layout;
 
@@ -71,13 +73,26 @@ const HeaderComponent = () => {
       disabled: true, 
     },
     { type: 'divider' },
-    ...(user?.role === 'Admin' || user?.role === 'Manager' 
+    ...(user?.role === 'Admin'
       ? [
-           {
+          {
+            key: 'admin-dashboard',
+            icon: <DashboardOutlined style={{ color: '#722ed1' }} />,
+            label: <Link to="/admin/users" style={{ fontWeight: 500 }}>Quản lý tài khoản</Link>,
+          },
+        ]
+      : []),
+    ...(user?.role === 'Admin' || user?.role === 'Manager'
+      ? [
+          {
             key: 'admin-manage-categories',
             icon: <AppstoreOutlined style={{ color: '#eb2f96' }} />, // Tùy chọn icon
-            label: <Link to="/admin/categories" style={{ fontWeight: 500 }}>Quản lý Danh mục</Link>,
+            label: <Link to="/admin/categories" style={{ fontWeight: 500 }}>{user?.role === 'Manager' ? 'Danh mục Dịch vụ' : 'Quản lý Danh mục'}</Link>,
           },
+        ]
+      : []),
+    ...(user?.role === 'Admin' || user?.role === 'Manager' 
+      ? [
           {
             key: 'admin-manage-products',
             icon: <AppstoreOutlined style={{ color: '#0057FF' }} />,
@@ -179,6 +194,20 @@ const HeaderComponent = () => {
               {/* Menu cho Mobile khi là Admin */}
               {(user.role === 'Admin' || user.role === 'Manager') && (
                  <>
+                   {user.role === 'Admin' && (
+                     <>
+                       <div style={{ fontSize: 12, fontWeight: 700, color: '#8c8c8c', marginTop: 8, textTransform: 'uppercase' }}>Tài Khoản</div>
+                       <AuthButton to="/admin/users" variant="outline" onClick={() => setDrawerOpen(false)} isFullWidth icon={<DashboardOutlined/>}>Quản lý tài khoản</AuthButton>
+                     </>
+                   )}
+                   {(user.role === 'Admin' || user.role === 'Manager') && (
+                     <>
+                       <div style={{ fontSize: 12, fontWeight: 700, color: '#8c8c8c', marginTop: 8, textTransform: 'uppercase' }}>Danh Mục</div>
+                       <AuthButton to="/admin/categories" variant="outline" onClick={() => setDrawerOpen(false)} isFullWidth icon={<AppstoreOutlined/>}>
+                         {user.role === 'Manager' ? 'Danh mục Dịch vụ' : 'Quản lý Danh mục'}
+                       </AuthButton>
+                     </>
+                   )}
                    <div style={{ fontSize: 12, fontWeight: 700, color: '#8c8c8c', marginTop: 8, textTransform: 'uppercase' }}>Phần Cứng</div>
                    <AuthButton to="/admin/products" variant="outline" onClick={() => setDrawerOpen(false)} isFullWidth icon={<AppstoreOutlined/>}>Quản lý Thiết bị</AuthButton>
                    <AuthButton to="/admin/products/add" variant="outline" onClick={() => setDrawerOpen(false)} isFullWidth icon={<PlusCircleOutlined/>}>Thêm Thiết Bị</AuthButton>

@@ -13,6 +13,10 @@ const ManageCategories = () => {
   const [activeTab, setActiveTab] = useState('Product'); // Mặc định mở Tab Thiết bị
   const [form] = Form.useForm();
 
+  const userStr = localStorage.getItem('user');
+  const user = userStr ? JSON.parse(userStr) : null;
+  const isManager = user?.role === 'Manager';
+
   // 1. Lấy danh sách danh mục (Lấy toàn bộ một lần)
   const fetchCategories = async () => {
     setLoading(true);
@@ -27,6 +31,11 @@ const ManageCategories = () => {
   };
 
   useEffect(() => { fetchCategories(); }, []);
+
+  // Manager chỉ được quản lý danh mục Dịch vụ
+  useEffect(() => {
+    if (isManager) setActiveTab('Service');
+  }, [isManager]);
 
   // 2. Mở hộp thoại Thêm/Sửa
   const openModal = (record = null) => {
@@ -115,10 +124,10 @@ const ManageCategories = () => {
         {/* COMPONENT TABS (Chìa khóa để chia đôi giao diện) */}
         <Tabs 
           activeKey={activeTab} 
-          onChange={(key) => setActiveTab(key)}
+          onChange={(key) => { if (!isManager) setActiveTab(key); }}
           size="large"
           items={[
-            { key: 'Product', label: <span style={{ fontWeight: 600 }}>📦 DANH MỤC THIẾT BỊ</span> },
+            ...(isManager ? [] : [{ key: 'Product', label: <span style={{ fontWeight: 600 }}>📦 DANH MỤC THIẾT BỊ</span> }]),
             { key: 'Service', label: <span style={{ fontWeight: 600 }}>🛠️ DANH MỤC DỊCH VỤ</span> }
           ]}
         />

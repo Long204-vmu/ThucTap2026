@@ -114,7 +114,7 @@ const Register = () => {
       <Form form={form} layout="vertical" requiredMark={false} onFinish={onFinish}>
         <div style={{ display: currentStep === 0 ? 'block' : 'none' }}>
           <Form.Item name="fullName" label={<Label>Họ và tên</Label>} rules={[{ required: true, message: 'Vui lòng nhập họ tên!' }]}><Input prefix={<IdcardOutlined style={{ color: '#bfbfbf' }} />} placeholder="Nguyễn Văn A" size="large" style={inputStyle} /></Form.Item>
-          <Form.Item name="email" label={<Label>Email công ty</Label>} rules={[{ required: true, message: 'Vui lòng nhập email!' }, { type: 'email', message: 'Email không hợp lệ!' }]}><Input prefix={<MailOutlined style={{ color: '#bfbfbf' }} />} placeholder="ten.ho@vishipel.com.vn" size="large" style={inputStyle} /></Form.Item>
+          <Form.Item name="email" label={<Label>Email</Label>} rules={[{ required: true, message: 'Vui lòng nhập email!' }, { type: 'email', message: 'Email không hợp lệ!' }]}><Input prefix={<MailOutlined style={{ color: '#bfbfbf' }} />} placeholder="ten.ho@vishipel.com.vn" size="large" style={inputStyle} /></Form.Item>
           <Form.Item name="phone" label={<Label>Số điện thoại</Label>} rules={[{ required: true, message: 'Vui lòng nhập số điện thoại!' }]}><Input prefix={<PhoneOutlined style={{ color: '#bfbfbf' }} />} placeholder="0901 234 567" size="large" style={inputStyle} /></Form.Item>
           <Button type="primary" size="large" block onClick={goNext} icon={<ArrowRightOutlined />} style={{ height: 50, borderRadius: 12, fontWeight: 700, fontSize: 15, background: 'linear-gradient(135deg, #0057FF, #003cc5)', border: 'none', boxShadow: '0 6px 20px rgba(0,87,255,0.3)', marginTop: 4 }}>Tiếp theo</Button>
         </div>
@@ -122,7 +122,7 @@ const Register = () => {
         <div style={{ display: currentStep === 1 ? 'block' : 'none' }}>
           <Form.Item name="username" label={<Label>Tên đăng nhập</Label>} rules={[{ required: true, message: 'Vui lòng nhập tên đăng nhập!' }, { min: 4, message: 'Tối thiểu 4 ký tự!' }, { pattern: /^[a-z0-9_.]+$/, message: 'Chỉ dùng chữ thường, số, dấu _ hoặc .' }]}><Input prefix={<UserOutlined style={{ color: '#bfbfbf' }} />} placeholder="nguyen.vana" size="large" style={inputStyle} /></Form.Item>
           <Form.Item name="password" label={<Label>Mật khẩu</Label>} rules={[{ required: true, message: 'Vui lòng nhập mật khẩu!' }, { min: 8, message: 'Mật khẩu phải có ít nhất 8 ký tự!' }]}><Input.Password prefix={<LockOutlined style={{ color: '#bfbfbf' }} />} placeholder="Tối thiểu 8 ký tự" size="large" style={inputStyle} onChange={e => setPassword(e.target.value)} iconRender={v => (v ? <EyeTwoTone /> : <EyeInvisibleOutlined />)} /></Form.Item>
-          
+
           {password && (
             <div style={{ marginTop: -16, marginBottom: 16 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}><span style={{ fontSize: 12, color: '#8c8c8c' }}>Độ mạnh mật khẩu</span><span style={{ fontSize: 12, color: pwdStrength.color, fontWeight: 600 }}>{pwdStrength.label}</span></div>

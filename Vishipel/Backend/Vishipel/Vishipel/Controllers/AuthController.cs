@@ -64,13 +64,9 @@ namespace Vishipel.Controllers
             if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
                 return Unauthorized(new { message = "Sai tên đăng nhập hoặc mật khẩu." });
 
-            // Tạm thời comment dòng này lại để bạn test tính năng Đăng nhập. 
-            // Khi nào làm xong trang Quản trị duyệt user, hãy mở comment ra nhé!
-            /*
             if (!user.IsApproved)
                 return BadRequest(new { message = "Tài khoản của bạn đang chờ Quản trị viên phê duyệt." });
-            */
-
+            
             // Tạo Token
             var token = CreateToken(user);
 

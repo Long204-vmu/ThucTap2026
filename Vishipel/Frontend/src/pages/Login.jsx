@@ -1,6 +1,13 @@
 import React, { useState } from 'react';
 import { message, Form, Input, Button, Checkbox, Alert, Divider } from 'antd';
-import { UserOutlined, LockOutlined, EyeInvisibleOutlined, EyeTwoTone, SafetyCertificateOutlined, ArrowRightOutlined } from '@ant-design/icons';
+import { 
+  UserOutlined, 
+  LockOutlined, 
+  EyeInvisibleOutlined, 
+  EyeTwoTone, 
+  ArrowRightOutlined,
+  ArrowLeftOutlined // Đã import thêm icon mũi tên quay lại
+} from '@ant-design/icons';
 import { Link, useNavigate } from 'react-router-dom';
 import AuthLayout from '../components/common/AuthLayout';
 import { login } from '../services/authService';
@@ -28,7 +35,7 @@ const Login = () => {
       localStorage.setItem('user', JSON.stringify(user));
       message.success('Đăng nhập thành công!');
       navigate('/');
-      window.location.href = '/'; // Reload lại trang để cập nhật trạng thái đăng nhập trên toàn app
+      window.location.href = '/'; 
     } catch (err) {
       if (err.response && err.response.status === 401) setError('Tên đăng nhập hoặc mật khẩu không chính xác.');
       else setError(err.response?.data?.message || 'Lỗi kết nối máy chủ. Vui lòng thử lại.');
@@ -37,7 +44,11 @@ const Login = () => {
     }
   };
 
-  // Khối giao diện động truyền sang cột trái của Layout
+  // Hàm xử lý khi bấm Quên mật khẩu (Tạm thời)
+  const handleForgotPassword = () => {
+    message.info('Chức năng Khôi phục mật khẩu đang được phát triển. Vui lòng liên hệ Admin!');
+  };
+
   const renderFeatures = (mounted) => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       {FEATURES.map((f, i) => (
@@ -56,6 +67,18 @@ const Login = () => {
       leftDescription="Nền tảng số hóa vòng đời thiết bị hàng hải — chuẩn xác, an toàn, được phát triển dành riêng cho Vishipel."
       leftExtra={renderFeatures}
     >
+      {/* NÚT QUAY LẠI TRANG CHỦ */}
+      <div style={{ marginBottom: 24 }}>
+        <Button 
+          type="text" 
+          icon={<ArrowLeftOutlined />} 
+          onClick={() => navigate('/')}
+          style={{ padding: 0, color: '#8c8c8c', fontWeight: 500, display: 'flex', alignItems: 'center' }}
+        >
+          Quay lại Trang chủ
+        </Button>
+      </div>
+
       <div style={{ marginBottom: 36 }}>
         <h2 style={{ fontSize: 28, fontWeight: 800, color: '#001529', margin: '0 0 8px' }}>Đăng nhập hệ thống</h2>
         <p style={{ color: '#8c8c8c', fontSize: 15, margin: 0 }}>Chào mừng trở lại! Vui lòng nhập thông tin tài khoản.</p>
@@ -68,7 +91,11 @@ const Login = () => {
           <Input prefix={<UserOutlined style={{ color: '#bfbfbf' }} />} placeholder="Nhập tên đăng nhập" size="large" style={inputStyle} />
         </Form.Item>
 
-        <Form.Item name="password" label={<div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}><span style={{ fontWeight: 600, color: '#001529', fontSize: 13 }}>Mật khẩu</span><Link to="/forgot-password" style={{ fontSize: 13, color: '#0057FF', fontWeight: 500 }}>Quên mật khẩu?</Link></div>} rules={[{ required: true, message: 'Vui lòng nhập mật khẩu!' }]}>
+        <Form.Item 
+          name="password" 
+          label={<span style={{ fontWeight: 600, color: '#001529', fontSize: 13 }}>Mật khẩu</span>}
+          rules={[{ required: true, message: 'Vui lòng nhập mật khẩu!' }]}
+        >
           <Input.Password prefix={<LockOutlined style={{ color: '#bfbfbf' }} />} placeholder="Nhập mật khẩu" size="large" style={inputStyle} iconRender={v => (v ? <EyeTwoTone /> : <EyeInvisibleOutlined />)} />
         </Form.Item>
 
@@ -81,6 +108,16 @@ const Login = () => {
             {loading ? 'Đang xác thực...' : 'Đăng nhập'}
           </Button>
         </Form.Item>
+
+        <div style={{ textAlign: 'center', marginBottom: 16 }}>
+          <Button 
+            type="link"
+            onClick={handleForgotPassword} 
+            style={{ padding: 0, height: 'auto', fontSize: 14, color: '#0057FF', fontWeight: 500 }}
+          >
+            Quên mật khẩu?
+          </Button>
+        </div>
       </Form>
 
       <Divider style={{ color: '#d9d9d9', fontSize: 13 }}><span style={{ color: '#bfbfbf', fontWeight: 500 }}>hoặc</span></Divider>

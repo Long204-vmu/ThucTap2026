@@ -22,7 +22,8 @@ import ServiceDetail from './pages/ServiceDetail';
 import ManageServices from './pages/admin/ManageServices';
 import AddService from './pages/admin/AddService';
 import ManageCategories from './pages/admin/ManageCategories';
-
+import ManageUsers from './pages/admin/ManageUsers';
+import ManageRequests from './pages/admin/ManageRequests';
 const { Content } = Layout;
 
 // ─── Trang toàn màn hình (không có Header/Footer) ─────────────────────────────
@@ -81,10 +82,12 @@ const App = () => (
           path="/admin/products/edit/:id" 
           element={<ProtectedRoute allowedRoles={['Admin', 'Manager']}><AddProduct /></ProtectedRoute>} 
         />
-        <Route path="/admin/services" element={<ProtectedRoute allowedRoles={['Admin']}><ManageServices /></ProtectedRoute>} />
+        <Route path="/admin/services" element={<ProtectedRoute allowedRoles={['Admin', 'Manager']}><ManageServices /></ProtectedRoute>} />
         <Route path="/admin/services/add" element={<ProtectedRoute allowedRoles={['Admin', 'Manager']}><AddService /></ProtectedRoute>} />
         <Route path="/admin/services/edit/:id" element={<ProtectedRoute allowedRoles={['Admin', 'Manager']}><AddService /></ProtectedRoute>} />
-        <Route path="/admin/categories" element={<ProtectedRoute allowedRoles={['Admin']}><ManageCategories /></ProtectedRoute>} />
+        <Route path="/admin/categories" element={<ProtectedRoute allowedRoles={['Admin', 'Manager']}><ManageCategories /></ProtectedRoute>} />
+        <Route path="/admin/users" element={<ProtectedRoute allowedRoles={['Admin']}><ManageUsers /></ProtectedRoute>} />
+        <Route path="/admin/requests" element={<ProtectedRoute allowedRoles={['Sales', 'Admin']}><ManageRequests /></ProtectedRoute>} />
       </Routes>
     </AppLayout>
 );
