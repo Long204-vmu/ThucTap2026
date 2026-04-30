@@ -135,7 +135,7 @@ const ManageCategories = () => {
         {/* Table chỉ hiển thị dữ liệu đã được lọc theo activeTab */}
         <Table 
           columns={columns} 
-          dataSource={categories.filter(c => c.categoryType === activeTab)} 
+          dataSource={categories.filter(c => (c.categoryType || 'Product') === activeTab)} 
           rowKey="id" 
           loading={loading} 
           pagination={{ pageSize: 10 }} 

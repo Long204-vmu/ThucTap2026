@@ -12,6 +12,12 @@ namespace Vishipel.Models
 
         // Navigation property
         public ICollection<Product>? Products { get; set; }
-        public string CategoryType { get; set; } = "Product";
+
+        private string? _categoryType;
+        public string CategoryType 
+        { 
+            get => string.IsNullOrEmpty(_categoryType) ? "Product" : _categoryType; 
+            set => _categoryType = value; 
+        }
     }
 }

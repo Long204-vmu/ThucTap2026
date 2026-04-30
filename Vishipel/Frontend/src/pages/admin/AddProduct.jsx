@@ -106,7 +106,7 @@ const AddProduct = () => {
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
           <Link to="/admin/products"><Button icon={<ArrowLeftOutlined />} shape="circle" /></Link>
           <Title level={3} style={{ margin: 0, color: '#001529' }}>
-            {isEditMode ? 'Cập nhật Thiết bị / Dịch vụ' : 'Thêm Mới Thiết bị / Dịch vụ'}
+            {isEditMode ? 'Cập nhật Thiết bị' : 'Thêm Mới Thiết bị'}
           </Title>
         </div>
 
@@ -115,7 +115,7 @@ const AddProduct = () => {
             <Col xs={24} lg={16}>
               <Card bordered={false} style={{ borderRadius: 12, marginBottom: 24, boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
                 <Title level={5} style={{ marginBottom: 20 }}>Thông tin cơ bản</Title>
-                <Form.Item name="name" label="Tên thiết bị / Dịch vụ" rules={[{ required: true }]}><Input size="large" /></Form.Item>
+                <Form.Item name="name" label="Tên thiết bị" rules={[{ required: true }]}><Input size="large" /></Form.Item>
                 <Row gutter={16}>
                   <Col span={12}><Form.Item name="model" label="Mã Model / SKU"><Input size="large" /></Form.Item></Col>
                   <Col span={12}><Form.Item name="brand" label="Thương hiệu (Hãng sản xuất)"><Input size="large" /></Form.Item></Col>

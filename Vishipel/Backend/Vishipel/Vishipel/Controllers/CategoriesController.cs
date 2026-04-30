@@ -28,7 +28,15 @@ namespace Vishipel.Controllers
             // Nếu Frontend có gửi kèm loại (Product hoặc Service) thì lọc ra
             if (!string.IsNullOrEmpty(type))
             {
-                query = query.Where(c => c.CategoryType == type);
+                if (type == "Product")
+                {
+                    // Lọc những danh mục là Product HOẶC bị null/rỗng do dữ liệu cũ trước khi thêm cột
+                    query = query.Where(c => c.CategoryType == type || c.CategoryType == null || c.CategoryType == "");
+                }
+                else
+                {
+                    query = query.Where(c => c.CategoryType == type);
+                }
             }
 
             return await query.ToListAsync();
