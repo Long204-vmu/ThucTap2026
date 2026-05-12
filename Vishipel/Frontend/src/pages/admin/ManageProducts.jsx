@@ -78,7 +78,7 @@ const ManageProducts = () => {
   ];
 
   return (
-    <div style={{ padding: '32px 5%', background: '#f5f7fa', minHeight: '100vh', marginTop: 64 }}>
+    <div style={{ padding: '32px 5%', background: '#f5f7fa', minHeight: '100vh' }}>
       <div style={{ maxWidth: 1400, margin: '0 auto', background: '#fff', padding: 24, borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
           <Title level={3} style={{ margin: 0 }}>Quản lý Thiết bị</Title>

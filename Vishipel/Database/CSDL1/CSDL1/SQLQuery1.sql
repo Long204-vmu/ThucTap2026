@@ -99,3 +99,5 @@ VALUES (
 -- Chèn 1 Admin (Lưu ý: Mật khẩu này đang để tạm, thực tế phải hash bằng BCrypt)
 INSERT INTO Users (FullName, Email, Username, PasswordHash, Role, IsApproved)
 VALUES (N'Quản trị viên', 'admin@vishipel.com.vn', 'admin', '123456', 'Admin', 1);
+
+

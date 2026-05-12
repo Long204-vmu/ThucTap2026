@@ -36,7 +36,7 @@ const FooterComponent = () => {
             <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: 13, marginBottom: 18, fontWeight: 500 }}>
               <span style={{ fontWeight: 700 }}>Cơ quan chủ quản:</span> Bộ Giao thông Vận tải
             </p>
-            <Space direction="vertical" size={11} style={{ width: '100%' }}>
+            <Space orientation="vertical" size={11} style={{ width: '100%' }}>
               <ContactRow icon={<EnvironmentOutlined />} label="Địa chỉ:" value="Số 02, Nguyễn Thượng Hiền, P. Hồng Bàng, TP. Hải Phòng" />
               <ContactRow icon={<PhoneOutlined />} label="Điện thoại:" value="+84 (0225) 374 6464" extra="/ Fax:" />
               <ContactRow icon={<CustomerServiceOutlined />} label="Hotline:" value="+84 (0978) 000 247" />

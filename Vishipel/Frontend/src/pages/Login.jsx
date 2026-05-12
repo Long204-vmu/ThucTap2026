@@ -84,7 +84,7 @@ const Login = () => {
         <p style={{ color: '#8c8c8c', fontSize: 15, margin: 0 }}>Chào mừng trở lại! Vui lòng nhập thông tin tài khoản.</p>
       </div>
 
-      {error && <Alert message={error} type="error" showIcon closable onClose={() => setError(null)} style={{ marginBottom: 20, borderRadius: 10 }} />}
+      {error && <Alert title={error} type="error" showIcon closable onClose={() => setError(null)} style={{ marginBottom: 20, borderRadius: 10 }} />}
 
       <Form form={form} onFinish={onFinish} layout="vertical" requiredMark={false} initialValues={{ remember: true }}>
         <Form.Item name="username" label={<span style={{ fontWeight: 600, color: '#001529', fontSize: 13 }}>Tên đăng nhập</span>} rules={[{ required: true, message: 'Vui lòng nhập tên đăng nhập!' }]}>

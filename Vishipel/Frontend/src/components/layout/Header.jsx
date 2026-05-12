@@ -9,22 +9,20 @@ import {
   LogoutOutlined, 
   PlusCircleOutlined, 
   AppstoreOutlined,
-  ToolOutlined,
-  DashboardOutlined
+  DashboardOutlined,
+  ShoppingCartOutlined,
+  FileTextOutlined
 } from '@ant-design/icons';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
 
 import BrandLogo from '../common/Brandlogo';
 import AuthButton from '../common/AuthButton';
 import { DesktopNavLink, MobileNavLink } from '../common/Navlinks';
-import { TeamOutlined } from '@ant-design/icons';
-
 const { Header: AntHeader } = Layout;
 
 const navItems = [
   { key: 'home',     to: '/',         label: 'Trang Chủ' },
   { key: 'products', to: '/products', label: 'Thiết Bị' },
-  { key: 'services', to: '/services', label: 'Dịch Vụ' },
   { key: 'about',    to: '/about',    label: 'Giới Thiệu' },
   { key: 'contact',  to: '/contact',  label: 'Liên Hệ' },
 ];
@@ -70,59 +68,46 @@ const HeaderComponent = () => {
           <strong style={{ color: '#001529', fontSize: 14 }}>{user?.fullName || user?.username}</strong>
         </div>
       ),
-      disabled: true, 
+      disabled: true,
     },
     { type: 'divider' },
-    ...(user?.role === 'Admin'
+    ...(user?.role?.toLowerCase() === 'admin' || user?.role?.toLowerCase() === 'manager'
       ? [
+          {
+            key: 'account-info',
+            icon: <UserOutlined style={{ color: '#0057FF' }} />,
+            label: <Link to="/profile" style={{ fontWeight: 500 }}>Thông tin tài khoản</Link>,
+          },
           {
             key: 'admin-dashboard',
             icon: <DashboardOutlined style={{ color: '#722ed1' }} />,
-            label: <Link to="/admin/users" style={{ fontWeight: 500 }}>Quản lý tài khoản</Link>,
+            label: <Link to="/admin/sales" style={{ fontWeight: 500 }}>Dashboard quản trị</Link>,
           },
         ]
-      : []),
-    ...(user?.role === 'Admin' || user?.role === 'Manager'
-      ? [
+      : [
           {
-            key: 'admin-manage-categories',
-            icon: <AppstoreOutlined style={{ color: '#eb2f96' }} />, // Tùy chọn icon
-            label: <Link to="/admin/categories" style={{ fontWeight: 500 }}>{user?.role === 'Manager' ? 'Danh mục Dịch vụ' : 'Quản lý Danh mục'}</Link>,
-          },
-        ]
-      : []),
-    ...(user?.role === 'Admin' || user?.role === 'Manager' 
-      ? [
-          {
-            key: 'admin-manage-products',
-            icon: <AppstoreOutlined style={{ color: '#0057FF' }} />,
-            label: <Link to="/admin/products" style={{ fontWeight: 500 }}>Quản lý Thiết bị</Link>,
+            key: 'account-info',
+            icon: <UserOutlined style={{ color: '#0057FF' }} />,
+            label: <Link to="/profile" style={{ fontWeight: 500 }}>Thông tin tài khoản</Link>,
           },
           {
-            key: 'admin-add-product',
-            icon: <PlusCircleOutlined style={{ color: '#52c41a' }} />,
-            label: <Link to="/admin/products/add" style={{ fontWeight: 500 }}>Thêm Thiết bị</Link>,
-          },
-          { type: 'divider' }, // Vạch ngăn cách cho gọn mắt
-          {
-            key: 'admin-manage-services',
-            icon: <ToolOutlined style={{ color: '#fa8c16' }} />,
-            label: <Link to="/admin/services" style={{ fontWeight: 500 }}>Quản lý Dịch vụ</Link>,
+            key: 'my-requests',
+            icon: <ShoppingCartOutlined style={{ color: '#fa8c16' }} />,
+            label: <Link to="/my-requests" style={{ fontWeight: 500 }}>Lịch sử báo giá</Link>,
           },
           {
-            key: 'admin-add-service',
-            icon: <PlusCircleOutlined style={{ color: '#52c41a' }} />,
-            label: <Link to="/admin/services/add" style={{ fontWeight: 500 }}>Thêm Dịch vụ</Link>,
-          }
-        ] 
-      : []),
+            key: 'my-orders',
+            icon: <FileTextOutlined style={{ color: '#1890ff' }} />,
+            label: <Link to="/my-orders" style={{ fontWeight: 500 }}>Đơn hàng của tôi</Link>,
+          },
+        ]),
     { type: 'divider' },
     {
       key: 'logout',
       icon: <LogoutOutlined />,
       label: 'Đăng xuất',
       onClick: handleLogout,
-      danger: true, 
+      danger: true,
     },
   ];
 
@@ -191,31 +176,23 @@ const HeaderComponent = () => {
                 <div style={{ color: '#001529', fontWeight: 700, fontSize: 16 }}>{user.fullName || user.username}</div>
               </div>
               
-              {/* Menu cho Mobile khi là Admin */}
-              {(user.role === 'Admin' || user.role === 'Manager') && (
+              <div style={{ fontSize: 12, fontWeight: 700, color: '#8c8c8c', marginTop: 8, textTransform: 'uppercase' }}>Cá nhân</div>
+              <AuthButton to="/profile" variant="outline" onClick={() => setDrawerOpen(false)} isFullWidth icon={<UserOutlined />}>Thông tin tài khoản</AuthButton>
+
+              {/* Menu cho Mobile khi là Admin/Manager */}
+              {(user?.role?.toLowerCase() === 'admin' || user?.role?.toLowerCase() === 'manager') && (
                  <>
-                   {user.role === 'Admin' && (
-                     <>
-                       <div style={{ fontSize: 12, fontWeight: 700, color: '#8c8c8c', marginTop: 8, textTransform: 'uppercase' }}>Tài Khoản</div>
-                       <AuthButton to="/admin/users" variant="outline" onClick={() => setDrawerOpen(false)} isFullWidth icon={<DashboardOutlined/>}>Quản lý tài khoản</AuthButton>
-                     </>
-                   )}
-                   {(user.role === 'Admin' || user.role === 'Manager') && (
-                     <>
-                       <div style={{ fontSize: 12, fontWeight: 700, color: '#8c8c8c', marginTop: 8, textTransform: 'uppercase' }}>Danh Mục</div>
-                       <AuthButton to="/admin/categories" variant="outline" onClick={() => setDrawerOpen(false)} isFullWidth icon={<AppstoreOutlined/>}>
-                         {user.role === 'Manager' ? 'Danh mục Dịch vụ' : 'Quản lý Danh mục'}
-                       </AuthButton>
-                     </>
-                   )}
-                   <div style={{ fontSize: 12, fontWeight: 700, color: '#8c8c8c', marginTop: 8, textTransform: 'uppercase' }}>Phần Cứng</div>
-                   <AuthButton to="/admin/products" variant="outline" onClick={() => setDrawerOpen(false)} isFullWidth icon={<AppstoreOutlined/>}>Quản lý Thiết bị</AuthButton>
-                   <AuthButton to="/admin/products/add" variant="outline" onClick={() => setDrawerOpen(false)} isFullWidth icon={<PlusCircleOutlined/>}>Thêm Thiết Bị</AuthButton>
-                   
-                   <div style={{ fontSize: 12, fontWeight: 700, color: '#8c8c8c', marginTop: 8, textTransform: 'uppercase' }}>Dịch Vụ</div>
-                   <AuthButton to="/admin/services" variant="outline" onClick={() => setDrawerOpen(false)} isFullWidth icon={<ToolOutlined/>}>Quản lý Dịch vụ</AuthButton>
-                   <AuthButton to="/admin/services/add" variant="outline" onClick={() => setDrawerOpen(false)} isFullWidth icon={<PlusCircleOutlined/>}>Thêm Dịch Vụ</AuthButton>
+                   <div style={{ fontSize: 12, fontWeight: 700, color: '#8c8c8c', marginTop: 8, textTransform: 'uppercase' }}>Quản trị</div>
+                   <AuthButton to="/admin/sales" variant="outline" onClick={() => setDrawerOpen(false)} isFullWidth icon={<DashboardOutlined />}>Dashboard quản trị</AuthButton>
                  </>
+              )}
+
+              {user?.role?.toLowerCase() === 'user' && (
+                <>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: '#8c8c8c', marginTop: 8, textTransform: 'uppercase' }}>Khách hàng</div>
+                  <AuthButton to="/my-requests" variant="outline" onClick={() => setDrawerOpen(false)} isFullWidth icon={<ShoppingCartOutlined />}>Lịch sử báo giá</AuthButton>
+                  <AuthButton to="/my-orders" variant="outline" onClick={() => setDrawerOpen(false)} isFullWidth icon={<FileTextOutlined />}>Đơn hàng của tôi</AuthButton>
+                </>
               )}
               <Button danger type="text" icon={<LogoutOutlined />} onClick={handleLogout} style={{ marginTop: 8, fontWeight: 600, height: 40 }}>Đăng xuất</Button>
             </>

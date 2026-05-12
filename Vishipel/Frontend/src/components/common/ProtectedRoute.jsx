@@ -13,11 +13,14 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
   }
 
   const user = JSON.parse(userStr);
+  const userRole = user.role?.toLowerCase();
 
-  // Đã đăng nhập nhưng không có quyền -> Đuổi về trang chủ
-  if (allowedRoles && !allowedRoles.includes(user.role)) {
-    message.error('Bạn không có quyền truy cập khu vực này!');
-    return <Navigate to="/" replace />;
+  if (allowedRoles) {
+    const isAllowed = allowedRoles.some(role => role.toLowerCase() === userRole);
+    if (!isAllowed) {
+      message.error('Bạn không có quyền truy cập khu vực này!');
+      return <Navigate to="/" replace />;
+    }
   }
 
   // Đủ quyền -> Cho phép vào trong

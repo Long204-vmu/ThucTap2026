@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="Vishipel.API/Vishipel.API.csproj" />
+  <Project Path="Vishipel.Core/Vishipel.Core.csproj" />
+  <Project Path="Vishipel.Infrastructure/Vishipel.Infrastructure.csproj" />
+  <Project Path="Vishipel.Services/Vishipel.Services.csproj" />
+</Solution>

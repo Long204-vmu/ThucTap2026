@@ -109,7 +109,7 @@ const Register = () => {
         <div style={{ height: '100%', width: currentStep === 0 ? '50%' : '100%', background: 'linear-gradient(90deg, #0057FF, #4d8eff)', borderRadius: 4, transition: 'width 0.4s ease' }} />
       </div>
 
-      {error && <Alert message={error} type="error" showIcon closable onClose={() => setError(null)} style={{ marginBottom: 20, borderRadius: 10 }} />}
+      {error && <Alert title={error} type="error" showIcon closable onClose={() => setError(null)} style={{ marginBottom: 20, borderRadius: 10 }} />}
 
       <Form form={form} layout="vertical" requiredMark={false} onFinish={onFinish}>
         <div style={{ display: currentStep === 0 ? 'block' : 'none' }}>

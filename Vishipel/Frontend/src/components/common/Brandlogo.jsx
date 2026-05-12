@@ -1,7 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-
-const BACKEND_URL = 'https://localhost:7010'; 
+import { BACKEND_ORIGIN } from '../../config/api';
 
 const BrandLogo = ({ onClick }) => {
   return (
@@ -13,9 +12,8 @@ const BrandLogo = ({ onClick }) => {
         textDecoration: 'none', flexShrink: 0,
       }}
     >
-      {/* 2. Sửa đường dẫn src tại đây */}
       <img
-        src={`${BACKEND_URL}/image/logo.jpg`} 
+        src={`${BACKEND_ORIGIN}/image/logo.jpg`}
         alt="Vishipel EMS Logo"
         style={{ height: '46px', width: 'auto', objectFit: 'contain', display: 'block' }}
       />

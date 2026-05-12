@@ -72,7 +72,7 @@ const Home = () => {
 
   return (
     <Content style={{ marginTop: 68 }}>
-      {error && <Alert message={error} type="error" showIcon closable style={{ margin: '16px 5%', borderRadius: 10 }} />}
+      {error && <Alert title={error} type="error" showIcon closable style={{ margin: '16px 5%', borderRadius: 10 }} />}
 
       {/* HeroBanner không còn phải đợi Loading nữa, load trang là hiện ngay! */}
       <HeroBanner />

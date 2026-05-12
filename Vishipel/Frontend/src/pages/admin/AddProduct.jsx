@@ -100,7 +100,7 @@ const AddProduct = () => {
   if (fetchingData) return <div style={{ textAlign: 'center', marginTop: 150 }}><Spin size="large" /></div>;
 
   return (
-    <div style={{ padding: '32px 5%', background: '#f5f7fa', minHeight: '100vh', marginTop: 64 }}>
+    <div style={{ padding: '32px 5%', background: '#f5f7fa', minHeight: '100vh' }}>
       <div style={{ maxWidth: 1300, margin: '0 auto' }}>
         
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>

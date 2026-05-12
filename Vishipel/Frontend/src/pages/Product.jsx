@@ -121,7 +121,9 @@ const ProductPage = ({ onCartChange }) => {
   const [activeCategory, setActiveCategory] = useState('all');
   const [search, setSearch]                 = useState('');
   const [page, setPage]                     = useState(1);
-  const [cart, setCart]                     = useState([]);
+  const [cart, setCart]                     = useState(() => {
+    return JSON.parse(localStorage.getItem('vishipel_cart') || '[]');
+  });
   const [drawerOpen, setDrawerOpen]         = useState(false);
 
   const { filtered, categories, loading, error } = useProductData(activeCategory, search);
@@ -137,9 +139,16 @@ const ProductPage = ({ onCartChange }) => {
   const handleRemoveCart = (id) => {
     setCart(prev => {
       const next = prev.filter(p => p.id !== id);
+      localStorage.setItem('vishipel_cart', JSON.stringify(next));
       onCartChange?.(next.length);
       return next;
     });
+  };
+
+  const handleClearCart = () => {
+    setCart([]);
+    localStorage.setItem('vishipel_cart', JSON.stringify([]));
+    onCartChange?.(0);
   };
 
   return (
@@ -153,7 +162,7 @@ const ProductPage = ({ onCartChange }) => {
         <Title level={2} style={{ color: '#fff', margin: 0 }}>Khám Phá Thiết Bị Hàng Hải</Title>
       </div>
 
-      {error && <Alert message={error} type="error" showIcon closable style={{ margin: '16px 5%', borderRadius: 10 }} />}
+      {error && <Alert title={error} type="error" showIcon closable style={{ margin: '16px 5%', borderRadius: 10 }} />}
 
       <div style={{ padding: '24px 5%' }}>
         <Layout style={{ background: 'transparent', gap: 20 }}>
@@ -215,7 +224,13 @@ const ProductPage = ({ onCartChange }) => {
         </Layout>
       </div>
 
-      <CartDrawer open={drawerOpen} cart={cart} onClose={() => setDrawerOpen(false)} onRemove={handleRemoveCart} />
+      <CartDrawer 
+          open={drawerOpen} 
+          cart={cart} 
+          onClose={() => setDrawerOpen(false)} 
+          onRemove={handleRemoveCart} 
+          onClearCart={handleClearCart} 
+      />
     </div>
   );
 };

@@ -14,7 +14,6 @@ import {
 import ImageSlider from '../components/features/product/ImageSlider';
 import { BACKEND_ORIGIN } from '../config/api';
 import { getProductById } from '../services/productService';
-import RequestFormModal from '../components/common/RequestFormModal'; // Import Component
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -24,8 +23,6 @@ const ProductDetail = () => {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [service, setService] = useState(null);
 
   useEffect(() => {
     const fetchDetail = async () => {
@@ -62,11 +59,26 @@ const ProductDetail = () => {
   }, [id]);
 
   const handleAddCart = () => {
+    // Lấy giỏ hàng hiện tại từ localStorage
+    const currentCart = JSON.parse(localStorage.getItem('vishipel_cart') || '[]');
+    
+    // Kiểm tra xem sản phẩm đã có trong giỏ chưa
+    if (!currentCart.find(item => item.id === product.id)) {
+        // Lưu các thông tin cần thiết vào giỏ
+        currentCart.push({
+            id: product.id,
+            name: product.name,
+            price: product.price,
+            img: product.images && product.images.length > 0 ? product.images[0] : 'https://via.placeholder.com/150'
+        });
+        localStorage.setItem('vishipel_cart', JSON.stringify(currentCart));
+    }
+    
     message.success({ content: `Đã thêm "${product.name}" vào danh sách yêu cầu`, duration: 2 });
   };
 
   const handleRequestConsult = () => {
-    setIsModalOpen(true);
+    navigate('/contact');
   };
 
   if (loading) {
@@ -96,7 +108,7 @@ const ProductDetail = () => {
         <Breadcrumb
           items={[
             { title: 'Trang chủ', onClick: () => navigate('/'), className: 'cursor-pointer' },
-            { title: 'Thiết bị & Dịch vụ', onClick: () => navigate('/products'), className: 'cursor-pointer' },
+            { title: 'Thiết bị', onClick: () => navigate('/products'), className: 'cursor-pointer' },
             { title: product.name },
           ]}
         />
@@ -202,7 +214,7 @@ const ProductDetail = () => {
               </div>
 
               {product.status !== 'Còn hàng' && (
-                <Alert message="Thiết bị hiện đang chờ nhập kho hoặc bảo trì — Quý khách vui lòng yêu cầu tư vấn để biết thêm chi tiết." type="warning" showIcon style={{ marginTop: 16, borderRadius: 8 }} />
+                <Alert title="Thiết bị hiện đang chờ nhập kho hoặc bảo trì — Quý khách vui lòng yêu cầu tư vấn để biết thêm chi tiết." type="warning" showIcon style={{ marginTop: 16, borderRadius: 8 }} />
               )}
             </div>
           </Col>
@@ -241,14 +253,6 @@ const ProductDetail = () => {
           </Text>
         </div>
       </div>
-      {product && (
-        <RequestFormModal 
-          isOpen={isModalOpen} 
-          onClose={() => setIsModalOpen(false)} 
-          itemName={product.name} 
-          itemType="Thiết bị" 
-        />
-      )}
     </div>
   );
 };

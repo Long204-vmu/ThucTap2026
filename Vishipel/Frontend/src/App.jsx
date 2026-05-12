@@ -1,29 +1,39 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Layout } from 'antd';
 
 // ── Components dùng chung ──────────────────────────────────────────────────────
 import HeaderComponent from './components/layout/Header';
 import FooterComponent from './components/layout/Footer';
+import AdminSidebar from './components/layout/AdminSidebar';
 
 // ── Pages ─────────────────────────────────────────────────────────────────────
 import Home     from './pages/Home';
 import Product  from './pages/Product';
 import ProductDetail from './pages/ProductDetail';
-import ServicePage from './pages/Service';
 import About    from './pages/About';
 import Contact  from './pages/Contact';
 import Login    from './pages/Login';
 import Register from './pages/Register';
-import AddProduct from './pages/admin/AddProduct'; 
+import AddProduct from './pages/admin/AddProduct';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import ManageProducts from './pages/admin/ManageProducts';
-import ServiceDetail from './pages/ServiceDetail';
-import ManageServices from './pages/admin/ManageServices';
-import AddService from './pages/admin/AddService';
 import ManageCategories from './pages/admin/ManageCategories';
 import ManageUsers from './pages/admin/ManageUsers';
-import ManageRequests from './pages/admin/ManageRequests';
+import SystemManagement from './pages/admin/SystemManagement';
+import WarehouseManagement from './pages/admin/WarehouseManagement';
+import TechnicalManagement from './pages/admin/TechnicalManagement';
+import ReportsManagement from './pages/admin/ReportsManagement';
+import MyRequests from './pages/MyRequests';
+import MyOrders from './pages/MyOrders';
+import ManageQuotes from './pages/admin/ManageQuotes';
+import SalesDashboard from './pages/admin/SalesDashboard';
+import CreateOrder from './pages/admin/CreateOrder';
+import ContractForm from './pages/admin/ContractForm';
+import DeliveryOrderForm from './pages/admin/DeliveryOrderForm';
+import InvoiceForm from './pages/admin/InvoiceForm';
+import Profile from './pages/Profile';
+
 const { Content } = Layout;
 
 // ─── Trang toàn màn hình (không có Header/Footer) ─────────────────────────────
@@ -32,6 +42,7 @@ const FULLSCREEN_ROUTES = ['/login', '/register'];
 const AppLayout = ({ children }) => {
   const location = useLocation();
   const isFullscreen = FULLSCREEN_ROUTES.includes(location.pathname);
+  const isAdminRoute = location.pathname.startsWith('/admin');
 
   if (isFullscreen) {
     return <>{children}</>;
@@ -40,10 +51,20 @@ const AppLayout = ({ children }) => {
   return (
     <Layout style={{ minHeight: '100vh' }}>
       <HeaderComponent />
-      <Content>
-        {children}
-      </Content>
-      <FooterComponent />
+      <Layout style={{ marginTop: 76 }}>
+        {isAdminRoute && <AdminSidebar />}
+        <Layout style={{ 
+          padding: isAdminRoute ? '0' : '0', 
+          marginLeft: isAdminRoute ? 260 : 0,
+          transition: 'all 0.2s',
+          minHeight: 'calc(100vh - 76px)'
+        }}>
+          <Content>
+            {children}
+          </Content>
+          {!isAdminRoute && <FooterComponent />}
+        </Layout>
+      </Layout>
     </Layout>
   );
 };
@@ -55,13 +76,15 @@ const App = () => (
         <Route path="/"         element={<Home />} />
         <Route path="/products" element={<Product />} />
         <Route path="/products/:id" element={<ProductDetail />}  />
-        <Route path="/services" element={<ServicePage />} />
         <Route path="/about"    element={<About />} />
         <Route path="/contact"  element={<Contact />} />
         <Route path="/login"    element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path="*"         element={<Navigate to="/" replace />} />
-        <Route path="/services/:id" element={<ServiceDetail />} />
+        <Route path="/profile"  element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+        
+        {/* Lịch sử báo giá */}
+        <Route path="/my-requests" element={<ProtectedRoute><MyRequests /></ProtectedRoute>} />
+        <Route path="/my-orders" element={<ProtectedRoute><MyOrders /></ProtectedRoute>} />
         
         {/* CÁC TRANG QUẢN TRỊ (Bị khóa bởi ProtectedRoute) */}
         
@@ -82,12 +105,24 @@ const App = () => (
           path="/admin/products/edit/:id" 
           element={<ProtectedRoute allowedRoles={['Admin', 'Manager']}><AddProduct /></ProtectedRoute>} 
         />
-        <Route path="/admin/services" element={<ProtectedRoute allowedRoles={['Admin', 'Manager']}><ManageServices /></ProtectedRoute>} />
-        <Route path="/admin/services/add" element={<ProtectedRoute allowedRoles={['Admin', 'Manager']}><AddService /></ProtectedRoute>} />
-        <Route path="/admin/services/edit/:id" element={<ProtectedRoute allowedRoles={['Admin', 'Manager']}><AddService /></ProtectedRoute>} />
         <Route path="/admin/categories" element={<ProtectedRoute allowedRoles={['Admin', 'Manager']}><ManageCategories /></ProtectedRoute>} />
         <Route path="/admin/users" element={<ProtectedRoute allowedRoles={['Admin']}><ManageUsers /></ProtectedRoute>} />
-        <Route path="/admin/requests" element={<ProtectedRoute allowedRoles={['Sales', 'Admin']}><ManageRequests /></ProtectedRoute>} />
+        <Route path="/admin/system" element={<ProtectedRoute allowedRoles={['Admin']}><SystemManagement /></ProtectedRoute>} />
+        <Route path="/admin/warehouse" element={<ProtectedRoute allowedRoles={['Admin', 'Manager', 'Warehouse']}><WarehouseManagement /></ProtectedRoute>} />
+        <Route path="/admin/technical" element={<ProtectedRoute allowedRoles={['Admin', 'Manager']}><TechnicalManagement /></ProtectedRoute>} />
+        <Route path="/admin/reports" element={<ProtectedRoute allowedRoles={['Admin', 'Manager', 'Accounting']}><ReportsManagement /></ProtectedRoute>} />
+        <Route path="/admin/quotes" element={<ProtectedRoute allowedRoles={['Admin', 'Manager', 'SaleManager']}><ManageQuotes /></ProtectedRoute>} />
+        
+        {/* Quy trình kinh doanh mới */}
+        <Route path="/admin/sales" element={<ProtectedRoute allowedRoles={['Admin', 'Manager', 'SaleManager', 'Warehouse', 'Accounting']}><SalesDashboard /></ProtectedRoute>} />
+        <Route path="/admin/dashboard" element={<Navigate to="/admin/sales" replace />} />
+        <Route path="/admin" element={<Navigate to="/admin/sales" replace />} />
+        <Route path="/admin/orders/create/:quoteId" element={<ProtectedRoute allowedRoles={['Admin', 'Manager', 'SaleManager']}><CreateOrder /></ProtectedRoute>} />
+        <Route path="/admin/contracts/create/:orderId" element={<ProtectedRoute allowedRoles={['Admin', 'Manager', 'SaleManager', 'User']}><ContractForm /></ProtectedRoute>} />
+        <Route path="/admin/delivery/create/:orderId" element={<ProtectedRoute allowedRoles={['Admin', 'Manager', 'Warehouse']}><DeliveryOrderForm /></ProtectedRoute>} />
+        <Route path="/admin/invoices/create/:orderId" element={<ProtectedRoute allowedRoles={['Admin', 'Manager', 'Accounting', 'User']}><InvoiceForm /></ProtectedRoute>} />
+
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </AppLayout>
 );
