@@ -30,8 +30,8 @@ function useProductData(category, search) {
         
         // 1. GỌI SONG SONG 2 API (SẢN PHẨM VÀ DANH MỤC TYPE=PRODUCT)
         const [prodRes, catRes] = await Promise.all([
-            apiClient.get('/api/Products'),
-            apiClient.get('/api/Categories?type=Product') // Lấy chuẩn danh mục thiết bị
+            apiClient.get('/api/ThietBi'),
+            apiClient.get('/api/LoaiThietBi') 
         ]);
 
         // 2. CHUẨN BỊ DANH SÁCH DANH MỤC TRƯỚC
@@ -41,20 +41,19 @@ function useProductData(category, search) {
         // Nhét các danh mục chuẩn (Product) từ API vào Map
         if (catRes.data && Array.isArray(catRes.data)) {
             catRes.data.forEach(c => {
-                 uniqueCategoryMap.set(String(c.id), c.name); 
+                 uniqueCategoryMap.set(String(c.maLoai), c.tenLoai); 
             });
         }
 
         // 3. XỬ LÝ DỮ LIỆU SẢN PHẨM (VÀ KHỚP VỚI DANH MỤC TRÊN)
         const realProducts = prodRes.data.map(item => {
-          const imagesArray = item.imagesJson ? JSON.parse(item.imagesJson) : [];
+          const imagesArray = item.hinhAnhJson ? JSON.parse(item.hinhAnhJson) : [];
           
           // An toàn: Lấy ID danh mục, nếu không có thì gán là 'uncategorized'
-          let catKey = item.category ? String(item.category.id) : 'uncategorized';
-          let catName = item.category ? item.category.name : 'Chưa phân loại';
+          let catKey = item.loaiThietBi ? String(item.loaiThietBi.maLoai) : 'uncategorized';
+          let catName = item.loaiThietBi ? item.loaiThietBi.tenLoai : 'Chưa phân loại';
 
           // BƯỚC BẢO VỆ: Nếu sản phẩm này đang mang một ID danh mục KHÔNG CÓ trong danh sách danh mục Product
-          // (ví dụ: nó lỡ bị gán nhầm vào danh mục Service), thì chúng ta tạm thời hiển thị nó là 'Khác'
           if (catKey !== 'uncategorized' && !uniqueCategoryMap.has(catKey)) {
               catKey = 'uncategorized';
               catName = 'Thiết bị khác (Sai danh mục)';
@@ -69,14 +68,14 @@ function useProductData(category, search) {
           
           return {
             ...item,
-            id: item.id,
-            name: item.name,
+            id: item.maThietBi,
+            name: item.tenThietBi,
             model: item.model,
             categoryId: catKey, 
             categoryName: catName,
             type: catName,
-            typeColor: item.category ? item.category.colorCode : 'default',
-            status: item.status, 
+            typeColor: item.loaiThietBi ? item.loaiThietBi.maMau : 'default',
+            status: item.trangThai === 1 ? 'Còn hàng' : 'Ngừng kinh doanh', 
             img: finalImgUrl,
           };
         });
@@ -136,6 +135,42 @@ const ProductPage = ({ onCartChange }) => {
     [filtered, page],
   );
 
+  const handleAddToCart = (product) => {
+    setCart(prev => {
+      const existing = prev.find(item => item.id === product.id);
+      if (existing) {
+        const next = prev.map(item => 
+          item.id === product.id 
+            ? { ...item, quantity: (item.quantity || 1) + 1 } 
+            : item
+        );
+        localStorage.setItem('vishipel_cart', JSON.stringify(next));
+        message.success(`Đã tăng số lượng "${product.name}"`);
+        return next;
+      }
+      
+      const next = [...prev, {
+        id: product.id,
+        name: product.name,
+        price: product.price || 0,
+        img: product.img,
+        quantity: 1
+      }];
+      localStorage.setItem('vishipel_cart', JSON.stringify(next));
+      onCartChange?.(next.length);
+      message.success(`Đã thêm "${product.name}" vào danh sách yêu cầu`);
+      return next;
+    });
+  };
+
+  const handleUpdateQuantity = (id, quantity) => {
+    setCart(prev => {
+      const next = prev.map(item => item.id === id ? { ...item, quantity } : item);
+      localStorage.setItem('vishipel_cart', JSON.stringify(next));
+      return next;
+    });
+  };
+
   const handleRemoveCart = (id) => {
     setCart(prev => {
       const next = prev.filter(p => p.id !== id);
@@ -152,7 +187,7 @@ const ProductPage = ({ onCartChange }) => {
   };
 
   return (
-    <div style={{ marginTop: 68, minHeight: '100vh', background: '#f5f7fa' }}>
+    <div style={{ minHeight: '100vh', background: '#f5f7fa' }}>
       
       {/* Page header */}
       <div style={{ background: '#001529', padding: '36px 5%' }}>
@@ -210,7 +245,7 @@ const ProductPage = ({ onCartChange }) => {
                 <Row gutter={[20, 20]}>
                   {paginated.map(item => (
                     <Col xs={24} sm={12} md={8} xl={6} key={item.id}>
-                      <ProductCard item={item} />
+                      <ProductCard item={item} onAdd={handleAddToCart} />
                     </Col>
                   ))}
                 </Row>
@@ -230,6 +265,7 @@ const ProductPage = ({ onCartChange }) => {
           onClose={() => setDrawerOpen(false)} 
           onRemove={handleRemoveCart} 
           onClearCart={handleClearCart} 
+          onUpdateQuantity={handleUpdateQuantity}
       />
     </div>
   );

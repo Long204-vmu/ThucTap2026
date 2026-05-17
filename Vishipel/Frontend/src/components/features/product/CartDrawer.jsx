@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Drawer, Button, Empty, Typography, Input, message } from 'antd';
+import { Drawer, Button, Empty, Typography, Input, message, InputNumber } from 'antd';
 import { ShoppingCartOutlined, CloseOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import apiClient from '../../../services/apiClient';
@@ -7,15 +7,15 @@ import apiClient from '../../../services/apiClient';
 const { Text } = Typography;
 const { TextArea } = Input;
 
-const CartDrawer = ({ open, cart, onClose, onRemove, onClearCart }) => {
+const CartDrawer = ({ open, cart, onClose, onRemove, onClearCart, onUpdateQuantity }) => {
   const navigate = useNavigate();
-  const [note, setNote] = useState('');
+  const [vesselName, setVesselName] = useState('');
+  const [deliveryPort, setDeliveryPort] = useState('');
+  const [additionalNote, setAdditionalNote] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   const userStr = localStorage.getItem('user');
   const user = userStr ? JSON.parse(userStr) : null;
-
-  const formatPrice = (n) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
 
   const handleSubmit = async () => {
     if (!user) {
@@ -25,19 +25,27 @@ const CartDrawer = ({ open, cart, onClose, onRemove, onClearCart }) => {
     
     try {
       setSubmitting(true);
+      
+      // Ghép các trường thông tin vào Note để gửi lên Backend
+      const fullNote = `[Tàu/Dự án: ${vesselName || 'N/A'}] 
+[Cảng giao: ${deliveryPort || 'N/A'}] 
+[Ghi chú: ${additionalNote || 'Không có'}]`;
+
       const payload = {
-        note: note,
+        note: fullNote,
         items: cart.map(item => ({
           productId: item.id,
           productName: item.name,
-          quantity: 1,
+          quantity: item.quantity || 1,
           referencePrice: item.price
         }))
       };
       
       await apiClient.post('/api/QuoteRequests', payload);
-      message.success('Gửi yêu cầu báo giá thành công! Bạn có thể xem trong Lịch sử yêu cầu.');
-      setNote('');
+      message.success('Gửi yêu cầu báo giá thành công! Chúng tôi sẽ phản hồi sớm nhất.');
+      setVesselName('');
+      setDeliveryPort('');
+      setAdditionalNote('');
       onClearCart?.();
       onClose();
     } catch (err) {
@@ -50,36 +58,72 @@ const CartDrawer = ({ open, cart, onClose, onRemove, onClearCart }) => {
 
   return (
     <Drawer
-      title={<span><ShoppingCartOutlined /> Giỏ hàng ({cart.length})</span>}
+      title={
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <ShoppingCartOutlined style={{ color: '#1677ff' }} />
+          <span>Yêu cầu báo giá ({cart.length} thiết bị)</span>
+        </div>
+      }
       placement="right"
       onClose={onClose}
       open={open}
-      size="default"
+      width={450}
       footer={
         cart.length > 0 && (
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
-              <Text strong>Tổng cộng (Tham khảo):</Text>
-              <Text strong style={{ color: '#1677ff', fontSize: 16 }}>
-                {formatPrice(cart.reduce((s, p) => s + p.price, 0))}
-              </Text>
-            </div>
-            
+          <div style={{ padding: '10px 0' }}>
             {user ? (
-              <>
-                <TextArea 
-                  rows={2} 
-                  placeholder="Ghi chú thêm cho Sale (VD: Cần gấp, xin báo giá VAT...)" 
-                  value={note}
-                  onChange={(e) => setNote(e.target.value)}
-                  style={{ marginBottom: 16 }}
-                />
-                <Button type="primary" block size="large" onClick={handleSubmit} loading={submitting} style={{ borderRadius: 10, height: 46, fontWeight: 600 }}>
-                  Gửi Yêu cầu Báo giá
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div>
+                  <Text strong style={{ fontSize: 13, display: 'block', marginBottom: 5 }}>Tên tàu / Dự án:</Text>
+                  <Input 
+                    placeholder="VD: Vessel MV. Vishipel 01..." 
+                    value={vesselName}
+                    onChange={(e) => setVesselName(e.target.value)}
+                  />
+                </div>
+                
+                <div>
+                  <Text strong style={{ fontSize: 13, display: 'block', marginBottom: 5 }}>Cảng/Địa điểm giao hàng:</Text>
+                  <Input 
+                    placeholder="VD: Cảng Hải Phòng, Cảng Cái Mép..." 
+                    value={deliveryPort}
+                    onChange={(e) => setDeliveryPort(e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <Text strong style={{ fontSize: 13, display: 'block', marginBottom: 5 }}>Ghi chú thêm:</Text>
+                  <TextArea 
+                    rows={2} 
+                    placeholder="Cần gấp, xin báo giá kèm VAT, CO/CQ..." 
+                    value={additionalNote}
+                    onChange={(e) => setAdditionalNote(e.target.value)}
+                  />
+                </div>
+
+                <Button 
+                  type="primary" 
+                  block 
+                  size="large" 
+                  onClick={handleSubmit} 
+                  loading={submitting} 
+                  style={{ 
+                    borderRadius: 8, 
+                    height: 50, 
+                    fontWeight: 700, 
+                    fontSize: 16,
+                    marginTop: 8,
+                    boxShadow: '0 4px 12px rgba(22, 119, 255, 0.3)'
+                  }}
+                >
+                  GỬI YÊU CẦU BÁO GIÁ
                 </Button>
-              </>
+                <Text type="secondary" style={{ fontSize: 12, textAlign: 'center' }}>
+                  Hệ thống sẽ ghi nhận và phản hồi trong vòng 24h làm việc.
+                </Text>
+              </div>
             ) : (
-              <Button type="primary" block size="large" onClick={() => navigate('/login')} style={{ borderRadius: 10, height: 46, fontWeight: 600 }}>
+              <Button type="primary" block size="large" onClick={() => navigate('/login')} style={{ borderRadius: 8, height: 46, fontWeight: 600 }}>
                 Đăng nhập để Yêu cầu Báo giá
               </Button>
             )}
@@ -99,8 +143,16 @@ const CartDrawer = ({ open, cart, onClose, onRemove, onClearCart }) => {
             />
             <div style={{ flex: 1 }}>
               <div style={{ fontWeight: 600, fontSize: 14 }}>{item.name}</div>
-              <div style={{ color: '#1677ff', fontWeight: 700, fontSize: 14 }}>
-                {formatPrice(item.price)}
+              <div style={{ marginTop: 4 }}>
+                <Text type="secondary" style={{ marginRight: 8, fontSize: 12 }}>Số lượng:</Text>
+                <InputNumber 
+                  min={1} 
+                  max={100} 
+                  size="small" 
+                  value={item.quantity || 1} 
+                  onChange={(val) => onUpdateQuantity?.(item.id, val)}
+                  style={{ width: 60 }}
+                />
               </div>
             </div>
             <Button type="text" icon={<CloseOutlined />} size="small" onClick={() => onRemove(item.id)} danger />
@@ -111,4 +163,4 @@ const CartDrawer = ({ open, cart, onClose, onRemove, onClearCart }) => {
   );
 };
 
-export default CartDrawer;
+export default CartDrawer;

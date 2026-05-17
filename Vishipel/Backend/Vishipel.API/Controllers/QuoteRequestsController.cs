@@ -1,15 +1,14 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Vishipel.Infrastructure.Data;
-using Vishipel.Core.Models;
-using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
+using Vishipel.Core.Models;
+using Vishipel.Infrastructure.Data;
 
 namespace Vishipel.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize] // Bắt buộc đăng nhập cho mọi thao tác
     public class QuoteRequestsController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -19,154 +18,172 @@ namespace Vishipel.API.Controllers
             _context = context;
         }
 
-        // DTOs
-        public class CreateQuoteRequestDto
+        // GET: api/QuoteRequests
+        [HttpGet]
+        [Authorize(Roles = "Admin,Manager,SaleManager")]
+        public async Task<ActionResult<IEnumerable<QuoteRequest>>> GetQuoteRequests()
         {
-            public string? Note { get; set; }
-            public List<CartItemDto> Items { get; set; } = new();
+            return await _context.QuoteRequests
+                .Include(q => q.User)
+                .Include(q => q.Items)
+                .OrderByDescending(q => q.CreatedAt)
+                .ToListAsync();
         }
 
-        public class CartItemDto
+        // GET: api/QuoteRequests/my-requests
+        [HttpGet("my-requests")]
+        [Authorize]
+        public async Task<ActionResult<IEnumerable<QuoteRequest>>> GetMyQuoteRequests()
         {
-            public int ProductId { get; set; }
-            public string ProductName { get; set; } = "";
-            public int Quantity { get; set; } = 1;
-            public decimal? ReferencePrice { get; set; }
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(userIdStr, out int userId)) return Unauthorized();
+
+            return await _context.QuoteRequests
+                .Where(q => q.UserId == userId)
+                .Include(q => q.Items)
+                .OrderByDescending(q => q.CreatedAt)
+                .ToListAsync();
         }
 
-        public class AdminReplyDto
+        // GET: api/QuoteRequests/5
+        [HttpGet("{id}")]
+        [Authorize(Roles = "Admin,Manager,SaleManager")]
+        public async Task<ActionResult<QuoteRequest>> GetQuoteRequest(int id)
         {
-            public string AdminReply { get; set; } = "";
-            public decimal? TotalQuotedPrice { get; set; }
+            var quoteRequest = await _context.QuoteRequests
+                .Include(q => q.User)
+                .Include(q => q.Items)
+                .FirstOrDefaultAsync(q => q.Id == id);
+
+            if (quoteRequest == null) return NotFound();
+            return quoteRequest;
         }
 
-        // 1. TẠO MỚI YÊU CẦU BÁO GIÁ (Cho Customer)
+        // POST: api/QuoteRequests
         [HttpPost]
-        public async Task<ActionResult<QuoteRequest>> CreateRequest(CreateQuoteRequestDto dto)
+        [Authorize]
+        public async Task<ActionResult<QuoteRequest>> PostQuoteRequest(QuoteRequest quoteRequest)
         {
-            var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out int userId))
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(userIdStr, out int userId)) return Unauthorized();
+
+            quoteRequest.UserId = userId;
+            quoteRequest.CreatedAt = DateTime.Now;
+            quoteRequest.Status = "Pending";
+
+            _context.QuoteRequests.Add(quoteRequest);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction("GetQuoteRequests", new { id = quoteRequest.Id }, quoteRequest);
+        }
+
+        // PUT: api/QuoteRequests/5/reply
+        [HttpPut("{id}/reply")]
+        [Authorize(Roles = "Admin,Manager,SaleManager")]
+        public async Task<IActionResult> ReplyToQuoteRequest(int id, QuoteRequest replyData)
+        {
+            var quoteRequest = await _context.QuoteRequests
+                .Include(q => q.Items)
+                .FirstOrDefaultAsync(q => q.Id == id);
+            
+            if (quoteRequest == null) return NotFound();
+
+            quoteRequest.AdminReply = replyData.AdminReply;
+            quoteRequest.TotalQuotedPrice = replyData.TotalQuotedPrice;
+            quoteRequest.Status = "Quoted";
+
+            // Cập nhật giá từng sản phẩm nếu có truyền lên
+            if (replyData.Items != null)
             {
-                return Unauthorized(new { message = "Không xác định được danh tính người dùng." });
+                foreach (var itemData in replyData.Items)
+                {
+                    // Tìm item theo ID duy nhất của bản ghi item trong báo giá
+                    var existingItem = quoteRequest.Items.FirstOrDefault(i => i.Id == itemData.Id);
+                    if (existingItem != null)
+                    {
+                        existingItem.ReferencePrice = itemData.ReferencePrice;
+                    }
+                }
             }
 
-            var request = new QuoteRequest
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
+
+        // PUT: api/QuoteRequests/5/accept
+        [HttpPut("{id}/accept")]
+        [Authorize]
+        public async Task<IActionResult> AcceptQuoteRequest(int id, [FromBody] AcceptQuoteDto dto)
+        {
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(userIdStr, out int userId)) return Unauthorized();
+
+            var quoteRequest = await _context.QuoteRequests
+                .Include(q => q.Items)
+                .FirstOrDefaultAsync(q => q.Id == id);
+            
+            if (quoteRequest == null) return NotFound();
+            if (quoteRequest.UserId != userId) return Forbid(); // Đảm bảo đúng người dùng
+            if (quoteRequest.Status != "Quoted") return BadRequest(new { message = "Chỉ có thể xác nhận các yêu cầu đã có báo giá." });
+
+            quoteRequest.Status = "Accepted";
+
+            // TỰ ĐỘNG TẠO ĐƠN ĐẶT HÀNG (Step 4.3) kèm thông tin giao hàng
+            var order = new DonDatHang
             {
-                UserId = userId,
-                Note = dto.Note,
-                Status = "Pending",
-                CreatedAt = DateTime.UtcNow,
-                Items = dto.Items.Select(i => new QuoteRequestItem
+                OrderCode = "DH" + DateTime.Now.ToString("yyyyMMdd") + new Random().Next(1000, 9999),
+                MaTaiKhoan = quoteRequest.UserId, // Sử dụng MaTaiKhoan thay vì MaKH
+                MaKH = null, // Có thể bổ sung logic tìm MaKH từ TaiKhoan sau này
+                NgayDat = DateTime.Now,
+                TongGiaTri = quoteRequest.TotalQuotedPrice ?? 0,
+                Status = "Confirmed", // Trạng thái đã chốt thông tin
+                Note = dto.Note ?? $"Đơn hàng tự động từ Báo giá #{quoteRequest.Id}",
+                ShippingAddress = dto.ShippingAddress,
+                ReceiverName = dto.ReceiverName,
+                ReceiverPhone = dto.ReceiverPhone,
+                ChiTietDonHangs = quoteRequest.Items.Select(item => new ChiTietDonHang
                 {
-                    ProductId = i.ProductId,
-                    ProductName = i.ProductName,
-                    Quantity = i.Quantity,
-                    ReferencePrice = i.ReferencePrice
+                    MaThietBi = item.ProductId,
+                    SoLuong = item.Quantity,
+                    DonGia = item.ReferencePrice ?? 0
                 }).ToList()
             };
 
-            _context.QuoteRequests.Add(request);
+            _context.DonDatHangs.Add(order);
             await _context.SaveChangesAsync();
 
-            return Ok(request);
+            return Ok(new { message = "Đã xác nhận báo giá và tạo đơn hàng thành công.", orderId = order.MaDonHang });
         }
 
-        // 2. LẤY DANH SÁCH YÊU CẦU CỦA MÌNH (Cho Customer)
-        [HttpGet("my-requests")]
-        public async Task<ActionResult<IEnumerable<QuoteRequest>>> GetMyRequests()
+        public class AcceptQuoteDto
         {
-            var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out int userId))
-            {
-                return Unauthorized();
-            }
-
-            var requests = await _context.QuoteRequests
-                .Include(r => r.Items)
-                .Where(r => r.UserId == userId)
-                .OrderByDescending(r => r.CreatedAt)
-                .ToListAsync();
-
-            return Ok(requests);
+            public string? ShippingAddress { get; set; }
+            public string? ReceiverName { get; set; }
+            public string? ReceiverPhone { get; set; }
+            public string? Note { get; set; }
         }
 
-        // 3. LẤY TOÀN BỘ YÊU CẦU (Cho Admin/SaleManager)
-        [HttpGet]
-        [Authorize(Roles = "Admin, SaleManager, Manager")]
-        public async Task<ActionResult<IEnumerable<QuoteRequest>>> GetAllRequests()
-        {
-            var requests = await _context.QuoteRequests
-                .Include(r => r.User)
-                .Include(r => r.Items)
-                .OrderByDescending(r => r.CreatedAt)
-                .ToListAsync();
-
-            return Ok(requests);
-        }
-
-        // 4. PHẢN HỒI YÊU CẦU (Cho Admin/SaleManager)
-        [HttpPut("{id}/reply")]
-        [Authorize(Roles = "Admin, SaleManager, Manager")]
-        public async Task<IActionResult> ReplyToRequest(int id, AdminReplyDto dto)
-        {
-            var request = await _context.QuoteRequests.FindAsync(id);
-            if (request == null) return NotFound(new { message = "Không tìm thấy yêu cầu này." });
-
-            request.AdminReply = dto.AdminReply;
-            request.TotalQuotedPrice = dto.TotalQuotedPrice;
-            request.Status = "Quoted";
-            request.UpdatedAt = DateTime.UtcNow;
-
-            await _context.SaveChangesAsync();
-            return Ok(request);
-        }
-
-        // 5. KHÁCH HÀNG XÁC NHẬN BÁO GIÁ
-        [HttpPut("{id}/accept")]
-        public async Task<IActionResult> AcceptQuote(int id)
-        {
-            var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out int userId))
-                return Unauthorized();
-
-            var request = await _context.QuoteRequests.FindAsync(id);
-            if (request == null) return NotFound(new { message = "Không tìm thấy yêu cầu này." });
-            if (request.UserId != userId) return Forbid();
-            if (request.Status != "Quoted") return BadRequest(new { message = "Chỉ có thể xác nhận báo giá ở trạng thái 'Đã báo giá'." });
-
-            request.Status = "Accepted";
-            request.AcceptedAt = DateTime.UtcNow;
-            request.UpdatedAt = DateTime.UtcNow;
-
-            await _context.SaveChangesAsync();
-            return Ok(new { message = "Bạn đã xác nhận báo giá thành công!", request });
-        }
-
-        // 6. KHÁCH HÀNG TỪ CHỐI BÁO GIÁ
-        public class RejectQuoteDto
-        {
-            public string? Reason { get; set; }
-        }
-
+        // PUT: api/QuoteRequests/5/reject
         [HttpPut("{id}/reject")]
-        public async Task<IActionResult> RejectQuote(int id, RejectQuoteDto dto)
+        [Authorize]
+        public async Task<IActionResult> RejectQuoteRequest(int id, [FromBody] RejectDto rejectData)
         {
-            var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out int userId))
-                return Unauthorized();
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(userIdStr, out int userId)) return Unauthorized();
 
-            var request = await _context.QuoteRequests.FindAsync(id);
-            if (request == null) return NotFound(new { message = "Không tìm thấy yêu cầu này." });
-            if (request.UserId != userId) return Forbid();
-            if (request.Status != "Quoted") return BadRequest(new { message = "Chỉ có thể từ chối báo giá ở trạng thái 'Đã báo giá'." });
+            var quoteRequest = await _context.QuoteRequests.FindAsync(id);
+            if (quoteRequest == null) return NotFound();
+            if (quoteRequest.UserId != userId) return Forbid();
 
-            request.Status = "Rejected";
-            request.RejectedAt = DateTime.UtcNow;
-            request.RejectionReason = dto.Reason;
-            request.UpdatedAt = DateTime.UtcNow;
-
+            quoteRequest.Status = "Rejected";
+            quoteRequest.AdminReply = (quoteRequest.AdminReply ?? "") + $"\n[Khách từ chối]: {rejectData.Reason}";
+            
             await _context.SaveChangesAsync();
-            return Ok(new { message = "Bạn đã từ chối báo giá.", request });
+
+            return NoContent();
         }
+
+        public class RejectDto { public string? Reason { get; set; } }
     }
 }

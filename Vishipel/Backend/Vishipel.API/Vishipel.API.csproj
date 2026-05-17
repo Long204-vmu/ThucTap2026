@@ -20,7 +20,6 @@
   <ItemGroup>
     <ProjectReference Include="..\Vishipel.Core\Vishipel.Core.csproj" />
     <ProjectReference Include="..\Vishipel.Infrastructure\Vishipel.Infrastructure.csproj" />
-    <ProjectReference Include="..\Vishipel.Services\Vishipel.Services.csproj" />
   </ItemGroup>
 
 </Project>

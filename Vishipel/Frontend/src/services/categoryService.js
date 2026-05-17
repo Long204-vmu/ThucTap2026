@@ -1,11 +1,11 @@
 import apiClient from './apiClient';
 
-export const getAllCategories = () => apiClient.get('/api/Categories');
+export const getAllCategories = (type = 'LoaiThietBi') => apiClient.get(`/api/${type}`);
 
-export const getCategoriesByType = (type) => apiClient.get(`/api/Categories?type=${type}`);
+export const getCategoriesByType = (type) => apiClient.get(`/api/${type}`);
 
-export const createCategory = (payload) => apiClient.post('/api/Categories', payload);
+export const createCategory = (type, payload) => apiClient.post(`/api/${type}`, payload);
 
-export const updateCategory = (id, payload) => apiClient.put(`/api/Categories/${id}`, payload);
+export const updateCategory = (type, id, payload) => apiClient.put(`/api/${type}/${id}`, payload);
 
-export const deleteCategory = (id) => apiClient.delete(`/api/Categories/${id}`);
+export const deleteCategory = (type, id) => apiClient.delete(`/api/${type}/${id}`);

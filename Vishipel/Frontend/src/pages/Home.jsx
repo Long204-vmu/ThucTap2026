@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Layout, Row, Col, Tag, Alert, Button } from 'antd';
+import { Layout, Row, Col, Tag, Alert, Button, message } from 'antd';
 import { ArrowRightOutlined } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
 import { BACKEND_ORIGIN } from '../config/api';
@@ -26,31 +26,30 @@ function useHomeData() {
         const res = await getProducts();
         
         const realProducts = res.data.map(item => {
-          const imagesArray = item.imagesJson ? JSON.parse(item.imagesJson) : [];
+          const imagesArray = item.hinhAnhJson ? JSON.parse(item.hinhAnhJson) : [];
           
           let finalImgUrl = 'https://via.placeholder.com/600x400?text=No+Image';
           if (imagesArray.length > 0) {
               const rawPath = imagesArray[0];
-              const fileName = rawPath.split('/').pop(); // Tự động lấy tên file (VD: radar-jma5310-1.jpg)
-              finalImgUrl = `${BACKEND_ORIGIN}/image/${fileName}`; // Ép thêm /image/ vào trước
+              const fileName = rawPath.split('/').pop();
+              finalImgUrl = `${BACKEND_ORIGIN}/image/${fileName}`;
           }
           
           return {
-            id: item.id,
-            name: item.name,
+            ...item,
+            id: item.maThietBi,
+            name: item.tenThietBi,
             model: item.model,
-            type: item.category ? item.category.name : 'Thiết bị',
-            typeColor: item.category ? item.category.colorCode : 'blue',
-            img: imagesArray.length > 0 ? `${BACKEND_ORIGIN}${imagesArray[0]}` : 'https://via.placeholder.com/600x400?text=No+Image',
-            status: item.status, // Đưa Trạng thái vào thay thế cho Giá
-            ...item
+            type: item.loaiThietBi ? item.loaiThietBi.tenLoai : 'Thiết bị',
+            typeColor: item.loaiThietBi ? item.loaiThietBi.maMau : 'blue',
+            img: finalImgUrl,
+            status: item.trangThai === 1 ? 'Còn hàng' : 'Ngừng kinh doanh',
           };
         });
 
-        // Chỉ lấy 4 sản phẩm mới nhất ra trang chủ
         const newestProducts = realProducts
-            .sort((a, b) => b.id - a.id) // Sort giảm dần
-            .slice(0, 4); // Lấy 4 ông mới nhất
+            .sort((a, b) => b.id - a.id)
+            .slice(0, 4);
 
         setProducts(newestProducts);
 
@@ -69,12 +68,31 @@ function useHomeData() {
 // MAIN COMPONENT
 const Home = () => {
   const { products, loading, error } = useHomeData();
+  const [, setCartCount] = useState(0);
+
+  const handleAddToCart = (product) => {
+    const currentCart = JSON.parse(localStorage.getItem('vishipel_cart') || '[]');
+    if (currentCart.find(item => item.id === product.id)) {
+      message.info(`"${product.name}" đã có trong danh sách yêu cầu`);
+      return;
+    }
+    const next = [...currentCart, {
+      id: product.id,
+      name: product.name,
+      price: product.price || 0,
+      img: product.img
+    }];
+    localStorage.setItem('vishipel_cart', JSON.stringify(next));
+    setCartCount(next.length);
+    message.success(`Đã thêm "${product.name}" vào danh sách yêu cầu`);
+    // Phát sự kiện để Header hoặc các trang khác có thể cập nhật
+    window.dispatchEvent(new Event('cartUpdated'));
+  };
 
   return (
-    <Content style={{ marginTop: 68 }}>
+    <Content>
       {error && <Alert title={error} type="error" showIcon closable style={{ margin: '16px 5%', borderRadius: 10 }} />}
 
-      {/* HeroBanner không còn phải đợi Loading nữa, load trang là hiện ngay! */}
       <HeroBanner />
       <StatsBar />
 
@@ -90,8 +108,7 @@ const Home = () => {
             ? [1, 2, 3, 4].map(n => <ProductSkeleton key={n} />)
             : products.map(item => (
                 <Col xs={24} sm={12} md={6} key={item.id}>
-                  {/* Bật cờ isNew={true} để nó hiện ruy-băng đỏ */}
-                  <ProductCard item={item} isNew={true} /> 
+                  <ProductCard item={item} isNew={true} onAdd={handleAddToCart} /> 
                 </Col>
               ))}
         </Row>

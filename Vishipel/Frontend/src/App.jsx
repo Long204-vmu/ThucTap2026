@@ -21,7 +21,13 @@ import ManageProducts from './pages/admin/ManageProducts';
 import ManageCategories from './pages/admin/ManageCategories';
 import ManageUsers from './pages/admin/ManageUsers';
 import SystemManagement from './pages/admin/SystemManagement';
+import BackupRestore from './pages/admin/BackupRestore';
+import WebsiteSettings from './pages/admin/WebsiteSettings';
 import WarehouseManagement from './pages/admin/WarehouseManagement';
+import WarehouseStock from './pages/admin/warehouse/WarehouseStock';
+import WarehouseImport from './pages/admin/warehouse/WarehouseImport';
+import WarehouseExport from './pages/admin/warehouse/WarehouseExport';
+import WarehouseTransfer from './pages/admin/warehouse/WarehouseTransfer';
 import TechnicalManagement from './pages/admin/TechnicalManagement';
 import ReportsManagement from './pages/admin/ReportsManagement';
 import MyRequests from './pages/MyRequests';
@@ -32,6 +38,7 @@ import CreateOrder from './pages/admin/CreateOrder';
 import ContractForm from './pages/admin/ContractForm';
 import DeliveryOrderForm from './pages/admin/DeliveryOrderForm';
 import InvoiceForm from './pages/admin/InvoiceForm';
+import ManageSuppliers from './pages/admin/ManageSuppliers';
 import Profile from './pages/Profile';
 
 const { Content } = Layout;
@@ -105,10 +112,19 @@ const App = () => (
           path="/admin/products/edit/:id" 
           element={<ProtectedRoute allowedRoles={['Admin', 'Manager']}><AddProduct /></ProtectedRoute>} 
         />
-        <Route path="/admin/categories" element={<ProtectedRoute allowedRoles={['Admin', 'Manager']}><ManageCategories /></ProtectedRoute>} />
+        <Route path="/admin/categories/NhaCungCap" element={<ProtectedRoute allowedRoles={['Admin', 'Manager']}><ManageSuppliers /></ProtectedRoute>} />
+        <Route path="/admin/categories/:type" element={<ProtectedRoute allowedRoles={['Admin', 'Manager']}><ManageCategories /></ProtectedRoute>} />
+        <Route path="/admin/categories" element={<Navigate to="/admin/categories/LoaiThietBi" replace />} />
         <Route path="/admin/users" element={<ProtectedRoute allowedRoles={['Admin']}><ManageUsers /></ProtectedRoute>} />
         <Route path="/admin/system" element={<ProtectedRoute allowedRoles={['Admin']}><SystemManagement /></ProtectedRoute>} />
-        <Route path="/admin/warehouse" element={<ProtectedRoute allowedRoles={['Admin', 'Manager', 'Warehouse']}><WarehouseManagement /></ProtectedRoute>} />
+        <Route path="/admin/backup" element={<ProtectedRoute allowedRoles={['Admin']}><BackupRestore /></ProtectedRoute>} />
+        <Route path="/admin/settings" element={<ProtectedRoute allowedRoles={['Admin']}><WebsiteSettings /></ProtectedRoute>} />
+        {/* Phân hệ Quản lý kho — 4 nhánh riêng */}
+        <Route path="/admin/warehouse" element={<Navigate to="/admin/warehouse/stock" replace />} />
+        <Route path="/admin/warehouse/stock" element={<ProtectedRoute allowedRoles={['Admin', 'Manager', 'Warehouse']}><WarehouseStock /></ProtectedRoute>} />
+        <Route path="/admin/warehouse/import" element={<ProtectedRoute allowedRoles={['Admin', 'Manager', 'Warehouse']}><WarehouseImport /></ProtectedRoute>} />
+        <Route path="/admin/warehouse/export" element={<ProtectedRoute allowedRoles={['Admin', 'Manager', 'Warehouse']}><WarehouseExport /></ProtectedRoute>} />
+        <Route path="/admin/warehouse/transfer" element={<ProtectedRoute allowedRoles={['Admin', 'Manager', 'Warehouse']}><WarehouseTransfer /></ProtectedRoute>} />
         <Route path="/admin/technical" element={<ProtectedRoute allowedRoles={['Admin', 'Manager']}><TechnicalManagement /></ProtectedRoute>} />
         <Route path="/admin/reports" element={<ProtectedRoute allowedRoles={['Admin', 'Manager', 'Accounting']}><ReportsManagement /></ProtectedRoute>} />
         <Route path="/admin/quotes" element={<ProtectedRoute allowedRoles={['Admin', 'Manager', 'SaleManager']}><ManageQuotes /></ProtectedRoute>} />

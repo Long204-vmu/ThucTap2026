@@ -101,7 +101,7 @@ const AnimatedStat = ({ label, value, suffix, decimal = 0 }) => {
 
 const About = () => {
   return (
-    <Content style={{ marginTop: 68, background: '#fff', minHeight: '100vh' }}>
+    <Content style={{ background: '#fff', minHeight: '100vh' }}>
 
       {/* ── 1. Hero Banner ─────────────────────────────────────── */}
       <div

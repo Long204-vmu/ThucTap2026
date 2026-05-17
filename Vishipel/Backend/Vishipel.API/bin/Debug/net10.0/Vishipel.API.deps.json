@@ -14,8 +14,7 @@
           "Microsoft.EntityFrameworkCore.Tools": "10.0.0",
           "Swashbuckle.AspNetCore": "6.6.2",
           "Vishipel.Core": "1.0.0",
-          "Vishipel.Infrastructure": "1.0.0",
-          "Vishipel.Services": "1.0.0"
+          "Vishipel.Infrastructure": "1.0.0"
         },
         "runtime": {
           "Vishipel.API.dll": {}
@@ -951,17 +950,6 @@
             "fileVersion": "1.0.0.0"
           }
         }
-      },
-      "Vishipel.Services/1.0.0": {
-        "dependencies": {
-          "Vishipel.Core": "1.0.0"
-        },
-        "runtime": {
-          "Vishipel.Services.dll": {
-            "assemblyVersion": "1.0.0.0",
-            "fileVersion": "1.0.0.0"
-          }
-        }
       }
     }
   },
@@ -1390,11 +1378,6 @@
       "sha512": ""
     },
     "Vishipel.Infrastructure/1.0.0": {
-      "type": "project",
-      "serviceable": false,
-      "sha512": ""
-    },
-    "Vishipel.Services/1.0.0": {
       "type": "project",
       "serviceable": false,
       "sha512": ""

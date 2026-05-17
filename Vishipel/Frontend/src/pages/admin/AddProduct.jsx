@@ -32,16 +32,24 @@ const AddProduct = () => {
         if (isEditMode) {
           const prodRes = await getProductById(id);
           const product = prodRes.data;
-          const existingImages = product.imagesJson ? JSON.parse(product.imagesJson) : [];
+          
+          // Map backend fields to form fields
+          const formData = {
+            name: product.tenThietBi,
+            model: product.model,
+            brand: product.hangSanXuat,
+            origin: product.xuatXu,
+            warranty: product.baoHanhThang,
+            shortDescription: product.moTaNgan,
+            description: product.moTaChiTiet,
+            categoryId: product.maLoai,
+            status: product.trangThai === 1 ? 'Còn hàng' : 'Ngừng kinh doanh',
+            dynamicSpecs: product.thongSoKyThuatJson ? JSON.parse(product.thongSoKyThuatJson) : []
+          };
 
-          // Lấy mảng thông số từ Database (nếu có) để Form.List tự động vẽ ra
-          const specsArray = product.specsJson ? JSON.parse(product.specsJson) : [];
+          const existingImages = product.hinhAnhJson ? JSON.parse(product.hinhAnhJson) : [];
           setUploadedImages(existingImages);
-
-          form.setFieldsValue({
-            ...product,
-            dynamicSpecs: specsArray // Gắn thẳng mảng này vào Form.List
-          });
+          form.setFieldsValue(formData);
         }
       } catch (err) {
         message.error("Lỗi khi tải dữ liệu khởi tạo");
@@ -59,37 +67,32 @@ const AddProduct = () => {
       const rawSpecs = values.dynamicSpecs || [];
       const validSpecs = rawSpecs.filter(item => item && item.label && item.value);
 
-      // --- SỬA LẠI ĐOẠN NÀY ---
+      // Map form fields back to backend fields
       const submitData = {
-        // Nếu là chế độ Sửa, bắt buộc phải có trường id ở đây
-        ...(isEditMode ? { id: parseInt(id) } : {}), 
-        name: values.name,
+        ...(isEditMode ? { maThietBi: parseInt(id) } : {}), 
+        tenThietBi: values.name,
         model: values.model,
-        brand: values.brand,
-        categoryId: values.categoryId,
-        status: values.status,
-        shortDescription: values.shortDescription,
-        description: values.description,
-        origin: values.origin,
-        warranty: values.warranty,
-        specsJson: JSON.stringify(validSpecs),
-        imagesJson: JSON.stringify(uploadedImages) 
+        hangSanXuat: values.brand,
+        maLoai: values.categoryId,
+        trangThai: values.status === 'Còn hàng' ? 1 : 0,
+        moTaNgan: values.shortDescription,
+        moTaChiTiet: values.description,
+        xuatXu: values.origin,
+        baoHanhThang: parseInt(values.warranty) || 12,
+        thongSoKyThuatJson: JSON.stringify(validSpecs),
+        hinhAnhJson: JSON.stringify(uploadedImages) 
       };
-      // -----------------------
 
       if (isEditMode) {
-        // Gọi PUT để cập nhật
         await updateProduct(id, submitData);
         message.success('Cập nhật thiết bị thành công!');
       } else {
-        // Gọi POST để thêm mới
         await createProduct(submitData);
         message.success('Thêm mới thiết bị thành công!');
       }
       
       navigate('/admin/products'); 
     } catch (err) {
-      // In lỗi ra console để chúng ta biết chính xác server đang báo lỗi gì
       console.error("Lỗi khi lưu:", err.response?.data);
       message.error(err.response?.data?.title || 'Có lỗi xảy ra khi lưu thiết bị.');
     } finally {
@@ -122,7 +125,7 @@ const AddProduct = () => {
                 </Row>
                 <Row gutter={16}>
                   <Col span={12}><Form.Item name="origin" label="Xuất xứ"><Input size="large" /></Form.Item></Col>
-                  <Col span={12}><Form.Item name="warranty" label="Chế độ bảo hành"><Input size="large" /></Form.Item></Col>
+                  <Col span={12}><Form.Item name="warranty" label="Bảo hành (tháng)"><Input type="number" size="large" /></Form.Item></Col>
                 </Row>
                 <Form.Item name="shortDescription" label="Mô tả ngắn"><TextArea rows={2} /></Form.Item>
                 <Form.Item name="description" label="Bài viết chi tiết"><TextArea rows={6} /></Form.Item>
@@ -144,15 +147,15 @@ const AddProduct = () => {
                   <Select 
                     size="large" 
                     placeholder="Gõ để tìm hoặc chọn danh mục..."
-                    showSearch // Bật tính năng gõ phím tìm kiếm
-                    optionFilterProp="children" // Tìm theo nội dung chữ hiển thị
+                    showSearch 
+                    optionFilterProp="children" 
                     filterOption={(input, option) =>
                       (option?.children ?? '').toLowerCase().includes(input.toLowerCase())
                     }
-                    listHeight={250} // Khống chế chiều cao danh sách xổ xuống tối đa 250px (khoảng 7 item), thừa sẽ tự có thanh cuộn
+                    listHeight={250} 
                   >
                     {categories.map(cat => (
-                      <Select.Option key={cat.id} value={cat.id}>{cat.name}</Select.Option>
+                      <Select.Option key={cat.maLoai} value={cat.maLoai}>{cat.tenLoai}</Select.Option>
                     ))}
                   </Select>
                 </Form.Item>
@@ -160,8 +163,6 @@ const AddProduct = () => {
                 <Form.Item name="status" label="Trạng thái hiện tại" initialValue="Còn hàng" rules={[{ required: true }]}>
                   <Select size="large">
                     <Select.Option value="Còn hàng">✅ Còn hàng</Select.Option>
-                    <Select.Option value="Hết hàng">❌ Hết hàng</Select.Option>
-                    <Select.Option value="Đang bảo trì">🛠️ Đang bảo trì / Sửa chữa</Select.Option>
                     <Select.Option value="Ngừng kinh doanh">⛔ Ngừng kinh doanh</Select.Option>
                   </Select>
                 </Form.Item>

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Card, Tag, Button, Badge } from 'antd';
-import { ArrowRightOutlined } from '@ant-design/icons';
+import { ArrowRightOutlined, ShoppingCartOutlined } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
 
 // 1. HÀM TẠO MÀU SẮC THÔNG MINH CHO TRẠNG THÁI
@@ -21,7 +21,7 @@ const getStatusTag = (status) => {
   return <Tag color="processing" style={{ fontWeight: 600 }}> {status}</Tag>;
 };
 
-const ProductCard = ({ item, isNew = false }) => {
+const ProductCard = ({ item, isNew = false, onAdd }) => {
   const [hovered, setHovered] = useState(false);
 
   const cardContent = (
@@ -60,19 +60,35 @@ const ProductCard = ({ item, isNew = false }) => {
         Model: <strong style={{ color: '#555' }}>{item.model}</strong>
       </div>
       
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto', gap: 8 }}>
         
         {/* 2. THAY THẾ GIÁ TIỀN BẰNG TRẠNG THÁI Ở ĐÂY */}
-        <div>{getStatusTag(item.status)}</div>
+        <div style={{ flex: 1 }}>{getStatusTag(item.status)}</div>
 
-        <Link to={`/products/${item.id}`}>
+        <div style={{ display: 'flex', gap: 6 }}>
           <Button
-            type={hovered ? 'primary' : 'default'} size="small" icon={<ArrowRightOutlined />}
-            style={{ borderRadius: 8, transition: 'all 0.2s' }}
-          >
-            Chi tiết
-          </Button>
-        </Link>
+            type="default"
+            size="small"
+            icon={<ShoppingCartOutlined />}
+            style={{ borderRadius: 8 }}
+            title="Thêm vào danh sách yêu cầu"
+            disabled={item.status !== 'Còn hàng'}
+            onClick={(e) => {
+              e.preventDefault();
+              onAdd?.(item);
+            }}
+          />
+          <Link to={`/products/${item.id}`}>
+            <Button
+              type={hovered ? 'primary' : 'default'}
+              size="small"
+              icon={<ArrowRightOutlined />}
+              style={{ borderRadius: 8, transition: 'all 0.2s' }}
+            >
+              Chi tiết
+            </Button>
+          </Link>
+        </div>
       </div>
     </Card>
   );

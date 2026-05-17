@@ -14,6 +14,8 @@ const MyRequests = () => {
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [rejectModalVisible, setRejectModalVisible] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
+  const [acceptModalVisible, setAcceptModalVisible] = useState(false);
+  const [shippingInfo, setShippingInfo] = useState({ receiverName: '', receiverPhone: '', shippingAddress: '', note: '' });
   const [actionLoading, setActionLoading] = useState(false);
 
   const formatPrice = (n) => n != null ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n) : 'Đang cập nhật';
@@ -38,11 +40,12 @@ const MyRequests = () => {
     setIsModalVisible(true);
   };
 
-  const handleAccept = async () => {
+  const handleAcceptSubmit = async () => {
     try {
       setActionLoading(true);
-      await apiClient.put(`/api/QuoteRequests/${selectedRequest.id}/accept`);
-      message.success('Bạn đã xác nhận báo giá thành công!');
+      await apiClient.put(`/api/QuoteRequests/${selectedRequest.id}/accept`, shippingInfo);
+      message.success('Bạn đã xác nhận báo giá và điền thông tin giao hàng thành công!');
+      setAcceptModalVisible(false);
       setIsModalVisible(false);
       fetchRequests();
     } catch (err) {
@@ -128,7 +131,7 @@ const MyRequests = () => {
   ];
 
   return (
-    <div style={{ padding: '40px 5%', marginTop: 68, minHeight: '80vh', background: '#f5f7fa' }}>
+    <div style={{ padding: '40px 5%', minHeight: '80vh', background: '#f5f7fa' }}>
       <div style={{ background: '#fff', padding: '32px 24px', borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.05)', maxWidth: 1200, margin: '0 auto' }}>
         <Title level={3} style={{ marginBottom: 24, color: '#001529' }}>Lịch sử Yêu cầu Báo giá</Title>
         <Table 
@@ -151,8 +154,7 @@ const MyRequests = () => {
                 <Button 
                   type="primary" 
                   icon={<CheckCircleOutlined />} 
-                  onClick={handleAccept} 
-                  loading={actionLoading}
+                  onClick={() => setAcceptModalVisible(true)} 
                   style={{ background: '#52c41a', borderColor: '#52c41a' }}
                 >
                   ✅ Xác nhận Báo giá
@@ -242,6 +244,56 @@ const MyRequests = () => {
           value={rejectReason}
           onChange={(e) => setRejectReason(e.target.value)}
         />
+      </Modal>
+
+      {/* Modal đồng ý - điền thông tin giao hàng */}
+      <Modal
+        title="Xác nhận báo giá & Thông tin giao hàng"
+        open={acceptModalVisible}
+        onCancel={() => setAcceptModalVisible(false)}
+        onOk={handleAcceptSubmit}
+        okText="Chốt Đơn"
+        okButtonProps={{ loading: actionLoading, style: { background: '#52c41a', borderColor: '#52c41a' } }}
+        cancelText="Hủy"
+      >
+        <p style={{ marginBottom: 16 }}>Vui lòng cung cấp thông tin để chúng tôi tạo đơn hàng và tiến hành giao hàng/lắp đặt cho bạn:</p>
+        
+        <div style={{ marginBottom: 12 }}>
+          <div style={{ marginBottom: 4, fontWeight: 500 }}>Tên người nhận hàng <span style={{color: 'red'}}>*</span></div>
+          <Input 
+            placeholder="Nhập tên người nhận" 
+            value={shippingInfo.receiverName}
+            onChange={(e) => setShippingInfo({...shippingInfo, receiverName: e.target.value})}
+          />
+        </div>
+        
+        <div style={{ marginBottom: 12 }}>
+          <div style={{ marginBottom: 4, fontWeight: 500 }}>Số điện thoại liên hệ <span style={{color: 'red'}}>*</span></div>
+          <Input 
+            placeholder="Nhập SĐT người nhận" 
+            value={shippingInfo.receiverPhone}
+            onChange={(e) => setShippingInfo({...shippingInfo, receiverPhone: e.target.value})}
+          />
+        </div>
+        
+        <div style={{ marginBottom: 12 }}>
+          <div style={{ marginBottom: 4, fontWeight: 500 }}>Địa chỉ giao hàng/lắp đặt <span style={{color: 'red'}}>*</span></div>
+          <Input 
+            placeholder="Nhập địa chỉ chi tiết" 
+            value={shippingInfo.shippingAddress}
+            onChange={(e) => setShippingInfo({...shippingInfo, shippingAddress: e.target.value})}
+          />
+        </div>
+
+        <div style={{ marginBottom: 12 }}>
+          <div style={{ marginBottom: 4, fontWeight: 500 }}>Ghi chú thêm cho đơn hàng (Tùy chọn)</div>
+          <TextArea 
+            rows={2}
+            placeholder="Yêu cầu riêng về thời gian, kỹ thuật..." 
+            value={shippingInfo.note}
+            onChange={(e) => setShippingInfo({...shippingInfo, note: e.target.value})}
+          />
+        </div>
       </Modal>
     </div>
   );

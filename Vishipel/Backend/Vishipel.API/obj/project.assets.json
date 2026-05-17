@@ -1334,19 +1334,6 @@
         "runtime": {
           "bin/placeholder/Vishipel.Infrastructure.dll": {}
         }
-      },
-      "Vishipel.Services/1.0.0": {
-        "type": "project",
-        "framework": ".NETCoreApp,Version=v10.0",
-        "dependencies": {
-          "Vishipel.Core": "1.0.0"
-        },
-        "compile": {
-          "bin/placeholder/Vishipel.Services.dll": {}
-        },
-        "runtime": {
-          "bin/placeholder/Vishipel.Services.dll": {}
-        }
       }
     }
   },
@@ -4020,11 +4007,6 @@
       "type": "project",
       "path": "../Vishipel.Infrastructure/Vishipel.Infrastructure.csproj",
       "msbuildProject": "../Vishipel.Infrastructure/Vishipel.Infrastructure.csproj"
-    },
-    "Vishipel.Services/1.0.0": {
-      "type": "project",
-      "path": "../Vishipel.Services/Vishipel.Services.csproj",
-      "msbuildProject": "../Vishipel.Services/Vishipel.Services.csproj"
     }
   },
   "projectFileDependencyGroups": {
@@ -4035,8 +4017,7 @@
       "Microsoft.EntityFrameworkCore.Tools >= 10.0.0",
       "Swashbuckle.AspNetCore >= 6.6.2",
       "Vishipel.Core >= 1.0.0",
-      "Vishipel.Infrastructure >= 1.0.0",
-      "Vishipel.Services >= 1.0.0"
+      "Vishipel.Infrastructure >= 1.0.0"
     ]
   },
   "packageFolders": {
@@ -4076,9 +4057,6 @@
             },
             "C:\\Users\\edloc\\Documents\\GitHub\\ThucTap2026\\Vishipel\\Backend\\Vishipel.Infrastructure\\Vishipel.Infrastructure.csproj": {
               "projectPath": "C:\\Users\\edloc\\Documents\\GitHub\\ThucTap2026\\Vishipel\\Backend\\Vishipel.Infrastructure\\Vishipel.Infrastructure.csproj"
-            },
-            "C:\\Users\\edloc\\Documents\\GitHub\\ThucTap2026\\Vishipel\\Backend\\Vishipel.Services\\Vishipel.Services.csproj": {
-              "projectPath": "C:\\Users\\edloc\\Documents\\GitHub\\ThucTap2026\\Vishipel\\Backend\\Vishipel.Services\\Vishipel.Services.csproj"
             }
           }
         }

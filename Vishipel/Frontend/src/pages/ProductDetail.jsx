@@ -33,16 +33,26 @@ const ProductDetail = () => {
         const data = res.data;
         
         // Parse dữ liệu JSON từ SQL Server và gắn tiền tố ảnh
-        data.images = data.imagesJson 
-          ? JSON.parse(data.imagesJson).map(img => {
+        data.images = data.hinhAnhJson 
+          ? JSON.parse(data.hinhAnhJson).map(img => {
               const fileName = img.split('/').pop();
               return `${BACKEND_ORIGIN}/image/${fileName}`;
             }) 
           : ['https://via.placeholder.com/600x400?text=No+Image'];
           
-        data.specs = data.specsJson ? JSON.parse(data.specsJson) : [];
-        data.certs = data.certificationsJson ? JSON.parse(data.certificationsJson) : [];
+        data.specs = data.thongSoKyThuatJson ? JSON.parse(data.thongSoKyThuatJson) : [];
+        data.certs = data.chungChiJson ? JSON.parse(data.chungChiJson) : [];
         
+        // Map fields to original names for UI consistency or update UI
+        data.id = data.maThietBi;
+        data.name = data.tenThietBi;
+        data.brand = data.hangSanXuat;
+        data.price = data.giaBan;
+        data.description = data.moTaChiTiet;
+        data.origin = data.xuatXu;
+        data.warranty = data.baoHanhThang ? `${data.baoHanhThang} tháng` : 'Theo tiêu chuẩn NSX';
+        data.status = data.trangThai === 1 ? 'Còn hàng' : 'Hết hàng / Ngừng bán';
+
         setProduct(data);
         setError(null);
       } catch (err) {
@@ -101,7 +111,7 @@ const ProductDetail = () => {
   }
 
   return (
-    <div style={{ marginTop: 68, minHeight: '100vh', background: '#f5f7fa', paddingBottom: 60 }}>
+    <div style={{ minHeight: '100vh', background: '#f5f7fa', paddingBottom: 60 }}>
       
       {/* Breadcrumb Header */}
       <div style={{ background: '#fff', borderBottom: '1px solid #f0f0f0', padding: '16px 5%' }}>

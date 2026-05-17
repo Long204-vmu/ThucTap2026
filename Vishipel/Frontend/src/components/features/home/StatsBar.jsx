@@ -17,7 +17,7 @@ const StatsBar = () => {
           <Col xs={12} sm={6} key={i} style={{ textAlign: 'center' }}>
             <Statistic
               value={s.value} suffix={s.suffix} precision={s.precision ?? 0}
-              valueStyle={{ color: '#1677ff', fontWeight: 700, fontSize: 32 }}
+              styles={{ content: { color: '#1677ff', fontWeight: 700, fontSize: 32 } }}
             />
             <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, marginTop: 4 }}>{s.label}</div>
           </Col>

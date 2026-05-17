@@ -7,114 +7,131 @@ namespace Vishipel.Infrastructure.Data
     {
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
-        // ── Existing ──
-        public DbSet<Category> Categories { get; set; }
-        public DbSet<Product> Products { get; set; }
-        public DbSet<User> Users { get; set; }
+        // 1. Nhóm Hệ thống & Phân quyền
+        public DbSet<VaiTro> VaiTros { get; set; }
+        public DbSet<ChiNhanh> ChiNhanhs { get; set; }
+        public DbSet<TaiKhoan> TaiKhoans { get; set; }
+        public DbSet<NhatKyHeThong> NhatKyHeThongs { get; set; }
+
+        // 2. Nhóm Danh mục & Đối tác
+        public DbSet<LoaiThietBi> LoaiThietBis { get; set; }
+        public DbSet<DonViTinh> DonViTinhs { get; set; }
+        public DbSet<NhaCungCap> NhaCungCaps { get; set; }
+        public DbSet<KhachHang> KhachHangs { get; set; }
+
+        // 3. Nhóm Thiết bị
+        public DbSet<ThietBi> ThietBis { get; set; }
+        public DbSet<DanhMucSeri> DanhMucSeris { get; set; }
+        public DbSet<ThanhLyHangHoa> ThanhLyHangHoas { get; set; }
+
+        // 4. Nhóm Bán hàng & Hợp đồng
+        public DbSet<DonDatHang> DonDatHangs { get; set; }
+        public DbSet<ChiTietDonHang> ChiTietDonHangs { get; set; }
+        public DbSet<HopDong> HopDongs { get; set; }
+        public DbSet<HoaDon> HoaDons { get; set; }
+
+        // 5. Nhóm Kho & Tồn kho
+        public DbSet<Kho> Khos { get; set; }
+        public DbSet<PhieuNhapKho> PhieuNhapKhos { get; set; }
+        public DbSet<ChiTietNhapKho> ChiTietNhapKhos { get; set; }
+        public DbSet<PhieuXuatKho> PhieuXuatKhos { get; set; }
+        public DbSet<ChiTietXuatKho> ChiTietXuatKhos { get; set; }
+        public DbSet<TonKhoChiTiet> TonKhoChiTiets { get; set; }
+
+        // 6. Nhóm Tài chính & Công nợ
+        public DbSet<PhieuThu> PhieuThus { get; set; }
+        public DbSet<PhieuChi> PhieuChis { get; set; }
+        public DbSet<KeHoachCongNo> KeHoachCongNos { get; set; }
+
+        // 7. Nhóm Website & Tương tác
+        public DbSet<YeuCauHoTro> YeuCauHoTros { get; set; }
+        public DbSet<CauHinhHeThong> CauHinhHeThongs { get; set; }
         public DbSet<QuoteRequest> QuoteRequests { get; set; }
         public DbSet<QuoteRequestItem> QuoteRequestItems { get; set; }
-        public DbSet<ProductReview> ProductReviews { get; set; }
-
-        // ── New: Business Workflow ──
-        public DbSet<Order> Orders { get; set; }
-        public DbSet<OrderItem> OrderItems { get; set; }
-        public DbSet<Contract> Contracts { get; set; }
-        public DbSet<DeliveryOrder> DeliveryOrders { get; set; }
-        public DbSet<Invoice> Invoices { get; set; }
-        public DbSet<PaymentSchedule> PaymentSchedules { get; set; }
-        public DbSet<WarrantyRecord> WarrantyRecords { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+
             base.OnModelCreating(modelBuilder);
 
-            // Quan hệ 1-1: Order ↔ Contract
-            modelBuilder.Entity<Order>()
-                .HasOne(o => o.Contract)
-                .WithOne(c => c.Order)
-                .HasForeignKey<Contract>(c => c.OrderId)
-                .OnDelete(DeleteBehavior.Restrict);
+            // Composite Keys
+            modelBuilder.Entity<ChiTietDonHang>()
+                .HasKey(c => new { c.MaDonHang, c.MaThietBi });
 
-            // Quan hệ 1-1: Order ↔ DeliveryOrder
-            modelBuilder.Entity<Order>()
-                .HasOne(o => o.DeliveryOrder)
-                .WithOne(d => d.Order)
-                .HasForeignKey<DeliveryOrder>(d => d.OrderId)
-                .OnDelete(DeleteBehavior.Restrict);
+            modelBuilder.Entity<ChiTietNhapKho>()
+                .HasKey(c => new { c.MaPhieuNhap, c.MaThietBi });
 
-            // Quan hệ 1-1: Order ↔ Invoice
-            modelBuilder.Entity<Order>()
-                .HasOne(o => o.Invoice)
-                .WithOne(i => i.Order)
-                .HasForeignKey<Invoice>(i => i.OrderId)
-                .OnDelete(DeleteBehavior.Restrict);
+            modelBuilder.Entity<TonKhoChiTiet>()
+                .HasKey(t => new { t.MaKho, t.MaThietBi });
 
-            // Quan hệ 1-N: Order ↔ OrderItems
-            modelBuilder.Entity<OrderItem>()
-                .HasOne(oi => oi.Order)
-                .WithMany(o => o.Items)
-                .HasForeignKey(oi => oi.OrderId)
+            // Relationships Configuration
+            
+            // DonDatHang ↔ ChiTietDonHang
+            modelBuilder.Entity<ChiTietDonHang>()
+                .HasOne(c => c.DonDatHang)
+                .WithMany(d => d.ChiTietDonHangs)
+                .HasForeignKey(c => c.MaDonHang)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // Quan hệ 1-N: Order ↔ PaymentSchedules
-            modelBuilder.Entity<PaymentSchedule>()
-                .HasOne(ps => ps.Order)
-                .WithMany(o => o.PaymentSchedules)
-                .HasForeignKey(ps => ps.OrderId)
+            // PhieuNhapKho ↔ ChiTietNhapKho
+            modelBuilder.Entity<ChiTietNhapKho>()
+                .HasOne(c => c.PhieuNhapKho)
+                .WithMany(p => p.ChiTietNhapKhos)
+                .HasForeignKey(c => c.MaPhieuNhap)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // Quan hệ 1-N: OrderItem ↔ WarrantyRecords
-            modelBuilder.Entity<WarrantyRecord>()
-                .HasOne(w => w.OrderItem)
-                .WithMany(oi => oi.WarrantyRecords)
-                .HasForeignKey(w => w.OrderItemId)
+            modelBuilder.Entity<ChiTietXuatKho>()
+                .HasKey(c => new { c.MaPhieuXuat, c.MaThietBi });
+
+            modelBuilder.Entity<ChiTietXuatKho>()
+                .HasOne(c => c.PhieuXuatKho)
+                .WithMany(p => p.ChiTietXuatKhos)
+                .HasForeignKey(c => c.MaPhieuXuat)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // Tránh cascade cycle cho Order → Customer
-            modelBuilder.Entity<Order>()
-                .HasOne(o => o.Customer)
-                .WithMany()
-                .HasForeignKey(o => o.CustomerId)
-                .OnDelete(DeleteBehavior.Restrict);
+            // Precision for Decimal types
+            foreach (var property in modelBuilder.Model.GetEntityTypes()
+                .SelectMany(t => t.GetProperties())
+                .Where(p => p.ClrType == typeof(decimal) || p.ClrType == typeof(decimal?)))
+            {
+                property.SetPrecision(15);
+                property.SetScale(2);
+            }
 
-            // Tránh cascade cycle cho DeliveryOrder → WarehouseStaff
-            modelBuilder.Entity<DeliveryOrder>()
-                .HasOne(d => d.WarehouseStaff)
-                .WithMany()
-                .HasForeignKey(d => d.WarehouseStaffId)
-                .OnDelete(DeleteBehavior.Restrict);
+            // Unsigned Vietnamese Table Naming (Optional but requested by user in SQL script)
+            // If the user wants the exact names from the script:
+            modelBuilder.Entity<VaiTro>().ToTable("VaiTro");
+            
+            modelBuilder.Entity<ChiNhanh>().ToTable("ChiNhanh");
 
-            // Tránh cascade cycle cho OrderItem → Product
-            modelBuilder.Entity<OrderItem>()
-                .HasOne(oi => oi.Product)
-                .WithMany()
-                .HasForeignKey(oi => oi.ProductId)
-                .OnDelete(DeleteBehavior.Restrict);
 
-            // Tránh cascade cycle cho WarrantyRecord → Product
-            modelBuilder.Entity<WarrantyRecord>()
-                .HasOne(w => w.Product)
-                .WithMany()
-                .HasForeignKey(w => w.ProductId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            // Product ↔ ProductReview
-            modelBuilder.Entity<ProductReview>()
-                .HasOne(pr => pr.Product)
-                .WithMany(p => p.Reviews)
-                .HasForeignKey(pr => pr.ProductId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            // User ↔ ProductReview
-            modelBuilder.Entity<ProductReview>()
-                .HasOne(pr => pr.User)
-                .WithMany()
-                .HasForeignKey(pr => pr.UserId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            modelBuilder.Entity<ProductReview>()
-                .HasIndex(pr => new { pr.ProductId, pr.UserId })
-                .IsUnique();
+            modelBuilder.Entity<TaiKhoan>().ToTable("TaiKhoan");
+            modelBuilder.Entity<LoaiThietBi>().ToTable("LoaiThietBi");
+            modelBuilder.Entity<DonViTinh>().ToTable("DonViTinh");
+            modelBuilder.Entity<NhaCungCap>().ToTable("NhaCungCap");
+            modelBuilder.Entity<KhachHang>().ToTable("KhachHang");
+            modelBuilder.Entity<ThietBi>().ToTable("ThietBi");
+            modelBuilder.Entity<DonDatHang>().ToTable("DonDatHang");
+            modelBuilder.Entity<ChiTietDonHang>().ToTable("ChiTietDonHang");
+            modelBuilder.Entity<HopDong>().ToTable("HopDong");
+            modelBuilder.Entity<HoaDon>().ToTable("HoaDon");
+            modelBuilder.Entity<Kho>().ToTable("Kho");
+            modelBuilder.Entity<PhieuNhapKho>().ToTable("PhieuNhapKho");
+            modelBuilder.Entity<ChiTietNhapKho>().ToTable("ChiTietNhapKho");
+            modelBuilder.Entity<PhieuXuatKho>().ToTable("PhieuXuatKho");
+            modelBuilder.Entity<ChiTietXuatKho>().ToTable("ChiTietXuatKho");
+            modelBuilder.Entity<TonKhoChiTiet>().ToTable("TonKhoChiTiet");
+            modelBuilder.Entity<DanhMucSeri>().ToTable("DanhMucSeri");
+            modelBuilder.Entity<ThanhLyHangHoa>().ToTable("ThanhLyHangHoa");
+            modelBuilder.Entity<PhieuThu>().ToTable("PhieuThu");
+            modelBuilder.Entity<PhieuChi>().ToTable("PhieuChi");
+            modelBuilder.Entity<KeHoachCongNo>().ToTable("KeHoachCongNo");
+            modelBuilder.Entity<YeuCauHoTro>().ToTable("YeuCauHoTro");
+            modelBuilder.Entity<NhatKyHeThong>().ToTable("NhatKyHeThong");
+            modelBuilder.Entity<CauHinhHeThong>().ToTable("CauHinhHeThong");
+            modelBuilder.Entity<QuoteRequest>().ToTable("QuoteRequests");
+            modelBuilder.Entity<QuoteRequestItem>().ToTable("QuoteRequestItems");
         }
+
     }
 }

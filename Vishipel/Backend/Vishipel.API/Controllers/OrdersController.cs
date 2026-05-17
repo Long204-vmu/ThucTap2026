@@ -7,7 +7,7 @@ using System.Security.Claims;
 
 namespace Vishipel.API.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/Orders")]
     [ApiController]
     [Authorize]
     public class OrdersController : ControllerBase
@@ -19,186 +19,265 @@ namespace Vishipel.API.Controllers
             _context = context;
         }
 
-        // ── DTOs ──
-        public class CreateOrderDto
+        // 1. LẤY TẤT CẢ ĐƠN HÀNG (Admin)
+        [HttpGet]
+        [Authorize(Roles = "Admin,Manager,SaleManager,Warehouse,Accounting")]
+        public async Task<ActionResult<IEnumerable<DonDatHang>>> GetOrders()
         {
+            return await _context.DonDatHangs
+                .Include(o => o.KhachHang)
+                .Include(o => o.TaiKhoan)
+                .Include(o => o.QuoteRequest)
+                .Include(o => o.ChiTietDonHangs)
+                    .ThenInclude(d => d.ThietBi)
+                .Include(o => o.Contract)
+                    .ThenInclude(c => c.PhieuThus)
+                .Include(o => o.Invoice)
+                .OrderByDescending(o => o.NgayDat)
+                .ToListAsync();
+        }
+
+        // 2. TẠO ĐƠN HÀNG MỚI (Admin)
+        [HttpPost]
+        [Authorize(Roles = "Admin,Manager,SaleManager")]
+        public async Task<ActionResult<DonDatHang>> PostOrder(OrderCreateDto dto)
+        {
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(userIdStr, out int userId)) return Unauthorized();
+
+            // Lấy thông tin báo giá để lấy MaKH nếu có
+            var quote = await _context.QuoteRequests.FindAsync(dto.QuoteRequestId);
+            
+            var order = new DonDatHang
+            {
+                OrderCode = "DH" + DateTime.Now.ToString("yyyyMMdd") + new Random().Next(1000, 9999),
+                NgayDat = DateTime.Now,
+                QuoteRequestId = dto.QuoteRequestId,
+                MaTaiKhoan = userId,
+                MaKH = dto.MaKH,
+                Note = dto.Note,
+                PaymentMethod = dto.PaymentMethod,
+                Status = "AwaitingConfirmation",
+                
+                // Logistics
+                ShippingAddress = dto.ShippingAddress,
+                ShippingMethod = dto.ShippingMethod,
+                ShippingCost = dto.ShippingCost,
+                ExpectedDeliveryDate = dto.ExpectedDeliveryDate,
+                ReceiverName = dto.ReceiverName,
+                ReceiverPhone = dto.ReceiverPhone,
+
+                // Billing
+                BillingInfo = dto.BillingInfo,
+                IsDepositPaid = dto.IsDepositPaid,
+
+                // Operations
+                AssigneeId = dto.AssigneeId,
+                WarehouseId = dto.WarehouseId,
+                Deadline = dto.Deadline,
+
+                // Technical
+                WarrantyTerms = dto.WarrantyTerms,
+                TechnicalNotes = dto.TechnicalNotes,
+
+                ChiTietDonHangs = dto.Items.Select(i => new ChiTietDonHang
+                {
+                    MaThietBi = i.ProductId,
+                    SoLuong = i.SoLuong,
+                    DonGia = i.UnitPrice
+                }).ToList(),
+                PaymentSchedules = dto.PaymentSchedules.Select(ps => new KeHoachCongNo
+                {
+                    PhaseName = ps.PhaseName,
+                    PhaseOrder = ps.PhaseOrder,
+                    Percentage = ps.Percentage,
+                    GhiChu = ps.Note,
+                    Status = "Pending"
+                }).ToList()
+            };
+
+            order.TongGiaTri = order.ChiTietDonHangs.Sum(i => i.SoLuong * i.DonGia) + (dto.ShippingCost ?? 0);
+            
+            // Cập nhật trạng thái báo giá
+            if (quote != null) quote.Status = "Accepted";
+
+            _context.DonDatHangs.Add(order);
+            await _context.SaveChangesAsync();
+
+            return Ok(order);
+        }
+
+        // 3. DANH SÁCH ĐƠN HÀNG CỦA TÔI (Khách hàng)
+        [HttpGet("my-orders")]
+        public async Task<ActionResult<IEnumerable<DonDatHang>>> GetMyOrders()
+        {
+            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(userIdStr, out int userId)) return Unauthorized();
+
+            return await _context.DonDatHangs
+                .Include(o => o.ChiTietDonHangs)
+                    .ThenInclude(ct => ct.ThietBi)
+                .Include(o => o.Contract)
+                    .ThenInclude(c => c.PhieuThus)
+                .Include(o => o.Invoice)
+                .Include(o => o.PaymentSchedules)
+                .Where(o => o.MaTaiKhoan == userId)
+                .OrderByDescending(o => o.NgayDat)
+                .ToListAsync();
+        }
+
+        // 4. CHI TIẾT ĐƠN HÀNG
+        [HttpGet("{id}")]
+        public async Task<ActionResult<DonDatHang>> GetOrder(int id)
+        {
+            var order = await _context.DonDatHangs
+                .Include(o => o.KhachHang)
+                .Include(o => o.TaiKhoan)
+                .Include(o => o.Assignee)
+                .Include(o => o.Warehouse)
+                .Include(o => o.ChiTietDonHangs)
+                    .ThenInclude(d => d.ThietBi)
+                .Include(o => o.PaymentSchedules)
+                .Include(o => o.Contract)
+                    .ThenInclude(c => c.PhieuThus)
+                .Include(o => o.Invoice)
+                .FirstOrDefaultAsync(o => o.MaDonHang == id);
+
+            if (order == null) return NotFound();
+            return Ok(order);
+        }
+
+        public class OrderCreateDto
+        {
+            public int? MaKH { get; set; }
             public int QuoteRequestId { get; set; }
-            public string PaymentMethod { get; set; } = "HợpĐồng";
             public string? Note { get; set; }
+            public string? PaymentMethod { get; set; }
+            
+            // Logistics
+            public string? ShippingAddress { get; set; }
+            public string? ShippingMethod { get; set; }
+            public decimal? ShippingCost { get; set; }
+            public DateTime? ExpectedDeliveryDate { get; set; }
+            public string? ReceiverName { get; set; }
+            public string? ReceiverPhone { get; set; }
+
+            // Billing
+            public string? BillingInfo { get; set; }
+            public bool IsDepositPaid { get; set; }
+
+            // Operations
+            public int? AssigneeId { get; set; }
+            public byte? WarehouseId { get; set; }
+            public DateTime? Deadline { get; set; }
+
+            // Technical
+            public string? WarrantyTerms { get; set; }
+            public string? TechnicalNotes { get; set; }
+
             public List<OrderItemDto> Items { get; set; } = new();
-            public List<PaymentPhaseDto>? PaymentSchedules { get; set; }
+            public List<PaymentScheduleDto> PaymentSchedules { get; set; } = new();
         }
 
         public class OrderItemDto
         {
             public int ProductId { get; set; }
-            public string ProductName { get; set; } = "";
-            public string? Unit { get; set; } = "Cái";
-            public int Quantity { get; set; } = 1;
+            public int SoLuong { get; set; }
             public decimal UnitPrice { get; set; }
-            public string? SerialNumbersJson { get; set; }
-            public string? InstallLocation { get; set; }
         }
 
-        public class PaymentPhaseDto
+        public class PaymentScheduleDto
         {
-            public string PhaseName { get; set; } = "";
+            public string? PhaseName { get; set; }
             public int PhaseOrder { get; set; }
-            public decimal Percentage { get; set; }
-            public DateTime? DueDate { get; set; }
+            public int Percentage { get; set; }
             public string? Note { get; set; }
         }
 
-        public class UpdateStatusDto
+        [HttpPut("{id}")]
+        [Authorize(Roles = "Admin,Manager,SaleManager")]
+        public async Task<IActionResult> UpdateOrder(int id, [FromBody] OrderCreateDto dto)
         {
-            public string Status { get; set; } = "";
-        }
+            var order = await _context.DonDatHangs
+                .Include(o => o.ChiTietDonHangs)
+                .Include(o => o.PaymentSchedules)
+                .FirstOrDefaultAsync(o => o.MaDonHang == id);
 
-        // ── Sinh mã đơn hàng tự động ──
-        private async Task<string> GenerateOrderCode()
-        {
-            var year = DateTime.UtcNow.Year;
-            var count = await _context.Orders.CountAsync(o => o.CreatedAt.Year == year);
-            return $"DH-{year}-{(count + 1):D5}";
-        }
+            if (order == null) return NotFound("Đơn hàng không tồn tại.");
 
-        // 1. TẠO ĐƠN HÀNG TỪ BÁO GIÁ ĐÃ ĐƯỢC XÁC NHẬN
-        [HttpPost]
-        [Authorize(Roles = "Admin, Manager, SaleManager")]
-        public async Task<ActionResult<Order>> CreateOrder(CreateOrderDto dto)
-        {
-            var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out int userId))
-                return Unauthorized();
+            // Update simple fields
+            order.MaKH = dto.MaKH;
+            order.Note = dto.Note;
+            order.PaymentMethod = dto.PaymentMethod;
+            order.ShippingAddress = dto.ShippingAddress;
+            order.ShippingMethod = dto.ShippingMethod;
+            order.ShippingCost = dto.ShippingCost;
+            order.ExpectedDeliveryDate = dto.ExpectedDeliveryDate;
+            order.ReceiverName = dto.ReceiverName;
+            order.ReceiverPhone = dto.ReceiverPhone;
+            order.BillingInfo = dto.BillingInfo;
+            order.IsDepositPaid = dto.IsDepositPaid;
+            order.AssigneeId = dto.AssigneeId;
+            order.WarehouseId = dto.WarehouseId;
+            order.Deadline = dto.Deadline;
+            order.WarrantyTerms = dto.WarrantyTerms;
+            order.TechnicalNotes = dto.TechnicalNotes;
 
-            // Kiểm tra QuoteRequest tồn tại và đã được Accepted
-            var quote = await _context.QuoteRequests
-                .Include(q => q.Items)
-                .FirstOrDefaultAsync(q => q.Id == dto.QuoteRequestId);
-
-            if (quote == null) return NotFound(new { message = "Không tìm thấy yêu cầu báo giá." });
-            if (quote.Status != "Accepted") return BadRequest(new { message = "Báo giá chưa được khách hàng xác nhận." });
-
-            // Kiểm tra chưa có đơn hàng nào cho báo giá này
-            var existingOrder = await _context.Orders.AnyAsync(o => o.QuoteRequestId == dto.QuoteRequestId);
-            if (existingOrder) return BadRequest(new { message = "Đã có đơn hàng cho báo giá này." });
-
-            var order = new Order
+            // Update items
+            _context.ChiTietDonHangs.RemoveRange(order.ChiTietDonHangs);
+            order.ChiTietDonHangs = dto.Items.Select(i => new ChiTietDonHang
             {
-                OrderCode = await GenerateOrderCode(),
-                QuoteRequestId = dto.QuoteRequestId,
-                CustomerId = quote.UserId,
-                CreatedByUserId = userId,
-                Status = "Created",
-                PaymentMethod = dto.PaymentMethod,
-                Note = dto.Note,
-                CreatedAt = DateTime.UtcNow,
-                Items = dto.Items.Select(i => new OrderItem
-                {
-                    ProductId = i.ProductId,
-                    ProductName = i.ProductName,
-                    Unit = i.Unit,
-                    Quantity = i.Quantity,
-                    UnitPrice = i.UnitPrice,
-                    TotalPrice = i.Quantity * i.UnitPrice,
-                    SerialNumbersJson = i.SerialNumbersJson,
-                    InstallLocation = i.InstallLocation
-                }).ToList()
-            };
+                MaThietBi = i.ProductId,
+                SoLuong = i.SoLuong,
+                DonGia = i.UnitPrice
+            }).ToList();
 
-            order.TotalAmount = order.Items.Sum(i => i.TotalPrice);
-
-            // Tạo lịch thanh toán theo đợt (nếu có)
-            if (dto.PaymentSchedules != null && dto.PaymentSchedules.Any())
+            // Update payment schedules
+            _context.KeHoachCongNos.RemoveRange(order.PaymentSchedules);
+            order.PaymentSchedules = dto.PaymentSchedules.Select(p => new KeHoachCongNo
             {
-                order.PaymentSchedules = dto.PaymentSchedules.Select(ps => new PaymentSchedule
-                {
-                    PhaseName = ps.PhaseName,
-                    PhaseOrder = ps.PhaseOrder,
-                    Percentage = ps.Percentage,
-                    Amount = order.TotalAmount * ps.Percentage / 100,
-                    DueDate = ps.DueDate,
-                    Status = "Pending",
-                    Note = ps.Note
-                }).ToList();
-            }
+                PhaseName = p.PhaseName,
+                PhaseOrder = p.PhaseOrder,
+                Percentage = p.Percentage,
+                GhiChu = p.Note
+            }).ToList();
 
-            _context.Orders.Add(order);
+            order.TongGiaTri = order.ChiTietDonHangs.Sum(x => x.SoLuong * x.DonGia) + (order.ShippingCost ?? 0);
+
             await _context.SaveChangesAsync();
-
-            return Ok(order);
+            return Ok();
         }
 
-        // 2. LẤY TẤT CẢ ĐƠN HÀNG (Admin/Sale)
-        [HttpGet]
-        [Authorize(Roles = "Admin, Manager, SaleManager, Warehouse, Accounting")]
-        public async Task<ActionResult<IEnumerable<Order>>> GetAllOrders()
-        {
-            var orders = await _context.Orders
-                .Include(o => o.Customer)
-                .Include(o => o.Items)
-                .Include(o => o.Contract)
-                .Include(o => o.DeliveryOrder)
-                .Include(o => o.Invoice)
-                .Include(o => o.PaymentSchedules)
-                .OrderByDescending(o => o.CreatedAt)
-                .ToListAsync();
-
-            return Ok(orders);
-        }
-
-        // 3. CHI TIẾT ĐƠN HÀNG
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Order>> GetOrder(int id)
-        {
-            var order = await _context.Orders
-                .Include(o => o.Customer)
-                .Include(o => o.Items)
-                .Include(o => o.Contract)
-                .Include(o => o.DeliveryOrder)
-                .Include(o => o.Invoice)
-                .Include(o => o.PaymentSchedules)
-                .Include(o => o.QuoteRequest)
-                .FirstOrDefaultAsync(o => o.Id == id);
-
-            if (order == null) return NotFound();
-            return Ok(order);
-        }
-
-        // 4. ĐƠN HÀNG CỦA KHÁCH
-        [HttpGet("my-orders")]
-        public async Task<ActionResult<IEnumerable<Order>>> GetMyOrders()
-        {
-            var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out int userId))
-                return Unauthorized();
-
-            var orders = await _context.Orders
-                .Include(o => o.Items)
-                .Include(o => o.Contract)
-                .Include(o => o.DeliveryOrder)
-                .Include(o => o.Invoice)
-                .Include(o => o.PaymentSchedules)
-                .Where(o => o.CustomerId == userId)
-                .OrderByDescending(o => o.CreatedAt)
-                .ToListAsync();
-
-            return Ok(orders);
-        }
-
-        // 5. CẬP NHẬT TRẠNG THÁI ĐƠN HÀNG
+        // 5. CẬP NHẬT TRẠNG THÁI ĐƠN HÀNG (Admin/Manager)
         [HttpPut("{id}/status")]
-        [Authorize(Roles = "Admin, Manager, SaleManager")]
-        public async Task<IActionResult> UpdateStatus(int id, UpdateStatusDto dto)
+        [Authorize(Roles = "Admin,Manager,SaleManager,Warehouse,Accounting")]
+        public async Task<IActionResult> UpdateOrderStatus(int id, [FromBody] OrderStatusUpdateDto dto)
         {
-            var order = await _context.Orders.FindAsync(id);
-            if (order == null) return NotFound();
+            var order = await _context.DonDatHangs.FindAsync(id);
+            if (order == null) return NotFound("Đơn hàng không tồn tại.");
+
+            // Các trạng thái có thể có: 
+            // - Confirmed: Đã xác nhận/có hợp đồng
+            // - Processing: Chuyển sang Kho xuất hàng / Kỹ thuật lắp đặt
+            // - Delivered_Accepted: Đã lắp đặt & nghiệm thu xong
+            // - Completed: Đã thu tiền / Hoàn thành
+            // - Cancelled: Đã hủy
 
             order.Status = dto.Status;
-            order.UpdatedAt = DateTime.UtcNow;
+            
+            if (!string.IsNullOrEmpty(dto.Note))
+            {
+                order.Note = (order.Note ?? "") + $"\n[{DateTime.Now:dd/MM/yyyy}] Cập nhật trạng thái: {dto.Note}";
+            }
 
             await _context.SaveChangesAsync();
-            return Ok(order);
+            return Ok(new { message = $"Đã cập nhật trạng thái đơn hàng thành {dto.Status}." });
+        }
+
+        public class OrderStatusUpdateDto
+        {
+            public string Status { get; set; } = string.Empty;
+            public string? Note { get; set; }
         }
     }
 }

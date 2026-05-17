@@ -17,7 +17,7 @@ const ManageProducts = () => {
     try {
       const res = await getProducts();
       // Sắp xếp ID giảm dần (mới nhất lên đầu)
-      setProducts(res.data.sort((a, b) => b.id - a.id));
+      setProducts(res.data.sort((a, b) => b.maThietBi - a.maThietBi));
     } catch (err) {
       message.error('Không thể tải danh sách sản phẩm');
     } finally {
@@ -40,21 +40,21 @@ const ManageProducts = () => {
 
   // 3. Cấu hình các cột của Bảng
   const columns = [
-    { title: 'ID', dataIndex: 'id', key: 'id', width: 60 },
-    { title: 'Tên thiết bị / Dịch vụ', dataIndex: 'name', key: 'name', fontWeight: 600 },
+    { title: 'ID', dataIndex: 'maThietBi', key: 'maThietBi', width: 60 },
+    { title: 'Tên thiết bị / Dịch vụ', dataIndex: 'tenThietBi', key: 'tenThietBi', fontWeight: 600 },
     { title: 'Model', dataIndex: 'model', key: 'model' },
     { 
       title: 'Danh mục', 
-      key: 'category',
-      render: (_, record) => <Tag color="blue">{record.category?.name || 'Chưa phân loại'}</Tag>
+      key: 'loaiThietBi',
+      render: (_, record) => <Tag color="blue">{record.loaiThietBi?.tenLoai || 'Chưa phân loại'}</Tag>
     },
     { 
       title: 'Trạng thái', 
-      dataIndex: 'status', 
-      key: 'status',
-      render: (status) => (
-        <Tag color={status === 'Còn hàng' ? 'green' : (status === 'Hết hàng' ? 'red' : 'default')}>
-          {status || 'N/A'}
+      dataIndex: 'trangThai', 
+      key: 'trangThai',
+      render: (trangThai) => (
+        <Tag color={trangThai === 1 ? 'green' : (trangThai === 0 ? 'red' : 'default')}>
+          {trangThai === 1 ? 'Còn hàng' : 'Ngừng bán'}
         </Tag>
       ) 
     },
@@ -64,12 +64,12 @@ const ManageProducts = () => {
       render: (_, record) => (
         <Space size="middle">
           {/* Nút Sửa: Chuyển hướng sang trang Form kèm theo ID */}
-          <Button type="primary" ghost icon={<EditOutlined />} onClick={() => navigate(`/admin/products/edit/${record.id}`)}>
+          <Button type="primary" ghost icon={<EditOutlined />} onClick={() => navigate(`/admin/products/edit/${record.maThietBi}`)}>
             Sửa
           </Button>
           
           {/* Nút Xóa: Bọc trong Popconfirm để hỏi lại cho chắc chắn */}
-          <Popconfirm title="Bạn có chắc chắn muốn xóa thiết bị này?" onConfirm={() => handleDelete(record.id)} okText="Xóa" cancelText="Hủy" placement="left">
+          <Popconfirm title="Bạn có chắc chắn muốn xóa thiết bị này?" onConfirm={() => handleDelete(record.maThietBi)} okText="Xóa" cancelText="Hủy" placement="left">
             <Button danger icon={<DeleteOutlined />}>Xóa</Button>
           </Popconfirm>
         </Space>
@@ -87,7 +87,7 @@ const ManageProducts = () => {
           </Button>
         </div>
         
-        <Table columns={columns} dataSource={products} rowKey="id" loading={loading} pagination={{ pageSize: 10 }} />
+        <Table columns={columns} dataSource={products} rowKey="maThietBi" loading={loading} pagination={{ pageSize: 10 }} />
       </div>
     </div>
   );

@@ -1,0 +1,22 @@
+[
+  {
+    "MaLoai": 1,
+    "TenLoai": "Ti\u1EC1n m\u1EB7t",
+    "MoTa": "Thanh to\u00E1n b\u1EB1ng ti\u1EC1n m\u1EB7t"
+  },
+  {
+    "MaLoai": 2,
+    "TenLoai": "Chuy\u1EC3n kho\u1EA3n",
+    "MoTa": "Thanh to\u00E1n qua ng\u00E2n h\u00E0ng"
+  },
+  {
+    "MaLoai": 3,
+    "TenLoai": "Th\u1EBB t\u00EDn d\u1EE5ng",
+    "MoTa": "Thanh to\u00E1n qua th\u1EBB VISA/MasterCard"
+  },
+  {
+    "MaLoai": 4,
+    "TenLoai": "Tr\u1EA3 g\u00F3p",
+    "MoTa": "Tr\u1EA3 tr\u01B0\u1EDBc m\u1ED9t kho\u1EA3n c\u1ECDc"
+  }
+]

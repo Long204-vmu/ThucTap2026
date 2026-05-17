@@ -47,8 +47,8 @@ const Register = () => {
     setError(null);
     try {
       await register({
-        fullName: values.fullName, email: values.email, phone: values.phone,
-        username: values.username, password: values.password,
+        hoTen: values.fullName, email: values.email, soDienThoai: values.phone,
+        tenDangNhap: values.username, password: values.password,
       });
       setSuccess(true);
       setTimeout(() => navigate('/login'), 2500);

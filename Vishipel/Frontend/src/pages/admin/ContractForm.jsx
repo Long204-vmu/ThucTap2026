@@ -31,7 +31,19 @@ const ContractForm = () => {
   const loadData = async () => {
     try {
       const res = await apiClient.get(`/api/Orders/${orderId}`);
-      setOrder(res.data);
+      const orderData = res.data;
+      
+      // Map chiTietDonHangs to items
+      orderData.items = orderData.chiTietDonHangs?.map(ct => ({
+        id: ct.maThietBi,
+        productName: ct.thietBi?.tenThietBi || 'Thiết bị',
+        unit: ct.thietBi?.donViTinh?.tenDVT || 'Cái',
+        quantity: ct.soLuong,
+        unitPrice: ct.donGia,
+        totalPrice: ct.soLuong * ct.donGia
+      })) || [];
+      
+      setOrder(orderData);
       if (res.data.contract) {
         setContract(res.data.contract);
         form.setFieldsValue(res.data.contract);
@@ -55,7 +67,7 @@ const ContractForm = () => {
     try {
       setSubmitting(true);
       if (contract) {
-        await apiClient.put(`/api/Contracts/${contract.id}`, { ...values, orderId: parseInt(orderId) });
+        await apiClient.put(`/api/Contracts/${contract.maHopDong}`, { ...values, orderId: parseInt(orderId) });
         message.success('Đã cập nhật hợp đồng!');
       } else {
         const res = await apiClient.post('/api/Contracts', { ...values, orderId: parseInt(orderId) });
@@ -84,7 +96,7 @@ const ContractForm = () => {
   if (!order) return <div style={{ padding: 40, textAlign: 'center' }}>Không tìm thấy đơn hàng</div>;
 
   const contractData = form.getFieldsValue(true);
-  const totalAfterDiscount = (order.totalAmount || 0) * (1 - (contractData.discountPercent || 0) / 100);
+  const totalAfterDiscount = (order.tongGiaTri || 0) * (1 - (contractData.discountPercent || 0) / 100);
 
   return (
     <div style={{ padding: '24px', background: '#fff', borderRadius: 8, minHeight: '80vh' }}>
@@ -163,7 +175,7 @@ const ContractForm = () => {
                 { title: 'Thành tiền (VND)', dataIndex: 'totalPrice', width: 140, render: v => <b>{formatPrice(v)}</b> },
               ]}
               summary={() => (
-                <Table.Summary.Row><Table.Summary.Cell colSpan={5} align="right"><b>TỔNG CỘNG:</b></Table.Summary.Cell><Table.Summary.Cell><b style={{ color: '#cf1322' }}>{formatPrice(order.totalAmount)}</b></Table.Summary.Cell></Table.Summary.Row>
+                <Table.Summary.Row><Table.Summary.Cell colSpan={5} align="right"><b>TỔNG CỘNG:</b></Table.Summary.Cell><Table.Summary.Cell><b style={{ color: '#cf1322' }}>{formatPrice(order.tongGiaTri)}</b></Table.Summary.Cell></Table.Summary.Row>
               )}
             />
           </Card>

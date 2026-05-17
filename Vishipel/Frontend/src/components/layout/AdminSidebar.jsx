@@ -1,15 +1,20 @@
 import React from 'react';
 import { Menu, Layout } from 'antd';
-import { 
-  UserOutlined, 
-  AppstoreOutlined, 
-  ShoppingOutlined, 
-  DashboardOutlined, 
-  ToolOutlined, 
+import {
+  UserOutlined,
+  AppstoreOutlined,
+  ShoppingOutlined,
+  DashboardOutlined,
+  ToolOutlined,
   BarChartOutlined,
   AuditOutlined,
   LockOutlined,
-  FileTextOutlined
+  FileTextOutlined,
+  SafetyCertificateOutlined,
+  InboxOutlined,
+  ImportOutlined,
+  ExportOutlined,
+  SwapOutlined,
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -27,6 +32,8 @@ const AdminSidebar = () => {
       children: [
         { key: '/admin/users', icon: <UserOutlined />, label: 'Quản lý tài khoản' },
         { key: '/admin/system', icon: <LockOutlined />, label: 'Phân quyền & Vô hiệu hóa' },
+        { key: '/admin/backup', icon: <BarChartOutlined />, label: 'Sao lưu & Khôi phục' },
+        { key: '/admin/settings', icon: <ToolOutlined />, label: 'Cấu hình Website' },
       ]
     },
     {
@@ -34,7 +41,13 @@ const AdminSidebar = () => {
       icon: <AppstoreOutlined />,
       label: 'Quản lý danh mục',
       children: [
-        { key: '/admin/categories', label: 'Danh mục hệ thống' },
+        { key: '/admin/categories/LoaiThietBi', label: 'Loại thiết bị' },
+        { key: '/admin/categories/NhaCungCap', label: 'Nhà cung cấp' },
+        { key: '/admin/categories/Kho', label: 'Danh mục kho' },
+        { key: '/admin/categories/DonViTinh', label: 'Đơn vị tính' },
+        { key: '/admin/categories/LoaiKhachHang', label: 'Loại khách hàng' },
+        { key: '/admin/categories/PhuongThucThanhToan', label: 'Phương thức thanh toán' },
+        { key: '/admin/categories/LoaiHopDong', label: 'Loại hợp đồng' },
       ]
     },
     {
@@ -42,7 +55,10 @@ const AdminSidebar = () => {
       icon: <ShoppingOutlined />,
       label: 'Quản lý kho',
       children: [
-        { key: '/admin/warehouse', label: 'Phiếu nhập & xuất kho' },
+        { key: '/admin/warehouse/stock', icon: <InboxOutlined />, label: 'Tồn kho' },
+        { key: '/admin/warehouse/import', icon: <ImportOutlined />, label: 'Phiếu nhập kho' },
+        { key: '/admin/warehouse/export', icon: <ExportOutlined />, label: 'Phiếu xuất kho' },
+        { key: '/admin/warehouse/transfer', icon: <SwapOutlined />, label: 'Điều chuyển kho' },
       ]
     },
     {

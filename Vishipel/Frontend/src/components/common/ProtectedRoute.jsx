@@ -13,15 +13,24 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
   }
 
   const user = JSON.parse(userStr);
-  const userRole = user.role?.toLowerCase();
+  // Kiểm tra cả role (chữ thường) và Role (chữ hoa) để đảm bảo không bị lỗi do Backend trả về
+  const userRole = (user.role || user.Role || "").toLowerCase();
+  
+  console.log("Debug Auth - User Data:", user);
+  console.log("Debug Auth - Detected Role:", userRole);
+  console.log("Debug Auth - Allowed Roles:", allowedRoles);
 
   if (allowedRoles) {
     const isAllowed = allowedRoles.some(role => role.toLowerCase() === userRole);
+    console.log("Debug Auth - Is Allowed:", isAllowed);
+    
     if (!isAllowed) {
       message.error('Bạn không có quyền truy cập khu vực này!');
       return <Navigate to="/" replace />;
     }
   }
+
+
 
   // Đủ quyền -> Cho phép vào trong
   return children;

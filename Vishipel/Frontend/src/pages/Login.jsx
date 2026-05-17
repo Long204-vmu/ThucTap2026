@@ -29,13 +29,20 @@ const Login = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await login({ username: values.username, password: values.password });
+      const res = await login({ tenDangNhap: values.username, password: values.password });
       const { token, user } = res.data;
+      // Dọn dẹp dữ liệu cũ trước khi lưu mới
+      localStorage.clear();
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
       message.success('Đăng nhập thành công!');
-      navigate('/');
-      window.location.href = '/'; 
+      
+      // Chuyển hướng dựa trên Role
+      if (['Admin', 'Manager', 'SaleManager', 'Warehouse', 'Accounting'].includes(user.role)) {
+        window.location.href = '/admin/sales';
+      } else {
+        window.location.href = '/';
+      }
     } catch (err) {
       if (err.response && err.response.status === 401) setError('Tên đăng nhập hoặc mật khẩu không chính xác.');
       else setError(err.response?.data?.message || 'Lỗi kết nối máy chủ. Vui lòng thử lại.');

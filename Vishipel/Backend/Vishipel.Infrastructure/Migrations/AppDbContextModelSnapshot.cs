@@ -22,7 +22,7 @@ namespace Vishipel.Infrastructure.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("Vishipel.Core.Models.Category", b =>
+            modelBuilder.Entity("Vishipel.Core.Models.CauHinhHeThong", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -30,169 +30,232 @@ namespace Vishipel.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("ColorCode")
+                    b.Property<string>("BanQuyen")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("DiaChi")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("EmailLienHe")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Hotline")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("LogoUrl")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime>("NgayCapNhat")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Slogan")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("SmtpPass")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
+                    b.Property<int?>("SmtpPort")
+                        .HasColumnType("int");
+
+                    b.Property<string>("SmtpServer")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Slug")
-                        .IsRequired()
+                    b.Property<string>("SmtpUser")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("TenWebsite")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.HasKey("Id");
 
-                    b.ToTable("Categories");
+                    b.ToTable("CauHinhHeThong", (string)null);
                 });
 
-            modelBuilder.Entity("Vishipel.Core.Models.Contract", b =>
+            modelBuilder.Entity("Vishipel.Core.Models.ChiNhanh", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<byte>("MaChiNhanh")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<byte>("MaChiNhanh"));
+
+                    b.Property<string>("DiaChi")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SoDienThoai")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("TenChiNhanh")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("MaChiNhanh");
+
+                    b.ToTable("ChiNhanh", (string)null);
+                });
+
+            modelBuilder.Entity("Vishipel.Core.Models.ChiTietDonHang", b =>
+                {
+                    b.Property<int>("MaDonHang")
+                        .HasColumnType("int");
+
+                    b.Property<int>("MaThietBi")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("DonGia")
+                        .HasPrecision(15, 2)
+                        .HasColumnType("decimal(15,2)");
+
+                    b.Property<string>("InstallLocation")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SerialNumbersJson")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("SoLuong")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Unit")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("MaDonHang", "MaThietBi");
+
+                    b.HasIndex("MaThietBi");
+
+                    b.ToTable("ChiTietDonHang", (string)null);
+                });
+
+            modelBuilder.Entity("Vishipel.Core.Models.ChiTietNhapKho", b =>
+                {
+                    b.Property<int>("MaPhieuNhap")
+                        .HasColumnType("int");
+
+                    b.Property<int>("MaThietBi")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("DonGiaNhap")
+                        .HasPrecision(15, 2)
+                        .HasColumnType("decimal(15,2)");
+
+                    b.Property<int>("SoLuong")
+                        .HasColumnType("int");
+
+                    b.HasKey("MaPhieuNhap", "MaThietBi");
+
+                    b.HasIndex("MaThietBi");
+
+                    b.ToTable("ChiTietNhapKho", (string)null);
+                });
+
+            modelBuilder.Entity("Vishipel.Core.Models.ChiTietXuatKho", b =>
+                {
+                    b.Property<int>("MaPhieuXuat")
+                        .HasColumnType("int");
+
+                    b.Property<int>("MaThietBi")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("DonGiaBan")
+                        .HasPrecision(15, 2)
+                        .HasColumnType("decimal(15,2)");
+
+                    b.Property<int>("SoLuong")
+                        .HasColumnType("int");
+
+                    b.HasKey("MaPhieuXuat", "MaThietBi");
+
+                    b.HasIndex("MaThietBi");
+
+                    b.ToTable("ChiTietXuatKho", (string)null);
+                });
+
+            modelBuilder.Entity("Vishipel.Core.Models.DanhMucSeri", b =>
+                {
+                    b.Property<string>("MaSeri")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("MaHopDong")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<byte?>("MaKho")
+                        .HasColumnType("tinyint");
+
+                    b.Property<int?>("MaThietBi")
+                        .HasColumnType("int");
+
+                    b.Property<byte>("TrangThai")
+                        .HasColumnType("tinyint");
+
+                    b.HasKey("MaSeri");
+
+                    b.HasIndex("MaHopDong");
+
+                    b.HasIndex("MaKho");
+
+                    b.HasIndex("MaThietBi");
+
+                    b.ToTable("DanhMucSeri", (string)null);
+                });
+
+            modelBuilder.Entity("Vishipel.Core.Models.DonDatHang", b =>
+                {
+                    b.Property<int>("MaDonHang")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MaDonHang"));
 
-                    b.Property<string>("AdditionalTerms")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("ApprovedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int?>("ApprovedByUserId")
+                    b.Property<int?>("AssigneeId")
                         .HasColumnType("int");
 
-                    b.Property<DateTime>("ContractDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("ContractNumber")
-                        .IsRequired()
+                    b.Property<string>("BillingInfo")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<DateTime?>("Deadline")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("DeliveryTerms")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<DateTime?>("ExpectedDeliveryDate")
+                        .HasColumnType("datetime2");
 
-                    b.Property<decimal>("DiscountPercent")
-                        .HasColumnType("decimal(5,2)");
+                    b.Property<bool>("IsDepositPaid")
+                        .HasColumnType("bit");
 
-                    b.Property<int>("OrderId")
+                    b.Property<int?>("MaKH")
                         .HasColumnType("int");
 
-                    b.Property<string>("PartyAAddress")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PartyABank")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PartyABankAccount")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PartyAFax")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PartyAName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PartyAPhone")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PartyAPosition")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PartyARepresentative")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PartyATaxCode")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PartyBAddress")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PartyBBank")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PartyBBankAccount")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PartyBFax")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PartyBName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PartyBPhone")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PartyBPosition")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PartyBRepresentative")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PartyBTaxCode")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PaymentTerms")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("RejectionReason")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("SignedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Subject")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<decimal>("TotalAmount")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("WarrantyTerms")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("OrderId")
-                        .IsUnique();
-
-                    b.ToTable("Contracts");
-                });
-
-            modelBuilder.Entity("Vishipel.Core.Models.DeliveryOrder", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
+                    b.Property<int?>("MaTaiKhoan")
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<DateTime>("NgayDat")
                         .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("DeliveredAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("DeliveryAddress")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("DeliveryCode")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Note")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("OrderId")
+                    b.Property<string>("OrderCode")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("PaymentMethod")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("QuoteRequestId")
                         .HasColumnType("int");
 
                     b.Property<string>("ReceiverName")
@@ -201,344 +264,498 @@ namespace Vishipel.Infrastructure.Migrations
                     b.Property<string>("ReceiverPhone")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("ShippingAddress")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal?>("ShippingCost")
+                        .HasPrecision(15, 2)
+                        .HasColumnType("decimal(15,2)");
+
+                    b.Property<string>("ShippingMethod")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("WarehouseStaffId")
-                        .HasColumnType("int");
+                    b.Property<string>("TechnicalNotes")
+                        .HasColumnType("nvarchar(max)");
 
-                    b.HasKey("Id");
+                    b.Property<decimal>("TongGiaTri")
+                        .HasPrecision(15, 2)
+                        .HasColumnType("decimal(15,2)");
 
-                    b.HasIndex("OrderId")
-                        .IsUnique();
+                    b.Property<byte?>("WarehouseId")
+                        .HasColumnType("tinyint");
 
-                    b.HasIndex("WarehouseStaffId");
+                    b.Property<string>("WarrantyTerms")
+                        .HasColumnType("nvarchar(max)");
 
-                    b.ToTable("DeliveryOrders");
+                    b.HasKey("MaDonHang");
+
+                    b.HasIndex("AssigneeId");
+
+                    b.HasIndex("MaKH");
+
+                    b.HasIndex("MaTaiKhoan");
+
+                    b.HasIndex("QuoteRequestId");
+
+                    b.HasIndex("WarehouseId");
+
+                    b.ToTable("DonDatHang", (string)null);
                 });
 
-            modelBuilder.Entity("Vishipel.Core.Models.Invoice", b =>
+            modelBuilder.Entity("Vishipel.Core.Models.DonViTinh", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                    b.Property<byte>("MaDVT")
+                        .HasColumnType("tinyint");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    b.Property<string>("TenDVT")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
-                    b.Property<string>("AmountInWords")
-                        .HasColumnType("nvarchar(max)");
+                    b.HasKey("MaDVT");
 
-                    b.Property<string>("BankAccount")
-                        .HasColumnType("nvarchar(max)");
+                    b.ToTable("DonViTinh", (string)null);
+                });
 
-                    b.Property<string>("BuyerAddress")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("BuyerCompany")
-                        .HasColumnType("nvarchar(max)");
+            modelBuilder.Entity("Vishipel.Core.Models.HoaDon", b =>
+                {
+                    b.Property<string>("MaHoaDon")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("BuyerName")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("BuyerTaxCode")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Content")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Department")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("InvoiceDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("InvoiceNumber")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("IssuedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("OrderId")
+                    b.Property<int?>("MaDonHang")
                         .HasColumnType("int");
 
-                    b.Property<string>("PaymentMethod")
+                    b.Property<string>("MaHopDong")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime>("NgayXuat")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("RecipientName")
+                    b.Property<string>("TaxCode")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("ThueSuat")
+                        .HasPrecision(15, 2)
+                        .HasColumnType("decimal(15,2)");
+
+                    b.Property<decimal>("TotalAmount")
+                        .HasPrecision(15, 2)
+                        .HasColumnType("decimal(15,2)");
+
+                    b.HasKey("MaHoaDon");
+
+                    b.HasIndex("MaDonHang")
+                        .IsUnique()
+                        .HasFilter("[MaDonHang] IS NOT NULL");
+
+                    b.HasIndex("MaHopDong");
+
+                    b.ToTable("HoaDon", (string)null);
+                });
+
+            modelBuilder.Entity("Vishipel.Core.Models.HopDong", b =>
+                {
+                    b.Property<string>("MaHopDong")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<decimal>("GiaTriHopDong")
+                        .HasPrecision(15, 2)
+                        .HasColumnType("decimal(15,2)");
+
+                    b.Property<int?>("MaDonHang")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("NgayKy")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("NoiDungTomTat")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PartyAName")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<decimal>("SubTotal")
-                        .HasColumnType("decimal(18,2)");
+                    b.Property<decimal?>("TotalAmount")
+                        .HasPrecision(15, 2)
+                        .HasColumnType("decimal(15,2)");
 
-                    b.Property<decimal>("TotalAmount")
-                        .HasColumnType("decimal(18,2)");
+                    b.HasKey("MaHopDong");
 
-                    b.Property<decimal>("VatAmount")
-                        .HasColumnType("decimal(18,2)");
+                    b.HasIndex("MaDonHang")
+                        .IsUnique()
+                        .HasFilter("[MaDonHang] IS NOT NULL");
 
-                    b.Property<decimal>("VatRate")
-                        .HasColumnType("decimal(5,2)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("OrderId")
-                        .IsUnique();
-
-                    b.ToTable("Invoices");
+                    b.ToTable("HopDong", (string)null);
                 });
 
-            modelBuilder.Entity("Vishipel.Core.Models.Order", b =>
+            modelBuilder.Entity("Vishipel.Core.Models.KeHoachCongNo", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("MaKeHoach")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MaKeHoach"));
 
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<string>("GhiChu")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime?>("HanThanhToan")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("CreatedByUserId")
+                    b.Property<int?>("MaDonHang")
                         .HasColumnType("int");
 
-                    b.Property<int>("CustomerId")
+                    b.Property<string>("MaHopDong")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<int?>("Percentage")
                         .HasColumnType("int");
-
-                    b.Property<string>("Note")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("OrderCode")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PaymentMethod")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("QuoteRequestId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<decimal>("TotalAmount")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CustomerId");
-
-                    b.HasIndex("QuoteRequestId");
-
-                    b.ToTable("Orders");
-                });
-
-            modelBuilder.Entity("Vishipel.Core.Models.OrderItem", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("InstallLocation")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("OrderId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ProductId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("ProductName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("Quantity")
-                        .HasColumnType("int");
-
-                    b.Property<string>("SerialNumbersJson")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<decimal>("TotalPrice")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("Unit")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<decimal>("UnitPrice")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("OrderId");
-
-                    b.HasIndex("ProductId");
-
-                    b.ToTable("OrderItems");
-                });
-
-            modelBuilder.Entity("Vishipel.Core.Models.PaymentSchedule", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<decimal>("Amount")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<DateTime?>("DueDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Note")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("OrderId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("PaidAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<decimal>("Percentage")
-                        .HasColumnType("decimal(5,2)");
 
                     b.Property<string>("PhaseName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
-                    b.Property<int>("PhaseOrder")
+                    b.Property<int?>("PhaseOrder")
                         .HasColumnType("int");
+
+                    b.Property<decimal>("SoTienDuKien")
+                        .HasPrecision(15, 2)
+                        .HasColumnType("decimal(15,2)");
 
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.HasKey("Id");
+                    b.HasKey("MaKeHoach");
 
-                    b.HasIndex("OrderId");
+                    b.HasIndex("MaDonHang");
 
-                    b.ToTable("PaymentSchedules");
+                    b.HasIndex("MaHopDong");
+
+                    b.ToTable("KeHoachCongNo", (string)null);
                 });
 
-            modelBuilder.Entity("Vishipel.Core.Models.Product", b =>
+            modelBuilder.Entity("Vishipel.Core.Models.KhachHang", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("MaKH")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MaKH"));
 
-                    b.Property<string>("Brand")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<string>("DiaChi")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
-                    b.Property<int>("CategoryId")
-                        .HasColumnType("int");
+                    b.Property<string>("Email")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
 
-                    b.Property<string>("CertificationsJson")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<string>("LoaiKhachHang")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
-                    b.Property<string>("Description")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<string>("MST")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
-                    b.Property<string>("ImagesJson")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<string>("SoDienThoai")
+                        .HasMaxLength(15)
+                        .HasColumnType("nvarchar(15)");
 
-                    b.Property<bool>("IsDiscontinued")
-                        .HasColumnType("bit");
-
-                    b.Property<int>("LowStockThreshold")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Model")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Name")
+                    b.Property<string>("TenKH")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
 
-                    b.Property<string>("Origin")
-                        .HasColumnType("nvarchar(max)");
+                    b.HasKey("MaKH");
 
-                    b.Property<decimal>("Price")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<double>("Rating")
-                        .HasColumnType("float");
-
-                    b.Property<int>("ReviewCount")
-                        .HasColumnType("int");
-
-                    b.Property<string>("ShortDescription")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("SpecsJson")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("StockQuantity")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Warranty")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CategoryId");
-
-                    b.ToTable("Products");
+                    b.ToTable("KhachHang", (string)null);
                 });
 
-            modelBuilder.Entity("Vishipel.Core.Models.ProductReview", b =>
+            modelBuilder.Entity("Vishipel.Core.Models.Kho", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<byte>("MaKho")
+                        .HasColumnType("tinyint");
+
+                    b.Property<byte?>("MaChiNhanh")
+                        .HasColumnType("tinyint");
+
+                    b.Property<string>("TenKho")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("MaKho");
+
+                    b.HasIndex("MaChiNhanh");
+
+                    b.ToTable("Kho", (string)null);
+                });
+
+            modelBuilder.Entity("Vishipel.Core.Models.LoaiThietBi", b =>
+                {
+                    b.Property<int>("MaLoai")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MaLoai"));
 
-                    b.Property<string>("Comment")
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
+                    b.Property<string>("MoTa")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<string>("TenLoai")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("MaLoai");
+
+                    b.ToTable("LoaiThietBi", (string)null);
+                });
+
+            modelBuilder.Entity("Vishipel.Core.Models.NhaCungCap", b =>
+                {
+                    b.Property<int>("MaNCC")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MaNCC"));
+
+                    b.Property<string>("DiaChi")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("MST")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("NguoiLienHe")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("SoDienThoai")
+                        .HasMaxLength(15)
+                        .HasColumnType("nvarchar(15)");
+
+                    b.Property<string>("TenNCC")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.HasKey("MaNCC");
+
+                    b.ToTable("NhaCungCap", (string)null);
+                });
+
+            modelBuilder.Entity("Vishipel.Core.Models.NhatKyHeThong", b =>
+                {
+                    b.Property<int>("MaLog")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MaLog"));
+
+                    b.Property<string>("DiaChiIP")
+                        .HasMaxLength(45)
+                        .HasColumnType("nvarchar(45)");
+
+                    b.Property<string>("HanhDong")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int?>("MaTaiKhoan")
+                        .HasColumnType("int");
+
+                    b.Property<string>("NoiDung")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("ThoiGian")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("ProductId")
+                    b.HasKey("MaLog");
+
+                    b.HasIndex("MaTaiKhoan");
+
+                    b.ToTable("NhatKyHeThong", (string)null);
+                });
+
+            modelBuilder.Entity("Vishipel.Core.Models.PhieuChi", b =>
+                {
+                    b.Property<int>("MaPhieuChi")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    b.Property<int>("Rating")
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MaPhieuChi"));
+
+                    b.Property<int?>("MaNCC")
                         .HasColumnType("int");
 
-                    b.Property<int>("UserId")
+                    b.Property<int?>("MaPhieuNhap")
                         .HasColumnType("int");
 
-                    b.HasKey("Id");
+                    b.Property<int?>("MaTaiKhoan")
+                        .HasColumnType("int");
 
-                    b.HasIndex("UserId");
+                    b.Property<DateTime>("NgayChi")
+                        .HasColumnType("datetime2");
 
-                    b.HasIndex("ProductId", "UserId")
-                        .IsUnique();
+                    b.Property<string>("SoPhieu")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
-                    b.ToTable("ProductReviews");
+                    b.Property<decimal>("SoTien")
+                        .HasPrecision(15, 2)
+                        .HasColumnType("decimal(15,2)");
+
+                    b.HasKey("MaPhieuChi");
+
+                    b.HasIndex("MaNCC");
+
+                    b.HasIndex("MaPhieuNhap");
+
+                    b.HasIndex("MaTaiKhoan");
+
+                    b.ToTable("PhieuChi", (string)null);
+                });
+
+            modelBuilder.Entity("Vishipel.Core.Models.PhieuNhapKho", b =>
+                {
+                    b.Property<int>("MaPhieuNhap")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MaPhieuNhap"));
+
+                    b.Property<string>("GhiChu")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<byte?>("MaKho")
+                        .HasColumnType("tinyint");
+
+                    b.Property<int?>("MaNCC")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("MaTaiKhoan")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("NgayNhap")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("MaPhieuNhap");
+
+                    b.HasIndex("MaKho");
+
+                    b.HasIndex("MaNCC");
+
+                    b.HasIndex("MaTaiKhoan");
+
+                    b.ToTable("PhieuNhapKho", (string)null);
+                });
+
+            modelBuilder.Entity("Vishipel.Core.Models.PhieuThu", b =>
+                {
+                    b.Property<int>("MaPhieuThu")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MaPhieuThu"));
+
+                    b.Property<string>("HinhThucThanhToan")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("MaHopDong")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<int?>("MaKH")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("MaTaiKhoan")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("NgayThu")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("SoPhieu")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<decimal>("SoTien")
+                        .HasPrecision(15, 2)
+                        .HasColumnType("decimal(15,2)");
+
+                    b.HasKey("MaPhieuThu");
+
+                    b.HasIndex("MaHopDong");
+
+                    b.HasIndex("MaKH");
+
+                    b.HasIndex("MaTaiKhoan");
+
+                    b.ToTable("PhieuThu", (string)null);
+                });
+
+            modelBuilder.Entity("Vishipel.Core.Models.PhieuXuatKho", b =>
+                {
+                    b.Property<int>("MaPhieuXuat")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MaPhieuXuat"));
+
+                    b.Property<string>("LyDoXuat")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("MaHopDong")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<byte?>("MaKho")
+                        .HasColumnType("tinyint");
+
+                    b.Property<int?>("MaTaiKhoan")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("NgayXuat")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("MaPhieuXuat");
+
+                    b.HasIndex("MaHopDong");
+
+                    b.HasIndex("MaKho");
+
+                    b.HasIndex("MaTaiKhoan");
+
+                    b.ToTable("PhieuXuatKho", (string)null);
                 });
 
             modelBuilder.Entity("Vishipel.Core.Models.QuoteRequest", b =>
@@ -549,9 +766,6 @@ namespace Vishipel.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime?>("AcceptedAt")
-                        .HasColumnType("datetime2");
-
                     b.Property<string>("AdminReply")
                         .HasColumnType("nvarchar(max)");
 
@@ -561,21 +775,13 @@ namespace Vishipel.Infrastructure.Migrations
                     b.Property<string>("Note")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime?>("RejectedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("RejectionReason")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal?>("TotalQuotedPrice")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2");
+                        .HasPrecision(15, 2)
+                        .HasColumnType("decimal(15,2)");
 
                     b.Property<int>("UserId")
                         .HasColumnType("int");
@@ -584,7 +790,7 @@ namespace Vishipel.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("QuoteRequests");
+                    b.ToTable("QuoteRequests", (string)null);
                 });
 
             modelBuilder.Entity("Vishipel.Core.Models.QuoteRequestItem", b =>
@@ -609,231 +815,517 @@ namespace Vishipel.Infrastructure.Migrations
                         .HasColumnType("int");
 
                     b.Property<decimal?>("ReferencePrice")
-                        .HasColumnType("decimal(18,2)");
+                        .HasPrecision(15, 2)
+                        .HasColumnType("decimal(15,2)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("ProductId");
 
                     b.HasIndex("QuoteRequestId");
 
-                    b.ToTable("QuoteRequestItems");
+                    b.ToTable("QuoteRequestItems", (string)null);
                 });
 
-            modelBuilder.Entity("Vishipel.Core.Models.User", b =>
+            modelBuilder.Entity("Vishipel.Core.Models.TaiKhoan", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("MaTaiKhoan")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Department")
-                        .HasColumnType("nvarchar(max)");
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MaTaiKhoan"));
 
                     b.Property<string>("Email")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
 
-                    b.Property<string>("FullName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<string>("HoTen")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
-                    b.Property<bool>("IsApproved")
+                    b.Property<byte?>("MaVaiTro")
+                        .HasColumnType("tinyint");
+
+                    b.Property<string>("MatKhau")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<DateTime>("NgayTao")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("SoDienThoai")
+                        .HasMaxLength(15)
+                        .HasColumnType("nvarchar(15)");
+
+                    b.Property<string>("TenDangNhap")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<bool>("TrangThai")
                         .HasColumnType("bit");
 
-                    b.Property<string>("PasswordHash")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.HasKey("MaTaiKhoan");
 
-                    b.Property<string>("Phone")
-                        .HasColumnType("nvarchar(max)");
+                    b.HasIndex("MaVaiTro");
 
-                    b.Property<string>("Role")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Username")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Users");
+                    b.ToTable("TaiKhoan", (string)null);
                 });
 
-            modelBuilder.Entity("Vishipel.Core.Models.WarrantyRecord", b =>
+            modelBuilder.Entity("Vishipel.Core.Models.ThanhLyHangHoa", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("MaThanhLy")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MaThanhLy"));
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
+                    b.Property<string>("LyDo")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
-                    b.Property<string>("CustomerName")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<byte?>("MaKho")
+                        .HasColumnType("tinyint");
 
-                    b.Property<string>("CustomerPhone")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("InstallLocation")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("OrderItemId")
+                    b.Property<int?>("MaTaiKhoan")
                         .HasColumnType("int");
 
-                    b.Property<int>("ProductId")
+                    b.Property<int?>("MaThietBi")
                         .HasColumnType("int");
 
-                    b.Property<string>("SerialNumber")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("WarrantyEndDate")
+                    b.Property<DateTime?>("NgayThanhLy")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime>("WarrantyStartDate")
-                        .HasColumnType("datetime2");
+                    b.Property<int>("SoLuong")
+                        .HasColumnType("int");
 
-                    b.Property<string>("WarrantyTerms")
+                    b.HasKey("MaThanhLy");
+
+                    b.HasIndex("MaKho");
+
+                    b.HasIndex("MaTaiKhoan");
+
+                    b.HasIndex("MaThietBi");
+
+                    b.ToTable("ThanhLyHangHoa", (string)null);
+                });
+
+            modelBuilder.Entity("Vishipel.Core.Models.ThietBi", b =>
+                {
+                    b.Property<int>("MaThietBi")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MaThietBi"));
+
+                    b.Property<byte>("BaoHanhThang")
+                        .HasColumnType("tinyint");
+
+                    b.Property<decimal>("DiemDanhGia")
+                        .HasPrecision(15, 2)
+                        .HasColumnType("decimal(15,2)");
+
+                    b.Property<decimal>("GiaBan")
+                        .HasPrecision(15, 2)
+                        .HasColumnType("decimal(15,2)");
+
+                    b.Property<string>("HangSanXuat")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("HinhAnhJson")
                         .HasColumnType("nvarchar(max)");
 
-                    b.HasKey("Id");
+                    b.Property<int>("LuotXem")
+                        .HasColumnType("int");
 
-                    b.HasIndex("OrderItemId");
+                    b.Property<byte?>("MaDVT")
+                        .HasColumnType("tinyint");
 
-                    b.HasIndex("ProductId");
+                    b.Property<int?>("MaLoai")
+                        .HasColumnType("int");
 
-                    b.ToTable("WarrantyRecords");
+                    b.Property<string>("MoTaChiTiet")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("MoTaNgan")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Model")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime>("NgayCapNhat")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("NgayTao")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("TenThietBi")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<string>("ThongSoKyThuat")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<byte>("TrangThai")
+                        .HasColumnType("tinyint");
+
+                    b.Property<string>("XuatXu")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("MaThietBi");
+
+                    b.HasIndex("MaDVT");
+
+                    b.HasIndex("MaLoai");
+
+                    b.ToTable("ThietBi", (string)null);
                 });
 
-            modelBuilder.Entity("Vishipel.Core.Models.Contract", b =>
+            modelBuilder.Entity("Vishipel.Core.Models.TonKhoChiTiet", b =>
                 {
-                    b.HasOne("Vishipel.Core.Models.Order", "Order")
-                        .WithOne("Contract")
-                        .HasForeignKey("Vishipel.Core.Models.Contract", "OrderId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                    b.Property<byte>("MaKho")
+                        .HasColumnType("tinyint");
 
-                    b.Navigation("Order");
+                    b.Property<int>("MaThietBi")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("NgayCapNhat")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("SoLuongTon")
+                        .HasColumnType("int");
+
+                    b.HasKey("MaKho", "MaThietBi");
+
+                    b.HasIndex("MaThietBi");
+
+                    b.ToTable("TonKhoChiTiet", (string)null);
                 });
 
-            modelBuilder.Entity("Vishipel.Core.Models.DeliveryOrder", b =>
+            modelBuilder.Entity("Vishipel.Core.Models.VaiTro", b =>
                 {
-                    b.HasOne("Vishipel.Core.Models.Order", "Order")
-                        .WithOne("DeliveryOrder")
-                        .HasForeignKey("Vishipel.Core.Models.DeliveryOrder", "OrderId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                    b.Property<byte>("MaVaiTro")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<byte>("MaVaiTro"));
+
+                    b.Property<string>("TenVaiTro")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("MaVaiTro");
+
+                    b.ToTable("VaiTro", (string)null);
+                });
+
+            modelBuilder.Entity("Vishipel.Core.Models.YeuCauHoTro", b =>
+                {
+                    b.Property<int>("MaYeuCau")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MaYeuCau"));
+
+                    b.Property<string>("CongTy")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("HoTen")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("LoaiYeuCau")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime>("NgayTao")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("NoiDung")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SoDienThoai")
+                        .IsRequired()
+                        .HasMaxLength(15)
+                        .HasColumnType("nvarchar(15)");
+
+                    b.Property<string>("TieuDe")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<byte>("TrangThai")
+                        .HasColumnType("tinyint");
+
+                    b.HasKey("MaYeuCau");
+
+                    b.ToTable("YeuCauHoTro", (string)null);
+                });
+
+            modelBuilder.Entity("Vishipel.Core.Models.ChiTietDonHang", b =>
+                {
+                    b.HasOne("Vishipel.Core.Models.DonDatHang", "DonDatHang")
+                        .WithMany("ChiTietDonHangs")
+                        .HasForeignKey("MaDonHang")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Vishipel.Core.Models.User", "WarehouseStaff")
+                    b.HasOne("Vishipel.Core.Models.ThietBi", "ThietBi")
                         .WithMany()
-                        .HasForeignKey("WarehouseStaffId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("Order");
-
-                    b.Navigation("WarehouseStaff");
-                });
-
-            modelBuilder.Entity("Vishipel.Core.Models.Invoice", b =>
-                {
-                    b.HasOne("Vishipel.Core.Models.Order", "Order")
-                        .WithOne("Invoice")
-                        .HasForeignKey("Vishipel.Core.Models.Invoice", "OrderId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasForeignKey("MaThietBi")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Order");
+                    b.Navigation("DonDatHang");
+
+                    b.Navigation("ThietBi");
                 });
 
-            modelBuilder.Entity("Vishipel.Core.Models.Order", b =>
+            modelBuilder.Entity("Vishipel.Core.Models.ChiTietNhapKho", b =>
                 {
-                    b.HasOne("Vishipel.Core.Models.User", "Customer")
+                    b.HasOne("Vishipel.Core.Models.PhieuNhapKho", "PhieuNhapKho")
+                        .WithMany("ChiTietNhapKhos")
+                        .HasForeignKey("MaPhieuNhap")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Vishipel.Core.Models.ThietBi", "ThietBi")
                         .WithMany()
-                        .HasForeignKey("CustomerId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasForeignKey("MaThietBi")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("PhieuNhapKho");
+
+                    b.Navigation("ThietBi");
+                });
+
+            modelBuilder.Entity("Vishipel.Core.Models.ChiTietXuatKho", b =>
+                {
+                    b.HasOne("Vishipel.Core.Models.PhieuXuatKho", "PhieuXuatKho")
+                        .WithMany("ChiTietXuatKhos")
+                        .HasForeignKey("MaPhieuXuat")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Vishipel.Core.Models.ThietBi", "ThietBi")
+                        .WithMany()
+                        .HasForeignKey("MaThietBi")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("PhieuXuatKho");
+
+                    b.Navigation("ThietBi");
+                });
+
+            modelBuilder.Entity("Vishipel.Core.Models.DanhMucSeri", b =>
+                {
+                    b.HasOne("Vishipel.Core.Models.HopDong", "HopDong")
+                        .WithMany()
+                        .HasForeignKey("MaHopDong");
+
+                    b.HasOne("Vishipel.Core.Models.Kho", "Kho")
+                        .WithMany()
+                        .HasForeignKey("MaKho");
+
+                    b.HasOne("Vishipel.Core.Models.ThietBi", "ThietBi")
+                        .WithMany()
+                        .HasForeignKey("MaThietBi");
+
+                    b.Navigation("HopDong");
+
+                    b.Navigation("Kho");
+
+                    b.Navigation("ThietBi");
+                });
+
+            modelBuilder.Entity("Vishipel.Core.Models.DonDatHang", b =>
+                {
+                    b.HasOne("Vishipel.Core.Models.TaiKhoan", "Assignee")
+                        .WithMany()
+                        .HasForeignKey("AssigneeId");
+
+                    b.HasOne("Vishipel.Core.Models.KhachHang", "KhachHang")
+                        .WithMany()
+                        .HasForeignKey("MaKH");
+
+                    b.HasOne("Vishipel.Core.Models.TaiKhoan", "TaiKhoan")
+                        .WithMany()
+                        .HasForeignKey("MaTaiKhoan");
 
                     b.HasOne("Vishipel.Core.Models.QuoteRequest", "QuoteRequest")
                         .WithMany()
-                        .HasForeignKey("QuoteRequestId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("QuoteRequestId");
 
-                    b.Navigation("Customer");
+                    b.HasOne("Vishipel.Core.Models.Kho", "Warehouse")
+                        .WithMany()
+                        .HasForeignKey("WarehouseId");
+
+                    b.Navigation("Assignee");
+
+                    b.Navigation("KhachHang");
 
                     b.Navigation("QuoteRequest");
+
+                    b.Navigation("TaiKhoan");
+
+                    b.Navigation("Warehouse");
                 });
 
-            modelBuilder.Entity("Vishipel.Core.Models.OrderItem", b =>
+            modelBuilder.Entity("Vishipel.Core.Models.HoaDon", b =>
                 {
-                    b.HasOne("Vishipel.Core.Models.Order", "Order")
-                        .WithMany("Items")
-                        .HasForeignKey("OrderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                    b.HasOne("Vishipel.Core.Models.DonDatHang", "DonDatHang")
+                        .WithOne("Invoice")
+                        .HasForeignKey("Vishipel.Core.Models.HoaDon", "MaDonHang");
 
-                    b.HasOne("Vishipel.Core.Models.Product", "Product")
+                    b.HasOne("Vishipel.Core.Models.HopDong", "HopDong")
                         .WithMany()
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .HasForeignKey("MaHopDong");
 
-                    b.Navigation("Order");
+                    b.Navigation("DonDatHang");
 
-                    b.Navigation("Product");
+                    b.Navigation("HopDong");
                 });
 
-            modelBuilder.Entity("Vishipel.Core.Models.PaymentSchedule", b =>
+            modelBuilder.Entity("Vishipel.Core.Models.HopDong", b =>
                 {
-                    b.HasOne("Vishipel.Core.Models.Order", "Order")
+                    b.HasOne("Vishipel.Core.Models.DonDatHang", "DonDatHang")
+                        .WithOne("Contract")
+                        .HasForeignKey("Vishipel.Core.Models.HopDong", "MaDonHang");
+
+                    b.Navigation("DonDatHang");
+                });
+
+            modelBuilder.Entity("Vishipel.Core.Models.KeHoachCongNo", b =>
+                {
+                    b.HasOne("Vishipel.Core.Models.DonDatHang", "DonDatHang")
                         .WithMany("PaymentSchedules")
-                        .HasForeignKey("OrderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("MaDonHang");
 
-                    b.Navigation("Order");
-                });
-
-            modelBuilder.Entity("Vishipel.Core.Models.Product", b =>
-                {
-                    b.HasOne("Vishipel.Core.Models.Category", "Category")
-                        .WithMany("Products")
-                        .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Category");
-                });
-
-            modelBuilder.Entity("Vishipel.Core.Models.ProductReview", b =>
-                {
-                    b.HasOne("Vishipel.Core.Models.Product", "Product")
-                        .WithMany("Reviews")
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Vishipel.Core.Models.User", "User")
+                    b.HasOne("Vishipel.Core.Models.HopDong", "HopDong")
                         .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .HasForeignKey("MaHopDong");
 
-                    b.Navigation("Product");
+                    b.Navigation("DonDatHang");
 
-                    b.Navigation("User");
+                    b.Navigation("HopDong");
+                });
+
+            modelBuilder.Entity("Vishipel.Core.Models.Kho", b =>
+                {
+                    b.HasOne("Vishipel.Core.Models.ChiNhanh", "ChiNhanh")
+                        .WithMany()
+                        .HasForeignKey("MaChiNhanh");
+
+                    b.Navigation("ChiNhanh");
+                });
+
+            modelBuilder.Entity("Vishipel.Core.Models.NhatKyHeThong", b =>
+                {
+                    b.HasOne("Vishipel.Core.Models.TaiKhoan", "TaiKhoan")
+                        .WithMany()
+                        .HasForeignKey("MaTaiKhoan");
+
+                    b.Navigation("TaiKhoan");
+                });
+
+            modelBuilder.Entity("Vishipel.Core.Models.PhieuChi", b =>
+                {
+                    b.HasOne("Vishipel.Core.Models.NhaCungCap", "NhaCungCap")
+                        .WithMany()
+                        .HasForeignKey("MaNCC");
+
+                    b.HasOne("Vishipel.Core.Models.PhieuNhapKho", "PhieuNhapKho")
+                        .WithMany()
+                        .HasForeignKey("MaPhieuNhap");
+
+                    b.HasOne("Vishipel.Core.Models.TaiKhoan", "TaiKhoan")
+                        .WithMany()
+                        .HasForeignKey("MaTaiKhoan");
+
+                    b.Navigation("NhaCungCap");
+
+                    b.Navigation("PhieuNhapKho");
+
+                    b.Navigation("TaiKhoan");
+                });
+
+            modelBuilder.Entity("Vishipel.Core.Models.PhieuNhapKho", b =>
+                {
+                    b.HasOne("Vishipel.Core.Models.Kho", "Kho")
+                        .WithMany()
+                        .HasForeignKey("MaKho");
+
+                    b.HasOne("Vishipel.Core.Models.NhaCungCap", "NhaCungCap")
+                        .WithMany()
+                        .HasForeignKey("MaNCC");
+
+                    b.HasOne("Vishipel.Core.Models.TaiKhoan", "TaiKhoan")
+                        .WithMany()
+                        .HasForeignKey("MaTaiKhoan");
+
+                    b.Navigation("Kho");
+
+                    b.Navigation("NhaCungCap");
+
+                    b.Navigation("TaiKhoan");
+                });
+
+            modelBuilder.Entity("Vishipel.Core.Models.PhieuThu", b =>
+                {
+                    b.HasOne("Vishipel.Core.Models.HopDong", "HopDong")
+                        .WithMany()
+                        .HasForeignKey("MaHopDong");
+
+                    b.HasOne("Vishipel.Core.Models.KhachHang", "KhachHang")
+                        .WithMany()
+                        .HasForeignKey("MaKH");
+
+                    b.HasOne("Vishipel.Core.Models.TaiKhoan", "TaiKhoan")
+                        .WithMany()
+                        .HasForeignKey("MaTaiKhoan");
+
+                    b.Navigation("HopDong");
+
+                    b.Navigation("KhachHang");
+
+                    b.Navigation("TaiKhoan");
+                });
+
+            modelBuilder.Entity("Vishipel.Core.Models.PhieuXuatKho", b =>
+                {
+                    b.HasOne("Vishipel.Core.Models.HopDong", "HopDong")
+                        .WithMany()
+                        .HasForeignKey("MaHopDong");
+
+                    b.HasOne("Vishipel.Core.Models.Kho", "Kho")
+                        .WithMany()
+                        .HasForeignKey("MaKho");
+
+                    b.HasOne("Vishipel.Core.Models.TaiKhoan", "TaiKhoan")
+                        .WithMany()
+                        .HasForeignKey("MaTaiKhoan");
+
+                    b.Navigation("HopDong");
+
+                    b.Navigation("Kho");
+
+                    b.Navigation("TaiKhoan");
                 });
 
             modelBuilder.Entity("Vishipel.Core.Models.QuoteRequest", b =>
                 {
-                    b.HasOne("Vishipel.Core.Models.User", "User")
+                    b.HasOne("Vishipel.Core.Models.TaiKhoan", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -844,68 +1336,103 @@ namespace Vishipel.Infrastructure.Migrations
 
             modelBuilder.Entity("Vishipel.Core.Models.QuoteRequestItem", b =>
                 {
-                    b.HasOne("Vishipel.Core.Models.Product", "Product")
-                        .WithMany()
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("Vishipel.Core.Models.QuoteRequest", "QuoteRequest")
                         .WithMany("Items")
                         .HasForeignKey("QuoteRequestId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Product");
-
                     b.Navigation("QuoteRequest");
                 });
 
-            modelBuilder.Entity("Vishipel.Core.Models.WarrantyRecord", b =>
+            modelBuilder.Entity("Vishipel.Core.Models.TaiKhoan", b =>
                 {
-                    b.HasOne("Vishipel.Core.Models.OrderItem", "OrderItem")
-                        .WithMany("WarrantyRecords")
-                        .HasForeignKey("OrderItemId")
+                    b.HasOne("Vishipel.Core.Models.VaiTro", "VaiTro")
+                        .WithMany()
+                        .HasForeignKey("MaVaiTro");
+
+                    b.Navigation("VaiTro");
+                });
+
+            modelBuilder.Entity("Vishipel.Core.Models.ThanhLyHangHoa", b =>
+                {
+                    b.HasOne("Vishipel.Core.Models.Kho", "Kho")
+                        .WithMany()
+                        .HasForeignKey("MaKho");
+
+                    b.HasOne("Vishipel.Core.Models.TaiKhoan", "TaiKhoan")
+                        .WithMany()
+                        .HasForeignKey("MaTaiKhoan");
+
+                    b.HasOne("Vishipel.Core.Models.ThietBi", "ThietBi")
+                        .WithMany()
+                        .HasForeignKey("MaThietBi");
+
+                    b.Navigation("Kho");
+
+                    b.Navigation("TaiKhoan");
+
+                    b.Navigation("ThietBi");
+                });
+
+            modelBuilder.Entity("Vishipel.Core.Models.ThietBi", b =>
+                {
+                    b.HasOne("Vishipel.Core.Models.DonViTinh", "DonViTinh")
+                        .WithMany()
+                        .HasForeignKey("MaDVT");
+
+                    b.HasOne("Vishipel.Core.Models.LoaiThietBi", "LoaiThietBi")
+                        .WithMany("ThietBis")
+                        .HasForeignKey("MaLoai");
+
+                    b.Navigation("DonViTinh");
+
+                    b.Navigation("LoaiThietBi");
+                });
+
+            modelBuilder.Entity("Vishipel.Core.Models.TonKhoChiTiet", b =>
+                {
+                    b.HasOne("Vishipel.Core.Models.Kho", "Kho")
+                        .WithMany()
+                        .HasForeignKey("MaKho")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Vishipel.Core.Models.Product", "Product")
+                    b.HasOne("Vishipel.Core.Models.ThietBi", "ThietBi")
                         .WithMany()
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasForeignKey("MaThietBi")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("OrderItem");
+                    b.Navigation("Kho");
 
-                    b.Navigation("Product");
+                    b.Navigation("ThietBi");
                 });
 
-            modelBuilder.Entity("Vishipel.Core.Models.Category", b =>
+            modelBuilder.Entity("Vishipel.Core.Models.DonDatHang", b =>
                 {
-                    b.Navigation("Products");
-                });
+                    b.Navigation("ChiTietDonHangs");
 
-            modelBuilder.Entity("Vishipel.Core.Models.Order", b =>
-                {
                     b.Navigation("Contract");
 
-                    b.Navigation("DeliveryOrder");
-
                     b.Navigation("Invoice");
-
-                    b.Navigation("Items");
 
                     b.Navigation("PaymentSchedules");
                 });
 
-            modelBuilder.Entity("Vishipel.Core.Models.OrderItem", b =>
+            modelBuilder.Entity("Vishipel.Core.Models.LoaiThietBi", b =>
                 {
-                    b.Navigation("WarrantyRecords");
+                    b.Navigation("ThietBis");
                 });
 
-            modelBuilder.Entity("Vishipel.Core.Models.Product", b =>
+            modelBuilder.Entity("Vishipel.Core.Models.PhieuNhapKho", b =>
                 {
-                    b.Navigation("Reviews");
+                    b.Navigation("ChiTietNhapKhos");
+                });
+
+            modelBuilder.Entity("Vishipel.Core.Models.PhieuXuatKho", b =>
+                {
+                    b.Navigation("ChiTietXuatKhos");
                 });
 
             modelBuilder.Entity("Vishipel.Core.Models.QuoteRequest", b =>

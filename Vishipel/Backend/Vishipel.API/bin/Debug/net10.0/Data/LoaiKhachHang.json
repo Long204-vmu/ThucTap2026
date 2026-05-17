@@ -1,0 +1,22 @@
+[
+  {
+    "MaLoai": 1,
+    "TenLoai": "C\u00E1 nh\u00E2n",
+    "MoTa": "Kh\u00E1ch h\u00E0ng c\u00E1 nh\u00E2n"
+  },
+  {
+    "MaLoai": 2,
+    "TenLoai": "Doanh nghi\u1EC7p",
+    "MoTa": "Kh\u00E1ch h\u00E0ng doanh nghi\u1EC7p"
+  },
+  {
+    "MaLoai": 3,
+    "TenLoai": "Kh\u00E1ch quen",
+    "MoTa": "Kh\u00E1ch h\u00E0ng th\u00E2n thi\u1EBFt "
+  },
+  {
+    "MaLoai": 4,
+    "TenLoai": "Kh\u00E1ch v\u00E3ng lai",
+    "MoTa": "Kh\u00E1ch h\u00E0ng l\u1EA7n \u0111\u1EA7u ho\u1EB7c \u00EDt khi mua h\u00E0ng"
+  }
+]
