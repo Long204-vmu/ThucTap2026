@@ -25,6 +25,9 @@ namespace Vishipel.Core.Models
         public string? HinhThucThanhToan { get; set; }
         
         public int? MaTaiKhoan { get; set; }
+        
+        public int? MaDonHang { get; set; }
+        public bool IsPaid { get; set; } = false;
 
         [ForeignKey("MaKH")]
         public virtual KhachHang? KhachHang { get; set; }
@@ -35,5 +38,9 @@ namespace Vishipel.Core.Models
         
         [ForeignKey("MaTaiKhoan")]
         public virtual TaiKhoan? TaiKhoan { get; set; }
+        
+        [ForeignKey("MaDonHang")]
+        [JsonIgnore]
+        public virtual DonDatHang? DonDatHang { get; set; }
     }
 }

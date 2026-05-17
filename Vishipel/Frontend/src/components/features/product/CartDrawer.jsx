@@ -163,4 +163,4 @@ const CartDrawer = ({ open, cart, onClose, onRemove, onClearCart, onUpdateQuanti
   );
 };
 
-export default CartDrawer;
+export default CartDrawer;

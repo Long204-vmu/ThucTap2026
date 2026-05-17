@@ -68,6 +68,7 @@ const AdminSidebar = () => {
       children: [
         { key: '/admin/sales', icon: <DashboardOutlined />, label: 'Dashboard kinh doanh' },
         { key: '/admin/quotes', icon: <FileTextOutlined />, label: 'Quản lý báo giá' },
+        { key: '/admin/customers', icon: <UserOutlined />, label: 'Quản lý khách hàng' },
       ]
     },
     {

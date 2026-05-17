@@ -176,7 +176,7 @@ const ManageSuppliers = () => {
         onCancel={() => setIsModalOpen(false)}
         footer={null}
         width={700}
-        destroyOnClose
+        destroyOnHidden
       >
         <Form form={form} layout="vertical" onFinish={handleSave} style={{ marginTop: 20 }}>
           <Row gutter={16}>

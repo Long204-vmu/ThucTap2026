@@ -154,7 +154,7 @@ const SalesDashboard = () => {
     { key: 'orders', label: <span><FileTextOutlined /> Đơn hàng ({orders.length})</span>, children: <Table columns={orderColumns} dataSource={orders} rowKey="maDonHang" loading={loading} pagination={{ pageSize: 10 }} /> },
     { key: 'contracts', label: <span><FileTextOutlined /> Hợp đồng ({contracts.filter(c => c.status === 'PendingApproval').length} chờ duyệt)</span>, children: <Table columns={contractColumns} dataSource={contracts} rowKey="maHopDong" loading={loading} pagination={{ pageSize: 10 }} /> },
     { key: 'invoices', label: <span><DollarOutlined /> Hóa đơn ({invoices.length})</span>, children: <Table columns={invoiceColumns} dataSource={invoices} rowKey="maHoaDon" loading={loading} pagination={{ pageSize: 10 }} /> },
-    { key: 'debts', label: <span><BarChartOutlined /> Công nợ ({payments.receipts.length} phiếu)</span>, children: <DebtTab receipts={payments.receipts} orders={orders} /> },
+    { key: 'debts', label: <span><BarChartOutlined /> Quản lý Phiếu thu ({payments.receipts.filter(r => !r.isPaid).length} chờ duyệt)</span>, children: <DebtTab receipts={payments.receipts} orders={orders} onReload={loadAll} /> },
   ];
 
   const pendingContractsCount = contracts.filter(c => c.status === 'PendingApproval').length;
@@ -196,17 +196,33 @@ const SalesDashboard = () => {
   );
 };
 
-const DebtTab = ({ receipts, orders }) => {
+const DebtTab = ({ receipts, orders, onReload }) => {
+  const handleConfirmReceipt = async (id) => {
+    try {
+      await apiClient.put(`/api/Payments/receipts/${id}/confirm`);
+      message.success('Đã xác nhận thanh toán! Hệ thống đã tự động xuất Hóa đơn & Bảo hành.');
+      if (onReload) onReload();
+    } catch (err) {
+      message.error(err.response?.data?.message || 'Lỗi xác nhận thanh toán');
+    }
+  };
+
   const columns = [
-    { title: 'Mã phiếu', dataIndex: 'maPhieuThu', key: 'id' },
-    { title: 'Ngày thu', dataIndex: 'ngayThu', render: d => moment(d).format('DD/MM/YYYY') },
-    { title: 'Số tiền', dataIndex: 'soTien', render: v => formatPrice(v) },
-    { title: 'Hình thức', dataIndex: 'hinhThucThanhToan' },
-    { title: 'Hợp đồng', dataIndex: 'maHopDong' },
+    { title: 'Mã phiếu', dataIndex: 'maPhieuThu', render: v => <b>PT-{v}</b> },
+    { title: 'Đơn hàng', dataIndex: ['donDatHang', 'orderCode'], render: (v, r) => <b>{v || (r.maDonHang ? `ĐH-${r.maDonHang}` : '—')}</b> },
+    { title: 'Khách hàng', dataIndex: ['khachHang', 'tenKH'], render: v => v || '—' },
+    { title: 'Ngày lập', dataIndex: 'ngayThu', render: d => moment(d).format('DD/MM/YYYY HH:mm') },
+    { title: 'Số tiền', dataIndex: 'soTien', render: v => <span style={{ color: '#cf1322', fontWeight: 'bold' }}>{formatPrice(v)}</span> },
+    { title: 'Trạng thái', dataIndex: 'isPaid', render: v => v ? <Tag color="success">Đã thu tiền</Tag> : <Tag color="warning">Chờ xác nhận</Tag> },
+    { title: 'Thao tác', key: 'action', render: (_, r) => !r.isPaid && (
+      <Button size="small" type="primary" style={{ background: '#52c41a' }} icon={<CheckOutlined />} onClick={() => handleConfirmReceipt(r.maPhieuThu)}>
+        Xác nhận Đã thu
+      </Button>
+    )},
   ];
 
   return (
-    <Card size="small" title="Danh sách Phiếu thu">
+    <Card size="small" title="Danh sách Phiếu thu chờ kế toán duyệt">
       <Table columns={columns} dataSource={receipts} rowKey="maPhieuThu" pagination={{ pageSize: 10 }} />
     </Card>
   );

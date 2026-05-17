@@ -46,6 +46,7 @@ namespace Vishipel.Infrastructure.Data
         // 7. Nhóm Website & Tương tác
         public DbSet<YeuCauHoTro> YeuCauHoTros { get; set; }
         public DbSet<CauHinhHeThong> CauHinhHeThongs { get; set; }
+        public DbSet<BienBanNghiemThu> BienBanNghiemThus { get; set; }
         public DbSet<QuoteRequest> QuoteRequests { get; set; }
         public DbSet<QuoteRequestItem> QuoteRequestItems { get; set; }
 
@@ -127,6 +128,7 @@ namespace Vishipel.Infrastructure.Data
             modelBuilder.Entity<PhieuChi>().ToTable("PhieuChi");
             modelBuilder.Entity<KeHoachCongNo>().ToTable("KeHoachCongNo");
             modelBuilder.Entity<YeuCauHoTro>().ToTable("YeuCauHoTro");
+            modelBuilder.Entity<BienBanNghiemThu>().ToTable("BienBanNghiemThu");
             modelBuilder.Entity<NhatKyHeThong>().ToTable("NhatKyHeThong");
             modelBuilder.Entity<CauHinhHeThong>().ToTable("CauHinhHeThong");
             modelBuilder.Entity<QuoteRequest>().ToTable("QuoteRequests");

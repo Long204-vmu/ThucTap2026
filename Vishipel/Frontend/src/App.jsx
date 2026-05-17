@@ -40,6 +40,7 @@ import DeliveryOrderForm from './pages/admin/DeliveryOrderForm';
 import InvoiceForm from './pages/admin/InvoiceForm';
 import ManageSuppliers from './pages/admin/ManageSuppliers';
 import Profile from './pages/Profile';
+import CustomerManagement from './pages/admin/CustomerManagement';
 
 const { Content } = Layout;
 
@@ -137,6 +138,7 @@ const App = () => (
         <Route path="/admin/contracts/create/:orderId" element={<ProtectedRoute allowedRoles={['Admin', 'Manager', 'SaleManager', 'User']}><ContractForm /></ProtectedRoute>} />
         <Route path="/admin/delivery/create/:orderId" element={<ProtectedRoute allowedRoles={['Admin', 'Manager', 'Warehouse']}><DeliveryOrderForm /></ProtectedRoute>} />
         <Route path="/admin/invoices/create/:orderId" element={<ProtectedRoute allowedRoles={['Admin', 'Manager', 'Accounting', 'User']}><InvoiceForm /></ProtectedRoute>} />
+        <Route path="/admin/customers" element={<ProtectedRoute allowedRoles={['Admin', 'Manager', 'SaleManager']}><CustomerManagement /></ProtectedRoute>} />
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

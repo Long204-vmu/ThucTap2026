@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Tag, Typography, message, Modal, Descriptions, Button, Steps, Card, Space, Row, Col, Tabs, Form, Input, Divider } from 'antd';
-import { EyeOutlined, DownloadOutlined, FilePdfOutlined, SolutionOutlined, FileTextOutlined, DollarCircleOutlined, InfoCircleOutlined } from '@ant-design/icons';
+import { EyeOutlined, DownloadOutlined, FilePdfOutlined, SolutionOutlined, FileTextOutlined, DollarCircleOutlined, InfoCircleOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import apiClient from '../services/apiClient';
 import moment from 'moment';
+import InvoiceDocument from '../components/common/InvoiceDocument';
+import WarrantyDocument from '../components/common/WarrantyDocument';
+import AcceptanceDocument from '../components/common/AcceptanceDocument';
 
 const { Title, Text } = Typography;
 
@@ -15,6 +18,9 @@ const MyOrders = () => {
   const [isConfirmModalVisible, setIsConfirmModalVisible] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [confirmForm] = Form.useForm();
+  
+  const [docModalVisible, setDocModalVisible] = useState(false);
+  const [docType, setDocType] = useState(''); // 'invoice' | 'warranty' | 'acceptance'
 
   const formatPrice = (n) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n || 0);
 
@@ -24,6 +30,7 @@ const MyOrders = () => {
 
   const fetchOrders = async () => {
     try {
+      setLoading(true);
       const res = await apiClient.get('/api/Orders/my-orders');
       setOrders(res.data);
     } catch (error) {
@@ -34,7 +41,7 @@ const MyOrders = () => {
   };
 
   const getStepStatus = (status) => {
-    const steps = ['AwaitingConfirmation', 'Created', 'ContractDraft', 'ContractSigned', 'Delivering', 'Delivered', 'InvoiceIssued', 'Completed'];
+    const steps = ['AwaitingConfirmation', 'Created', 'ContractDraft', 'ContractSigned', 'Delivering', 'Delivered_Accepted', 'InvoiceIssued', 'Completed'];
     const current = steps.indexOf(status);
     return current >= 0 ? current : 0;
   };
@@ -44,7 +51,7 @@ const MyOrders = () => {
       title: 'Mã đơn hàng',
       dataIndex: 'orderCode',
       key: 'orderCode',
-      render: (code) => <b>{code}</b>
+      render: (code, r) => <b>{code || `ĐH-${r.maDonHang}`}</b>
     },
     {
       title: 'Ngày đặt',
@@ -65,11 +72,13 @@ const MyOrders = () => {
       render: (status) => {
         const map = {
           AwaitingConfirmation: ['orange', 'Chờ bạn xác nhận'],
-          Created: ['blue', 'Đã xác nhận'],
+          Created: ['blue', 'Đã chốt đơn'],
           ContractDraft: ['blue', 'Đang soạn HĐ'],
           ContractSigned: ['green', 'Đã ký HĐ'],
+          Processing: ['cyan', 'Đang lắp đặt'],
           Delivering: ['cyan', 'Đang giao hàng'],
-          Delivered: ['geekblue', 'Đã giao hàng'],
+          Delivered: ['geekblue', 'Chờ nghiệm thu'],
+          Delivered_Accepted: ['volcano', 'Chờ thanh toán'],
           InvoiceIssued: ['purple', 'Đã xuất hóa đơn'],
           Completed: ['success', 'Hoàn thành']
         };
@@ -122,7 +131,7 @@ const MyOrders = () => {
       setConfirming(true);
       const id = selectedOrder.maDonHang || selectedOrder.MaDonHang;
       await apiClient.put(`/api/Orders/${id}/customer-confirm`, values);
-      message.success("Xác nhận đơn hàng thành công! Đơn hàng đã được chuyển sang trạng thái xử lý.");
+      message.success("Xác nhận đơn hàng thành công!");
       setIsConfirmModalVisible(false);
       fetchOrders();
     } catch (error) {
@@ -137,10 +146,39 @@ const MyOrders = () => {
       await apiClient.put(`/api/Contracts/${contractId}/sign`);
       message.success("Ký hợp đồng thành công!");
       fetchOrders();
-      setIsModalVisible(false); // Close details modal after success
+      setIsModalVisible(false);
     } catch (error) {
       message.error("Lỗi khi ký hợp đồng");
     }
+  };
+
+  const handleConfirmAcceptance = async () => {
+    try {
+      const bienBanId = selectedOrder.bienBanNghiemThus[0].maBienBan;
+      await apiClient.put(`/api/Orders/acceptance/${bienBanId}/confirm`);
+      message.success("Đã xác nhận nghiệm thu điện tử thành công! Hệ thống đã tạo Phiếu thu.");
+      setDocModalVisible(false);
+      fetchOrders();
+      setIsModalVisible(false);
+    } catch (err) {
+      message.error("Lỗi xác nhận nghiệm thu");
+    }
+  };
+
+  const handlePayReceipt = async (orderId) => {
+    try {
+      await apiClient.put(`/api/Orders/${orderId}/pay`);
+      message.success("Thanh toán thành công! Hệ thống đã xuất hóa đơn và phiếu bảo hành.");
+      fetchOrders();
+      setIsModalVisible(false);
+    } catch (err) {
+      message.error("Lỗi thanh toán");
+    }
+  };
+
+  const openDocument = (type) => {
+    setDocType(type);
+    setDocModalVisible(true);
   };
 
   return (
@@ -158,13 +196,14 @@ const MyOrders = () => {
 
       {/* Modal Chi tiết đơn hàng */}
       <Modal
-        title={<span>Chi tiết đơn hàng {selectedOrder?.orderCode}</span>}
+        title={<span>Chi tiết đơn hàng {selectedOrder?.orderCode || `ĐH-${selectedOrder?.maDonHang}`}</span>}
         open={isModalVisible}
         onCancel={() => setIsModalVisible(false)}
         footer={[
           <Button key="close" onClick={() => setIsModalVisible(false)}>Đóng</Button>
         ]}
         width={900}
+        destroyOnHidden
       >
         {selectedOrder && (
           <div style={{ marginTop: 20 }}>
@@ -176,10 +215,10 @@ const MyOrders = () => {
                 { title: 'Đã tạo' },
                 { title: 'Soạn HĐ' },
                 { title: 'Ký HĐ' },
-                { title: 'Giao hàng' },
-                { title: 'Nhận hàng' },
+                { title: 'Thi công' },
+                { title: 'Nghiệm thu' },
                 { title: 'Hóa đơn' },
-                { title: 'Xong' },
+                { title: 'Hoàn thành' },
               ]}
               style={{ marginBottom: 32 }}
             />
@@ -216,36 +255,19 @@ const MyOrders = () => {
                             </div>
                           </div>
                         </Card>
-                        
-                        <Card title="Thông tin giao nhận" size="small" style={{ marginTop: 16 }}>
+                      </Col>
+                      <Col span={10}>
+                        <Card title="Thông tin giao nhận" size="small">
                           <Descriptions column={1} size="small">
                             <Descriptions.Item label="Địa chỉ">{selectedOrder.shippingAddress || 'Chưa cập nhật'}</Descriptions.Item>
                             <Descriptions.Item label="Người nhận">{selectedOrder.receiverName || 'Chưa cập nhật'}</Descriptions.Item>
-                            <Descriptions.Item label="Số điện thoại">{selectedOrder.receiverPhone || 'Chưa cập nhật'}</Descriptions.Item>
-                            <Descriptions.Item label="Phương thức">{selectedOrder.shippingMethod}</Descriptions.Item>
+                            <Descriptions.Item label="SĐT">{selectedOrder.receiverPhone || 'Chưa cập nhật'}</Descriptions.Item>
                           </Descriptions>
-                        </Card>
-                      </Col>
-                      <Col span={10}>
-                        <Card title="Tiến độ thanh toán" size="small">
-                          {selectedOrder.paymentSchedules?.length > 0 ? (
-                            <Table 
-                              dataSource={selectedOrder.paymentSchedules} 
-                              rowKey="maKeHoach" 
-                              pagination={false} 
-                              size="small"
-                              columns={[
-                                { title: 'Đợt', dataIndex: 'phaseName' },
-                                { title: '%', dataIndex: 'percentage', render: v => `${v}%` },
-                                { title: 'Tình trạng', dataIndex: 'status', render: s => <Tag color={s === 'Paid' ? 'success' : 'warning'}>{s}</Tag> }
-                              ]}
-                            />
-                          ) : <Text type="secondary">Chưa có kế hoạch thanh toán</Text>}
                         </Card>
                         
                         <Card title="Bảo hành & Kỹ thuật" size="small" style={{ marginTop: 16 }}>
                           <Text type="secondary" style={{ fontSize: 12 }}>Điều khoản bảo hành:</Text>
-                          <p style={{ fontSize: 13, marginBottom: 8 }}>{selectedOrder.warrantyTerms || 'Theo quy định tiêu chuẩn'}</p>
+                          <p style={{ fontSize: 13, marginBottom: 8 }}>{selectedOrder.warrantyTerms || '12 Tháng tiêu chuẩn'}</p>
                           <Text type="secondary" style={{ fontSize: 12 }}>Ghi chú kỹ thuật:</Text>
                           <p style={{ fontSize: 13 }}>{selectedOrder.technicalNotes || 'Không có'}</p>
                         </Card>
@@ -262,54 +284,69 @@ const MyOrders = () => {
                         title="1. Hợp đồng kinh tế" 
                         size="small" 
                         style={{ marginBottom: 16 }} 
-                        extra={
-                          selectedOrder.contract && (
-                            <Space>
-                              {selectedOrder.contract.status === 'Approved' && (
-                                <Button 
-                                  type="primary" 
-                                  size="small" 
-                                  onClick={() => handleSignContract(selectedOrder.contract.maHopDong)}
-                                >
-                                  Ký hợp đồng
-                                </Button>
-                              )}
-                              <Button size="small" icon={<DownloadOutlined />}>Tải bản ký</Button>
-                            </Space>
-                          )
-                        }
                       >
                         {selectedOrder.contract ? (
                           <Descriptions column={2} bordered size="small">
                             <Descriptions.Item label="Số hợp đồng">{selectedOrder.contract.maHopDong}</Descriptions.Item>
                             <Descriptions.Item label="Ngày ký">{selectedOrder.contract.ngayKy ? moment(selectedOrder.contract.ngayKy).format('DD/MM/YYYY') : '---'}</Descriptions.Item>
-                            <Descriptions.Item label="Giá trị HĐ">{formatPrice(selectedOrder.contract.giaTriHopDong)}</Descriptions.Item>
                             <Descriptions.Item label="Trạng thái">
                               <Tag color={selectedOrder.contract.status === 'Approved' ? 'processing' : 'success'}>
                                 {selectedOrder.contract.status === 'Approved' ? 'Chờ bạn ký' : selectedOrder.contract.status}
                               </Tag>
                             </Descriptions.Item>
-                            <Descriptions.Item label="Nội dung" span={2}>{selectedOrder.contract.noiDungTomTat || 'Cung cấp thiết bị hàng hải'}</Descriptions.Item>
                           </Descriptions>
                         ) : (
-                          <div style={{ textAlign: 'center', padding: 20, background: '#fafafa' }}>
-                            <Text type="secondary">Đơn hàng đang trong quá trình soạn thảo hợp đồng.</Text>
-                          </div>
+                          <Text type="secondary">Đang trong quá trình soạn thảo.</Text>
                         )}
                       </Card>
 
-                      <Card title="2. Hóa đơn điện tử (VAT)" size="small">
+                      <Card 
+                        title="2. Biên bản nghiệm thu bàn giao" 
+                        size="small" 
+                        style={{ marginBottom: 16 }}
+                        extra={
+                          selectedOrder.bienBanNghiemThus && selectedOrder.bienBanNghiemThus.length > 0 ? (
+                            <Button 
+                              type="primary" 
+                              size="small" 
+                              onClick={() => openDocument('acceptance')}
+                              style={selectedOrder.bienBanNghiemThus[0].customerConfirmed ? {} : { background: '#52c41a' }}
+                            >
+                              {selectedOrder.bienBanNghiemThus[0].customerConfirmed ? 'Xem Biên bản' : 'Xem & Xác nhận'}
+                            </Button>
+                          ) : null
+                        }
+                      >
+                         {selectedOrder.bienBanNghiemThus && selectedOrder.bienBanNghiemThus.length > 0 ? (
+                           <Descriptions column={2} bordered size="small">
+                             <Descriptions.Item label="Ngày lập">{moment(selectedOrder.bienBanNghiemThus[0].ngayLap).format('DD/MM/YYYY')}</Descriptions.Item>
+                             <Descriptions.Item label="Trạng thái">
+                               {selectedOrder.bienBanNghiemThus[0].customerConfirmed ? <Tag color="success">Đã xác nhận điện tử</Tag> : <Tag color="warning">Chờ bạn xác nhận</Tag>}
+                             </Descriptions.Item>
+                           </Descriptions>
+                         ) : <Text type="secondary">Bộ phận kỹ thuật chưa lập biên bản nghiệm thu.</Text>}
+                      </Card>
+
+                      <Card 
+                        title="3. Hóa đơn & Phiếu bảo hành" 
+                        size="small"
+                        extra={
+                          selectedOrder.status === 'Completed' || selectedOrder.status === 'InvoiceIssued' ? (
+                            <Space>
+                              <Button type="primary" size="small" onClick={() => openDocument('invoice')}>Xem Hóa đơn</Button>
+                              <Button type="default" size="small" onClick={() => openDocument('warranty')}>Phiếu bảo hành</Button>
+                            </Space>
+                          ) : null
+                        }
+                      >
                         {selectedOrder.invoice ? (
                           <Descriptions column={2} bordered size="small">
-                            <Descriptions.Item label="Mã tra cứu">{selectedOrder.invoice.maHoaDon}</Descriptions.Item>
+                            <Descriptions.Item label="Mã hóa đơn">{selectedOrder.invoice.maHoaDon}</Descriptions.Item>
                             <Descriptions.Item label="Ngày xuất">{moment(selectedOrder.invoice.ngayXuat).format('DD/MM/YYYY')}</Descriptions.Item>
-                            <Descriptions.Item label="Thuế suất">{selectedOrder.invoice.thueSuat}%</Descriptions.Item>
-                            <Descriptions.Item label="Tổng tiền VAT">{formatPrice(selectedOrder.invoice.totalAmount)}</Descriptions.Item>
-                            <Descriptions.Item label="Trạng thái" span={2}><Tag color="blue">{selectedOrder.invoice.status}</Tag></Descriptions.Item>
                           </Descriptions>
                         ) : (
-                          <div style={{ textAlign: 'center', padding: 20, background: '#fafafa' }}>
-                            <Text type="secondary">Hóa đơn sẽ được xuất sau khi hoàn thành giao hàng.</Text>
+                          <div style={{ textAlign: 'center', padding: 10 }}>
+                            <Text type="secondary">Hóa đơn & Bảo hành sẽ được cấp sau khi bạn hoàn tất thanh toán.</Text>
                           </div>
                         )}
                       </Card>
@@ -320,17 +357,31 @@ const MyOrders = () => {
                   key: '3',
                   label: <span><DollarCircleOutlined /> Lịch sử thanh toán</span>,
                   children: (
-                    <Card title="Danh sách phiếu thu" size="small">
+                    <Card title="Yêu cầu thanh toán & Phiếu thu" size="small">
+                      {!selectedOrder.phieuThus?.some(p => p.isPaid) && selectedOrder.phieuThus?.length > 0 && (
+                        <div style={{ marginBottom: 16, padding: 12, background: '#fffbe6', border: '1px solid #ffe58f', borderRadius: 6 }}>
+                          <Text strong style={{ color: '#d48806' }}>Hướng dẫn thanh toán chuyển khoản:</Text>
+                          <Descriptions column={1} size="small" style={{ marginTop: 8 }}>
+                            <Descriptions.Item label="Ngân hàng">Vietcombank - CN Hải Phòng</Descriptions.Item>
+                            <Descriptions.Item label="Số tài khoản"><b>0031000123456</b></Descriptions.Item>
+                            <Descriptions.Item label="Chủ tài khoản">CÔNG TY TNHH MTV THÔNG TIN ĐIỆN TỬ HÀNG HẢI VIỆT NAM</Descriptions.Item>
+                            <Descriptions.Item label="Nội dung">Thanh toan don hang {selectedOrder.orderCode || `DH-${selectedOrder.maDonHang}`}</Descriptions.Item>
+                          </Descriptions>
+                        </div>
+                      )}
                       <Table 
-                        dataSource={selectedOrder.contract?.phieuThus || []} 
+                        dataSource={selectedOrder.phieuThus || []} 
                         rowKey="maPhieuThu" 
                         pagination={false} 
                         size="middle"
                         columns={[
                           { title: 'Số phiếu', dataIndex: 'soPhieu', key: 'soPhieu' },
-                          { title: 'Ngày thu', dataIndex: 'ngayThu', render: d => moment(d).format('DD/MM/YYYY') },
+                          { title: 'Ngày lập', dataIndex: 'ngayThu', render: d => moment(d).format('DD/MM/YYYY') },
                           { title: 'Số tiền', dataIndex: 'soTien', render: v => <Text strong style={{ color: '#52c41a' }}>{formatPrice(v)}</Text>, align: 'right' },
-                          { title: 'Hình thức', dataIndex: 'hinhThucThanhToan' },
+                          { title: 'Trạng thái', dataIndex: 'isPaid', render: (v, r) => 
+                            v ? <Tag color="success">Đã thanh toán</Tag> : 
+                            <Tag color="warning">Chờ Kế toán xác nhận</Tag>
+                          },
                         ]}
                         locale={{ emptyText: 'Chưa có dữ liệu thanh toán' }}
                       />
@@ -343,49 +394,29 @@ const MyOrders = () => {
         )}
       </Modal>
 
-      {/* Modal Xác nhận đơn hàng (Cho phép khách hàng sửa thông tin) */}
+      {/* Modal View Documents */}
       <Modal
-        title="Xác nhận đơn hàng & Hoàn thiện thông tin"
-        open={isConfirmModalVisible}
-        onCancel={() => setIsConfirmModalVisible(false)}
-        onOk={() => confirmForm.submit()}
-        confirmLoading={confirming}
-        okText="Xác nhận & Đặt hàng"
-        cancelText="Hủy"
-        width={600}
+        title={docType === 'invoice' ? 'HÓA ĐƠN BÁN HÀNG' : docType === 'warranty' ? 'PHIẾU BẢO HÀNH' : 'BIÊN BẢN BÀN GIAO'}
+        open={docModalVisible}
+        onCancel={() => setDocModalVisible(false)}
+        footer={null}
+        width={950}
+        destroyOnHidden
       >
-        <div style={{ marginBottom: 20 }}>
-          <Text>Vui lòng kiểm tra lại thông tin nhận hàng và xác nhận để chúng tôi bắt đầu triển khai đơn hàng.</Text>
-        </div>
-        <Form
-          form={confirmForm}
-          layout="vertical"
-          onFinish={handleConfirmOrder}
-        >
-          <Form.Item name="shippingAddress" label="Địa chỉ giao hàng" rules={[{ required: true, message: 'Vui lòng nhập địa chỉ!' }]}>
-            <Input placeholder="Số nhà, tên đường, cảng, tàu..." />
-          </Form.Item>
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item name="receiverName" label="Người nhận hàng" rules={[{ required: true, message: 'Vui lòng nhập tên!' }]}>
-                <Input placeholder="Tên người nhận" />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item name="receiverPhone" label="Số điện thoại" rules={[{ required: true, message: 'Vui lòng nhập số điện thoại!' }]}>
-                <Input placeholder="SĐT liên hệ" />
-              </Form.Item>
-            </Col>
-          </Row>
-          <Divider />
-          <div style={{ background: '#fafafa', padding: 16, borderRadius: 8 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <Text>Tổng giá trị đơn hàng:</Text>
-              <Text strong style={{ fontSize: 18, color: '#cf1322' }}>{formatPrice(selectedOrder?.tongGiaTri)}</Text>
-            </div>
-          </div>
-        </Form>
+        {docType === 'invoice' ? (
+          <InvoiceDocument order={selectedOrder} />
+        ) : docType === 'warranty' ? (
+          <WarrantyDocument order={selectedOrder} acceptanceRecord={selectedOrder?.bienBanNghiemThus ? selectedOrder.bienBanNghiemThus[0] : null} />
+        ) : (
+          <AcceptanceDocument 
+            order={selectedOrder} 
+            acceptanceRecord={selectedOrder?.bienBanNghiemThus ? selectedOrder.bienBanNghiemThus[0] : null}
+            isCustomerView={true}
+            onConfirm={handleConfirmAcceptance}
+          />
+        )}
       </Modal>
+
     </div>
   );
 };

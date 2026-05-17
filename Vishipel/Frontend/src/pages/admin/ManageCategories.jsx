@@ -156,7 +156,7 @@ const ManageCategories = () => {
         open={isModalOpen}
         onCancel={() => setIsModalOpen(false)}
         footer={null}
-        destroyOnClose
+        destroyOnHidden
       >
         <Form form={form} layout="vertical" onFinish={handleSave} style={{ marginTop: 20 }}>
           <Form.Item name="name" label={`Tên ${currentTypeInfo.label.toLowerCase()}`} rules={[{ required: true, message: 'Vui lòng nhập tên!' }]}>

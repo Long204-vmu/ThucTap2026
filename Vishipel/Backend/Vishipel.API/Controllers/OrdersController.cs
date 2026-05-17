@@ -115,10 +115,12 @@ namespace Vishipel.API.Controllers
             if (!int.TryParse(userIdStr, out int userId)) return Unauthorized();
 
             return await _context.DonDatHangs
+                .Include(o => o.KhachHang)
                 .Include(o => o.ChiTietDonHangs)
                     .ThenInclude(ct => ct.ThietBi)
                 .Include(o => o.Contract)
-                    .ThenInclude(c => c.PhieuThus)
+                .Include(o => o.PhieuThus)
+                .Include(o => o.BienBanNghiemThus)
                 .Include(o => o.Invoice)
                 .Include(o => o.PaymentSchedules)
                 .Where(o => o.MaTaiKhoan == userId)
@@ -300,6 +302,89 @@ namespace Vishipel.API.Controllers
             public string ReceiverPhone { get; set; } = string.Empty;
             public string ShippingAddress { get; set; } = string.Empty;
             public string? Note { get; set; }
+        }
+
+        // Khách hàng tiến hành thanh toán đơn hàng
+        [HttpPut("{id}/pay")]
+        [Authorize]
+        public async Task<IActionResult> PayOrder(int id)
+        {
+            var order = await _context.DonDatHangs
+                .Include(o => o.KhachHang)
+                .FirstOrDefaultAsync(o => o.MaDonHang == id);
+                
+            if (order == null) return NotFound(new { message = "Không tìm thấy đơn hàng." });
+
+            var phieuThu = await _context.PhieuThus.FirstOrDefaultAsync(p => p.MaDonHang == id);
+            if (phieuThu != null)
+            {
+                phieuThu.IsPaid = true;
+                phieuThu.NgayThu = DateTime.Now;
+            }
+
+            // Cập nhật trạng thái
+            order.Status = "Completed"; // Hoặc InvoiceIssued
+
+            // Tự động xuất hóa đơn nếu chưa có
+            var existingHoaDon = await _context.HoaDons.FirstOrDefaultAsync(h => h.MaDonHang == id);
+            if (existingHoaDon == null)
+            {
+                var hoaDon = new HoaDon
+                {
+                    MaHoaDon = $"INV-{DateTime.Now:yyyyMMdd}-{id}",
+                    MaDonHang = id,
+                    NgayXuat = DateTime.Now,
+                    TotalAmount = order.TongGiaTri,
+                    Status = "Issued",
+                    BuyerName = order.KhachHang?.TenKH ?? "Khách hàng",
+                    TaxCode = order.KhachHang?.MST ?? ""
+                };
+                _context.HoaDons.Add(hoaDon);
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Thanh toán thành công. Hệ thống đã tự động xuất hóa đơn và phiếu bảo hành." });
+        }
+
+        // Khách hàng xác nhận biên bản nghiệm thu
+        [HttpPut("acceptance/{bienBanId}/confirm")]
+        [Authorize]
+        public async Task<IActionResult> CustomerConfirmAcceptance(int bienBanId)
+        {
+            var bienBan = await _context.BienBanNghiemThus
+                .Include(b => b.DonDatHang)
+                .FirstOrDefaultAsync(b => b.MaBienBan == bienBanId);
+
+            if (bienBan == null) return NotFound("Không tìm thấy biên bản");
+
+            bienBan.CustomerConfirmed = true;
+            bienBan.NgayXacNhan = DateTime.Now;
+
+            // Chuyển trạng thái đơn hàng sang Đã nghiệm thu (Chờ thanh toán)
+            if (bienBan.DonDatHang != null)
+            {
+                bienBan.DonDatHang.Status = "Delivered_Accepted";
+                
+                // Tự động lập phiếu thu cho khách hàng thanh toán
+                var existingPhieuThu = await _context.PhieuThus.FirstOrDefaultAsync(p => p.MaDonHang == bienBan.MaDonHang);
+                if (existingPhieuThu == null)
+                {
+                    var phieuThu = new PhieuThu
+                    {
+                        SoPhieu = $"PT-{DateTime.Now:yyyyMMdd}-{bienBan.MaDonHang}",
+                        MaDonHang = bienBan.MaDonHang,
+                        MaKH = bienBan.DonDatHang.MaKH,
+                        SoTien = bienBan.DonDatHang.TongGiaTri,
+                        HinhThucThanhToan = bienBan.DonDatHang.PaymentMethod ?? "Chuyển khoản",
+                        IsPaid = false,
+                        NgayThu = DateTime.Now
+                    };
+                    _context.PhieuThus.Add(phieuThu);
+                }
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Khách hàng đã xác nhận nghiệm thu điện tử thành công." });
         }
 
         public class OrderStatusUpdateDto

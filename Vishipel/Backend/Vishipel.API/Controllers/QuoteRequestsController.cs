@@ -121,6 +121,7 @@ namespace Vishipel.API.Controllers
 
             var quoteRequest = await _context.QuoteRequests
                 .Include(q => q.Items)
+                .Include(q => q.User) // Include user to get Email/Phone
                 .FirstOrDefaultAsync(q => q.Id == id);
             
             if (quoteRequest == null) return NotFound();
@@ -129,19 +130,54 @@ namespace Vishipel.API.Controllers
 
             quoteRequest.Status = "Accepted";
 
+            // TỰ ĐỘNG THU THẬP THÔNG TIN KHÁCH HÀNG (CRM)
+            // Tìm khách hàng dựa trên SĐT của người nhận hoặc Email của tài khoản
+            var sdt = dto.ReceiverPhone ?? quoteRequest.User?.SoDienThoai;
+            var email = quoteRequest.User?.Email;
+            var tenKH = dto.ReceiverName ?? quoteRequest.User?.HoTen ?? "Khách hàng từ báo giá";
+
+            var khachHang = await _context.KhachHangs.FirstOrDefaultAsync(k => 
+                (!string.IsNullOrEmpty(sdt) && k.SoDienThoai == sdt) || 
+                (!string.IsNullOrEmpty(email) && k.Email == email)
+            );
+
+            if (khachHang == null)
+            {
+                // Chưa có thì tạo mới hồ sơ CRM
+                khachHang = new KhachHang
+                {
+                    TenKH = tenKH,
+                    SoDienThoai = sdt,
+                    Email = email,
+                    DiaChi = dto.ShippingAddress,
+                    LoaiKhachHang = "Cá nhân"
+                };
+                _context.KhachHangs.Add(khachHang);
+                await _context.SaveChangesAsync(); // Lưu để sinh ra MaKH
+            }
+            else
+            {
+                // Nếu đã có nhưng đang thiếu thông tin thì cập nhật thêm
+                bool isUpdated = false;
+                if (string.IsNullOrEmpty(khachHang.DiaChi) && !string.IsNullOrEmpty(dto.ShippingAddress)) { khachHang.DiaChi = dto.ShippingAddress; isUpdated = true; }
+                if (string.IsNullOrEmpty(khachHang.SoDienThoai) && !string.IsNullOrEmpty(sdt)) { khachHang.SoDienThoai = sdt; isUpdated = true; }
+                
+                if (isUpdated) await _context.SaveChangesAsync();
+            }
+
             // TỰ ĐỘNG TẠO ĐƠN ĐẶT HÀNG (Step 4.3) kèm thông tin giao hàng
             var order = new DonDatHang
             {
                 OrderCode = "DH" + DateTime.Now.ToString("yyyyMMdd") + new Random().Next(1000, 9999),
-                MaTaiKhoan = quoteRequest.UserId, // Sử dụng MaTaiKhoan thay vì MaKH
-                MaKH = null, // Có thể bổ sung logic tìm MaKH từ TaiKhoan sau này
+                MaTaiKhoan = quoteRequest.UserId,
+                MaKH = khachHang.MaKH, // Đã tự động gán khách hàng!
                 NgayDat = DateTime.Now,
                 TongGiaTri = quoteRequest.TotalQuotedPrice ?? 0,
                 Status = "Confirmed", // Trạng thái đã chốt thông tin
                 Note = dto.Note ?? $"Đơn hàng tự động từ Báo giá #{quoteRequest.Id}",
-                ShippingAddress = dto.ShippingAddress,
-                ReceiverName = dto.ReceiverName,
-                ReceiverPhone = dto.ReceiverPhone,
+                ShippingAddress = dto.ShippingAddress ?? khachHang.DiaChi,
+                ReceiverName = dto.ReceiverName ?? khachHang.TenKH,
+                ReceiverPhone = dto.ReceiverPhone ?? khachHang.SoDienThoai,
                 ChiTietDonHangs = quoteRequest.Items.Select(item => new ChiTietDonHang
                 {
                     MaThietBi = item.ProductId,
@@ -153,7 +189,7 @@ namespace Vishipel.API.Controllers
             _context.DonDatHangs.Add(order);
             await _context.SaveChangesAsync();
 
-            return Ok(new { message = "Đã xác nhận báo giá và tạo đơn hàng thành công.", orderId = order.MaDonHang });
+            return Ok(new { message = "Đã xác nhận báo giá, tạo hồ sơ khách hàng tự động và sinh đơn đặt hàng thành công.", orderId = order.MaDonHang });
         }
 
         public class AcceptQuoteDto

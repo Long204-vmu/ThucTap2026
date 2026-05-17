@@ -70,5 +70,9 @@ namespace Vishipel.Core.Models
         // Link to other documents
         public virtual HopDong? Contract { get; set; }
         public virtual HoaDon? Invoice { get; set; }
+        
+        public virtual ICollection<BienBanNghiemThu>? BienBanNghiemThus { get; set; }
+        
+        public virtual ICollection<PhieuThu>? PhieuThus { get; set; }
     }
 }

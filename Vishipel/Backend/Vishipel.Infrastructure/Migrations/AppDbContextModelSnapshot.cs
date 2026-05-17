@@ -22,6 +22,75 @@ namespace Vishipel.Infrastructure.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("Vishipel.Core.Models.BienBanNghiemThu", b =>
+                {
+                    b.Property<int>("MaBienBan")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MaBienBan"));
+
+                    b.Property<string>("ChucVuBenA")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("ChucVuBenB")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<bool>("CustomerConfirmed")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("DaiDienBenA")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("DaiDienBenB")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("DanhGiaChung")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("DiaDiem")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("GhiChuKiemTra")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<int>("MaDonHang")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("NgayLap")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("NgayXacNhan")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("NguoiLapId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("NoiDungDichVu")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ThoiGianBatDau")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ThoiGianKetThuc")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("MaBienBan");
+
+                    b.HasIndex("MaDonHang");
+
+                    b.HasIndex("NguoiLapId");
+
+                    b.ToTable("BienBanNghiemThu", (string)null);
+                });
+
             modelBuilder.Entity("Vishipel.Core.Models.CauHinhHeThong", b =>
                 {
                     b.Property<int>("Id")
@@ -690,6 +759,12 @@ namespace Vishipel.Infrastructure.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
+                    b.Property<bool>("IsPaid")
+                        .HasColumnType("bit");
+
+                    b.Property<int?>("MaDonHang")
+                        .HasColumnType("int");
+
                     b.Property<string>("MaHopDong")
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
@@ -712,6 +787,8 @@ namespace Vishipel.Infrastructure.Migrations
                         .HasColumnType("decimal(15,2)");
 
                     b.HasKey("MaPhieuThu");
+
+                    b.HasIndex("MaDonHang");
 
                     b.HasIndex("MaHopDong");
 
@@ -1071,6 +1148,23 @@ namespace Vishipel.Infrastructure.Migrations
                     b.ToTable("YeuCauHoTro", (string)null);
                 });
 
+            modelBuilder.Entity("Vishipel.Core.Models.BienBanNghiemThu", b =>
+                {
+                    b.HasOne("Vishipel.Core.Models.DonDatHang", "DonDatHang")
+                        .WithMany("BienBanNghiemThus")
+                        .HasForeignKey("MaDonHang")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Vishipel.Core.Models.TaiKhoan", "NguoiLap")
+                        .WithMany()
+                        .HasForeignKey("NguoiLapId");
+
+                    b.Navigation("DonDatHang");
+
+                    b.Navigation("NguoiLap");
+                });
+
             modelBuilder.Entity("Vishipel.Core.Models.ChiTietDonHang", b =>
                 {
                     b.HasOne("Vishipel.Core.Models.DonDatHang", "DonDatHang")
@@ -1283,8 +1377,12 @@ namespace Vishipel.Infrastructure.Migrations
 
             modelBuilder.Entity("Vishipel.Core.Models.PhieuThu", b =>
                 {
-                    b.HasOne("Vishipel.Core.Models.HopDong", "HopDong")
+                    b.HasOne("Vishipel.Core.Models.DonDatHang", "DonDatHang")
                         .WithMany()
+                        .HasForeignKey("MaDonHang");
+
+                    b.HasOne("Vishipel.Core.Models.HopDong", "HopDong")
+                        .WithMany("PhieuThus")
                         .HasForeignKey("MaHopDong");
 
                     b.HasOne("Vishipel.Core.Models.KhachHang", "KhachHang")
@@ -1294,6 +1392,8 @@ namespace Vishipel.Infrastructure.Migrations
                     b.HasOne("Vishipel.Core.Models.TaiKhoan", "TaiKhoan")
                         .WithMany()
                         .HasForeignKey("MaTaiKhoan");
+
+                    b.Navigation("DonDatHang");
 
                     b.Navigation("HopDong");
 
@@ -1411,6 +1511,8 @@ namespace Vishipel.Infrastructure.Migrations
 
             modelBuilder.Entity("Vishipel.Core.Models.DonDatHang", b =>
                 {
+                    b.Navigation("BienBanNghiemThus");
+
                     b.Navigation("ChiTietDonHangs");
 
                     b.Navigation("Contract");
@@ -1418,6 +1520,11 @@ namespace Vishipel.Infrastructure.Migrations
                     b.Navigation("Invoice");
 
                     b.Navigation("PaymentSchedules");
+                });
+
+            modelBuilder.Entity("Vishipel.Core.Models.HopDong", b =>
+                {
+                    b.Navigation("PhieuThus");
                 });
 
             modelBuilder.Entity("Vishipel.Core.Models.LoaiThietBi", b =>

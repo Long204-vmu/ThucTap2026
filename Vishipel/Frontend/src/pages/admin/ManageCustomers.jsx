@@ -174,7 +174,7 @@ const ManageCustomers = () => {
         open={isModalOpen}
         onCancel={() => setIsModalOpen(false)}
         footer={null}
-        destroyOnClose
+        destroyOnHidden
         width={600}
       >
         <Form form={form} layout="vertical" onFinish={handleSave} style={{ marginTop: 20 }}>
