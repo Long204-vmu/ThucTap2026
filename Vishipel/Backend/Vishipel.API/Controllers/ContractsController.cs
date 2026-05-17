@@ -8,7 +8,7 @@ namespace Vishipel.API.Controllers
 {
     [Route("api/Contracts")]
     [ApiController]
-    [Authorize(Roles = "Admin,Manager,SaleManager,Accounting")]
+    [Authorize]
     public class ContractsController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -19,11 +19,15 @@ namespace Vishipel.API.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Admin,Manager,SaleManager,Accounting,Warehouse")]
         public async Task<ActionResult<IEnumerable<HopDong>>> GetContracts()
         {
             return await _context.HopDongs
                 .Include(h => h.DonDatHang)
                     .ThenInclude(d => d!.KhachHang)
+                .Include(h => h.DonDatHang)
+                    .ThenInclude(d => d!.ChiTietDonHangs)
+                        .ThenInclude(i => i.ThietBi)
                 .OrderByDescending(h => h.NgayKy)
                 .ToListAsync();
         }
@@ -37,6 +41,7 @@ namespace Vishipel.API.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin,Manager,SaleManager,Accounting")]
         public async Task<ActionResult<HopDong>> PostContract([FromBody] ContractCreateDto dto)
         {
             var hopDong = new HopDong
@@ -65,6 +70,7 @@ namespace Vishipel.API.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin,Manager,SaleManager,Accounting")]
         public async Task<IActionResult> PutContract(string id, [FromBody] ContractCreateDto dto)
         {
             var hopDong = await _context.HopDongs.FindAsync(id);
@@ -86,6 +92,7 @@ namespace Vishipel.API.Controllers
         }
 
         [HttpPut("{id}/submit")]
+        [Authorize(Roles = "Admin,Manager,SaleManager,Accounting")]
         public async Task<IActionResult> SubmitContract(string id)
         {
             var hopDong = await _context.HopDongs.FindAsync(id);
@@ -107,6 +114,7 @@ namespace Vishipel.API.Controllers
         }
 
         [HttpPut("{id}/sign")]
+        [Authorize]
         public async Task<IActionResult> SignContract(string id)
         {
             var hopDong = await _context.HopDongs.FindAsync(id);

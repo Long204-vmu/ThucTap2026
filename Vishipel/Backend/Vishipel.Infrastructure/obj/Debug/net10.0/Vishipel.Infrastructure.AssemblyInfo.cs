@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Vishipel.Infrastructure")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+6568ab676ee8e35639d3a1e9d140806ddedccaf4")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+7fd352f353b4b1cf7126bcc0ca47c371950aab98")]
 [assembly: System.Reflection.AssemblyProductAttribute("Vishipel.Infrastructure")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Vishipel.Infrastructure")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

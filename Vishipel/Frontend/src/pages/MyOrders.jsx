@@ -99,6 +99,16 @@ const MyOrders = () => {
               Xác nhận & Hoàn thiện
             </Button>
           )}
+          {record.contract?.status === 'Approved' && (
+            <Button 
+              type="primary" 
+              style={{ background: '#52c41a', borderColor: '#52c41a' }}
+              size="small" 
+              onClick={() => handleSignContract(record.contract.maHopDong)}
+            >
+              Ký hợp đồng
+            </Button>
+          )}
           <Button type="link" onClick={() => { setSelectedOrder(record); setIsModalVisible(true); }} icon={<EyeOutlined />}>
             Chi tiết
           </Button>
@@ -119,6 +129,17 @@ const MyOrders = () => {
       message.error("Lỗi khi xác nhận đơn hàng");
     } finally {
       setConfirming(false);
+    }
+  };
+
+  const handleSignContract = async (contractId) => {
+    try {
+      await apiClient.put(`/api/Contracts/${contractId}/sign`);
+      message.success("Ký hợp đồng thành công!");
+      fetchOrders();
+      setIsModalVisible(false); // Close details modal after success
+    } catch (error) {
+      message.error("Lỗi khi ký hợp đồng");
     }
   };
 
@@ -237,13 +258,37 @@ const MyOrders = () => {
                   label: <span><SolutionOutlined /> Hồ sơ chứng từ</span>,
                   children: (
                     <div style={{ padding: '0 8px' }}>
-                      <Card title="1. Hợp đồng kinh tế" size="small" style={{ marginBottom: 16 }} extra={selectedOrder.contract && <Button size="small" icon={<DownloadOutlined />}>Tải bản ký</Button>}>
+                      <Card 
+                        title="1. Hợp đồng kinh tế" 
+                        size="small" 
+                        style={{ marginBottom: 16 }} 
+                        extra={
+                          selectedOrder.contract && (
+                            <Space>
+                              {selectedOrder.contract.status === 'Approved' && (
+                                <Button 
+                                  type="primary" 
+                                  size="small" 
+                                  onClick={() => handleSignContract(selectedOrder.contract.maHopDong)}
+                                >
+                                  Ký hợp đồng
+                                </Button>
+                              )}
+                              <Button size="small" icon={<DownloadOutlined />}>Tải bản ký</Button>
+                            </Space>
+                          )
+                        }
+                      >
                         {selectedOrder.contract ? (
                           <Descriptions column={2} bordered size="small">
                             <Descriptions.Item label="Số hợp đồng">{selectedOrder.contract.maHopDong}</Descriptions.Item>
                             <Descriptions.Item label="Ngày ký">{selectedOrder.contract.ngayKy ? moment(selectedOrder.contract.ngayKy).format('DD/MM/YYYY') : '---'}</Descriptions.Item>
                             <Descriptions.Item label="Giá trị HĐ">{formatPrice(selectedOrder.contract.giaTriHopDong)}</Descriptions.Item>
-                            <Descriptions.Item label="Trạng thái"><Tag color="green">{selectedOrder.contract.status}</Tag></Descriptions.Item>
+                            <Descriptions.Item label="Trạng thái">
+                              <Tag color={selectedOrder.contract.status === 'Approved' ? 'processing' : 'success'}>
+                                {selectedOrder.contract.status === 'Approved' ? 'Chờ bạn ký' : selectedOrder.contract.status}
+                              </Tag>
+                            </Descriptions.Item>
                             <Descriptions.Item label="Nội dung" span={2}>{selectedOrder.contract.noiDungTomTat || 'Cung cấp thiết bị hàng hải'}</Descriptions.Item>
                           </Descriptions>
                         ) : (

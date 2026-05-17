@@ -9,7 +9,7 @@ namespace Vishipel.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "Admin,Manager,Accounting")]
+    [Authorize(Roles = "Admin,Manager,SaleManager,Accounting")]
     public class PaymentsController : ControllerBase
     {
         private readonly AppDbContext _context;

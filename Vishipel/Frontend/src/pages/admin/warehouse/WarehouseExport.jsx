@@ -10,7 +10,7 @@ import {
 import { getProducts } from '../../../services/productService';
 import {
   getWarehouseExports, createWarehouseExport,
-  getWarehouseOptions
+  getWarehouseOptions, getContracts
 } from '../../../services/warehouseService';
 import apiClient from '../../../services/apiClient';
 
@@ -45,10 +45,10 @@ const WarehouseExport = () => {
 
     // Lấy hợp đồng riêng — không block nếu API chưa có
     try {
-      const contractRes = await apiClient.get('/api/HopDong');
+      const contractRes = await getContracts();
       setContracts(contractRes.data || []);
     } catch {
-      // Bỏ qua nếu chưa có HopDong API
+      // Bỏ qua nếu lỗi
     }
   };
 
@@ -64,10 +64,51 @@ const WarehouseExport = () => {
     value: w.maKho || w.maLoai,
   }));
 
-  const contractOptions = contracts.map(c => ({
-    label: `${c.maHopDong}${c.tenKhachHang ? ' — ' + c.tenKhachHang : ''}${c.ngayKy ? ' (' + new Date(c.ngayKy).toLocaleDateString('vi-VN') + ')' : ''}`,
-    value: c.maHopDong,
-  }));
+  const contractOptions = contracts.map(c => {
+    const customerName = c.donDatHang?.khachHang?.tenKH || c.partyAName || '';
+    return {
+      label: `${c.maHopDong}${customerName ? ' — ' + customerName : ''}${c.ngayKy ? ' (' + new Date(c.ngayKy).toLocaleDateString('vi-VN') + ')' : ''}`,
+      value: c.maHopDong,
+    };
+  });
+
+  const handleContractChange = (maHopDong) => {
+    if (!maHopDong) {
+      // Clear fields if deselected
+      form.setFieldsValue({
+        lyDoXuat: '',
+        items: [{ maThietBi: null, soLuong: 1, donGiaBan: 0 }]
+      });
+      return;
+    }
+
+    const selectedContract = contracts.find(c => c.maHopDong === maHopDong);
+    if (selectedContract) {
+      const customerName = selectedContract.donDatHang?.khachHang?.tenKH || selectedContract.partyAName || '';
+      const lyDo = `Xuất kho giao hàng theo hợp đồng ${maHopDong}${customerName ? ' — ' + customerName : ''}`;
+      
+      const orderItems = selectedContract.donDatHang?.chiTietDonHangs || [];
+      if (orderItems.length > 0) {
+        const formItems = orderItems.map(item => ({
+          maThietBi: item.maThietBi,
+          soLuong: item.soLuong,
+          donGiaBan: item.donGia || 0
+        }));
+
+        form.setFieldsValue({
+          lyDoXuat: lyDo,
+          items: formItems
+        });
+        message.success(`Đã tự động điền danh sách thiết bị (${orderItems.length} loại) từ hợp đồng ${maHopDong}!`);
+      } else {
+        form.setFieldsValue({
+          lyDoXuat: lyDo,
+          items: [{ maThietBi: null, soLuong: 1, donGiaBan: 0 }]
+        });
+        message.warning(`Hợp đồng ${maHopDong} không có chi tiết thiết bị nào.`);
+      }
+    }
+  };
 
   const handleSubmit = async (values) => {
     if (!values.items?.length) {
@@ -184,13 +225,13 @@ const WarehouseExport = () => {
         <Alert
           type="info"
           showIcon
-          message="Lưu ý: Phiếu xuất có thể liên kết với hợp đồng từ phân hệ Bán hàng để theo dõi giao hàng."
+          title="Lưu ý: Phiếu xuất có thể liên kết với hợp đồng từ phân hệ Bán hàng để theo dõi giao hàng."
           style={{ marginBottom: 20, borderRadius: 8 }}
         />
 
         {/* Form tạo phiếu xuất */}
         <Card
-          bordered={false}
+          variant="borderless"
           style={{ borderRadius: 12, marginBottom: 24, boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}
           title={<span><FileAddOutlined style={{ marginRight: 8 }} />Tạo phiếu xuất mới</span>}
         >
@@ -209,6 +250,7 @@ const WarehouseExport = () => {
                     placeholder="Chọn hợp đồng..."
                     allowClear showSearch optionFilterProp="label"
                     notFoundContent="Không có hợp đồng phù hợp"
+                    onChange={handleContractChange}
                   />
                 </Form.Item>
               </Col>
@@ -219,7 +261,7 @@ const WarehouseExport = () => {
               </Col>
             </Row>
 
-            <Divider orientation="left">Danh sách thiết bị xuất</Divider>
+            <Divider titlePlacement="left">Danh sách thiết bị xuất</Divider>
 
             <Form.List name="items">
               {(fields, { add, remove }) => (
@@ -227,7 +269,7 @@ const WarehouseExport = () => {
                   {fields.map((field) => (
                     <Space key={field.key} align="start" wrap style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
                       <Form.Item
-                        {...field} name={[field.name, 'maThietBi']}
+                        name={[field.name, 'maThietBi']}
                         rules={[{ required: true, message: 'Chọn thiết bị' }]}
                         style={{ minWidth: 280, flex: 1, marginBottom: 0 }}
                         label={field.name === 0 ? 'Thiết bị' : ''}
@@ -236,20 +278,18 @@ const WarehouseExport = () => {
                       </Form.Item>
 
                       <Form.Item
-                        {...field} name={[field.name, 'soLuong']}
+                        name={[field.name, 'soLuong']}
                         rules={[{ required: true, message: 'Nhập SL' }]}
                         style={{ width: 120, marginBottom: 0 }}
                         label={field.name === 0 ? 'Số lượng' : ''}
-                        initialValue={1}
                       >
                         <InputNumber min={1} style={{ width: '100%' }} />
                       </Form.Item>
 
                       <Form.Item
-                        {...field} name={[field.name, 'donGiaBan']}
+                        name={[field.name, 'donGiaBan']}
                         style={{ width: 180, marginBottom: 0 }}
                         label={field.name === 0 ? 'Đơn giá bán (₫)' : ''}
-                        initialValue={0}
                       >
                         <InputNumber
                           min={0} style={{ width: '100%' }}

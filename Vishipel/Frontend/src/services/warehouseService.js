@@ -8,7 +8,7 @@ export const createWarehouseExport = (payload) => apiClient.post('/api/Warehouse
 export const createWarehouseTransfer = (payload) => apiClient.post('/api/Warehouse/transfer', payload);
 export const getWarehouseOptions = () => apiClient.get('/api/Kho');
 export const getWarehouseSuppliers = () => apiClient.get('/api/NhaCungCap');
-export const getContracts = () => apiClient.get('/api/HopDong');
+export const getContracts = () => apiClient.get('/api/Contracts');
 export const getWarehouseTransfers = () =>
   getWarehouseImports().then(res => ({
     ...res,

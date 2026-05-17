@@ -1,112 +1,117 @@
 import React, { useState, useEffect } from 'react';
-import { Typography, Tabs, Table, Tag, Button, Card, Row, Col, Statistic, message, Modal, Space, Tooltip } from 'antd';
-import { ShoppingCartOutlined, FileTextOutlined, CarOutlined, DollarOutlined, PlusOutlined, EyeOutlined, CheckCircleOutlined, SendOutlined, EditOutlined, DashboardOutlined, ToolOutlined, BarChartOutlined, LockOutlined, AuditOutlined, ShoppingOutlined, UserOutlined } from '@ant-design/icons';
+import { Typography, Tabs, Table, Tag, Button, Card, Row, Col, Statistic, message, Modal, Space, Tooltip, Input, Select } from 'antd';
+import { FileTextOutlined, CarOutlined, DollarOutlined, EyeOutlined, SendOutlined, CheckOutlined, CloseOutlined, SignatureOutlined, BarChartOutlined, EditOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import apiClient from '../../services/apiClient';
 import moment from 'moment';
 
 const { Title } = Typography;
+const { TextArea } = Input;
+const { Option } = Select;
 
 const formatPrice = (n) => n != null ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n) : '—';
 
 const SalesDashboard = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('quotes');
-  const [quotes, setQuotes] = useState([]);
+  const [activeTab, setActiveTab] = useState('orders');
   const [orders, setOrders] = useState([]);
   const [contracts, setContracts] = useState([]);
   const [invoices, setInvoices] = useState([]);
+  const [payments, setPayments] = useState({ receipts: [], vouchers: [] });
   const [loading, setLoading] = useState(false);
+  
+  const [statusModalVisible, setStatusModalVisible] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [newStatus, setNewStatus] = useState('');
+  const [statusNote, setStatusNote] = useState('');
 
   const user = JSON.parse(localStorage.getItem('user') || '{}');
 
   useEffect(() => { loadAll(); }, []);
 
   const loadAll = async () => {
-    setLoading(true);
     try {
-      const [qRes, oRes, cRes, iRes] = await Promise.all([
-        apiClient.get('/api/QuoteRequests'),
+      setLoading(true);
+      const [ordRes, conRes, invRes, payRes, vouchRes] = await Promise.all([
         apiClient.get('/api/Orders'),
-        apiClient.get('/api/Contracts').catch(() => ({ data: [] })),
-        apiClient.get('/api/Invoices').catch(() => ({ data: [] })),
+        apiClient.get('/api/Contracts'),
+        apiClient.get('/api/Invoices'),
+        apiClient.get('/api/Payments/receipts'),
+        apiClient.get('/api/Payments/vouchers')
       ]);
-      setQuotes(qRes.data);
-      setOrders(oRes.data);
-      setContracts(cRes.data);
-      setInvoices(iRes.data);
+      setOrders(ordRes.data || []);
+      setContracts(conRes.data || []);
+      setInvoices(invRes.data || []);
+      setPayments({ receipts: payRes.data || [], vouchers: vouchRes.data || [] });
     } catch (err) {
-      console.error(err);
+      message.error('Lỗi tải dữ liệu Dashboard');
     } finally {
       setLoading(false);
     }
   };
 
-  // ── Thẻ thống kê ──
-  const acceptedQuotes = quotes.filter(q => q.status === 'Accepted');
-  const pendingContracts = contracts.filter(c => c.status === 'PendingApproval');
-  const activeOrders = orders.filter(o => !['Completed', 'Created'].includes(o.status));
+  // ── Thao tác Đơn hàng ──
+  const handleUpdateOrderStatus = async () => {
+    try {
+      await apiClient.put(`/api/Orders/${selectedOrder.maDonHang}/status`, { status: newStatus, note: statusNote });
+      message.success('Đã cập nhật trạng thái đơn hàng!');
+      setStatusModalVisible(false);
+      setStatusNote('');
+      loadAll();
+    } catch (err) {
+      message.error(err.response?.data?.message || 'Lỗi cập nhật trạng thái');
+    }
+  };
 
-  // ── Tab 1: Báo giá đã xác nhận (chờ tạo đơn hàng) ──
-  const quoteColumns = [
-    { title: 'ID', dataIndex: 'id', key: 'id', width: 60 },
-    { title: 'Khách hàng', key: 'customer', render: (_, r) => <div><div style={{ fontWeight: 600 }}>{r.user?.fullName}</div><div style={{ color: '#8c8c8c', fontSize: 12 }}>{r.user?.email}</div></div> },
-    { title: 'Thiết bị', key: 'items', render: (_, r) => r.items?.length || 0, align: 'center' },
-    { title: 'Giá báo', dataIndex: 'totalQuotedPrice', render: v => formatPrice(v) },
+  const orderColumns = [
+    { title: 'Mã ĐH', dataIndex: 'orderCode', render: (v, r) => <b>{v || `ĐH-${r.maDonHang}`}</b> },
+    { title: 'Khách hàng', dataIndex: 'khachHang', render: k => k?.tenKH || '—' },
+    { title: 'Tổng tiền', dataIndex: 'tongGiaTri', render: v => formatPrice(v) },
     { title: 'Trạng thái', dataIndex: 'status', render: s => {
-      const map = { Pending: ['processing', 'Chờ báo giá'], Quoted: ['warning', 'Đã báo giá'], Accepted: ['success', 'Đã xác nhận'], Rejected: ['error', 'Từ chối'] };
+      const map = { 
+        Created: ['default', 'Vừa tạo'], 
+        Confirmed: ['warning', 'Chốt đơn'], 
+        ContractDraft: ['processing', 'Đang soạn HĐ'],
+        ContractSigned: ['processing', 'Đã ký HĐ'],
+        Processing: ['processing', 'Đang xử lý (Kho/KT)'],
+        Delivered_Accepted: ['success', 'Đã nghiệm thu'],
+        InvoiceIssued: ['success', 'Đã xuất HĐ'],
+        Completed: ['success', 'Hoàn thành']
+      };
       const [c, t] = map[s] || ['default', s];
       return <Tag color={c}>{t}</Tag>;
     }},
-    { title: 'Ngày', dataIndex: 'createdAt', render: d => moment(d).format('DD/MM/YY') },
+    { title: 'Ngày tạo', dataIndex: 'ngayDat', render: d => moment(d).format('DD/MM/YY') },
     { title: 'Thao tác', key: 'action', render: (_, r) => (
       <Space>
-        {r.status === 'Accepted' && !orders.some(o => o.quoteRequestId === r.id) && (
-          <Button type="primary" size="small" icon={<PlusOutlined />} onClick={() => navigate(`/admin/orders/create/${r.id}`)}>Tạo Đơn hàng</Button>
-        )}
-        {orders.some(o => o.quoteRequestId === r.id) && <Tag color="green">Đã tạo ĐH</Tag>}
-      </Space>
-    )}
-  ];
-
-  // ── Tab 2: Đơn hàng ──
-  const orderColumns = [
-    { title: 'Mã ĐH', dataIndex: 'orderCode', key: 'code', render: v => <b>{v}</b> },
-    { title: 'Khách hàng', key: 'cust', render: (_, r) => r.customer?.fullName },
-    { title: 'Tổng tiền', dataIndex: 'totalAmount', render: v => formatPrice(v) },
-    { title: 'Trạng thái', dataIndex: 'status', render: s => {
-      const map = { Created: 'blue', ContractDraft: 'orange', ContractSigned: 'green', Delivering: 'cyan', Delivered: 'geekblue', InvoiceIssued: 'purple', Completed: 'success' };
-      return <Tag color={map[s] || 'default'}>{s}</Tag>;
-    }},
-    { title: 'Ngày tạo', dataIndex: 'createdAt', render: d => moment(d).format('DD/MM/YY') },
-    { title: 'Thao tác', key: 'action', render: (_, r) => (
-      <Space>
-        <Button size="small" icon={<EyeOutlined />} onClick={() => navigate(`/admin/orders/create/${r.quoteRequestId}?view=${r.id}`)}>Xem</Button>
-        {/* Hợp đồng & Xuất kho */}
-        {r.status === 'Created' && !r.contract && (
-          <Button type="primary" size="small" icon={<FileTextOutlined />} onClick={() => navigate(`/admin/contracts/create/${r.id}`)}>Lập HĐ</Button>
-        )}
-        {r.contract?.status === 'Signed' && !r.deliveryOrder && (
-          <Tooltip title="Tạo phiếu xuất kho"><Button size="small" icon={<CarOutlined />} onClick={() => navigate(`/admin/delivery/create/${r.id}`)}>Xuất kho</Button></Tooltip>
+        <Button size="small" icon={<EyeOutlined />} onClick={() => navigate(`/admin/orders/create/${r.quoteRequestId}?view=${r.maDonHang}`)}>Xem</Button>
+        <Button size="small" icon={<EditOutlined />} onClick={() => { setSelectedOrder(r); setNewStatus(r.status); setStatusModalVisible(true); }}>Cập nhật</Button>
+        
+        {/* Hợp đồng */}
+        {(r.status === 'Confirmed' || r.status === 'Created') && !r.contract && (
+          <Button type="primary" ghost size="small" icon={<FileTextOutlined />} onClick={() => navigate(`/admin/contracts/create/${r.maDonHang}`)}>Lập HĐ</Button>
         )}
 
-        {/* Cập nhật trạng thái Giao hàng */}
-        {r.deliveryOrder?.status === 'Pending' && (
-          <Tooltip title="Bắt đầu giao hàng"><Button size="small" type="primary" icon={<CarOutlined />} onClick={() => handleUpdateDeliveryStatus(r.deliveryOrder.id, 'deliver')}>Giao ngay</Button></Tooltip>
-        )}
-        {r.deliveryOrder?.status === 'Delivering' && (
-          <Tooltip title="Xác nhận khách đã nhận hàng"><Button size="small" type="primary" ghost icon={<CheckCircleOutlined />} onClick={() => handleUpdateDeliveryStatus(r.deliveryOrder.id, 'confirm')}>Đã giao</Button></Tooltip>
+        {/* Xuất kho */}
+        {['ContractSigned', 'Processing'].includes(r.status) && (
+          <Tooltip title="Tạo phiếu xuất kho"><Button size="small" icon={<CarOutlined />} onClick={() => navigate(`/admin/delivery/create/${r.maDonHang}`)}>Xuất kho</Button></Tooltip>
         )}
 
         {/* Hóa đơn */}
-        {['Delivering', 'Delivered'].includes(r.status) && !r.invoice && (
-          <Tooltip title="Lập hóa đơn tài chính"><Button size="small" icon={<DollarOutlined />} onClick={() => navigate(`/admin/invoices/create/${r.id}`)}>Xuất HĐ</Button></Tooltip>
+        {r.status === 'Delivered_Accepted' && !r.invoice && (
+          <Tooltip title="Lập hóa đơn tài chính"><Button size="small" type="primary" icon={<DollarOutlined />} onClick={() => navigate(`/admin/invoices/create/${r.maDonHang}`)}>Xuất HĐ</Button></Tooltip>
         )}
       </Space>
     )}
   ];
 
-  // ── Tab 3: Hợp đồng ──
+  // ── Thao tác Hợp đồng ──
+  const submitContract = async (id) => { try { await apiClient.put(`/api/Contracts/${id}/submit`); message.success('Đã gửi duyệt!'); loadAll(); } catch(e) { message.error('Lỗi gửi duyệt'); } };
+  const approveContract = async (id) => { try { await apiClient.put(`/api/Contracts/${id}/approve`); message.success('Đã duyệt hợp đồng!'); loadAll(); } catch(e) { message.error('Lỗi duyệt'); } };
+  const rejectContract = async (id) => { try { await apiClient.put(`/api/Contracts/${id}/reject`, { reason: 'Cần chỉnh sửa' }); message.info('Đã từ chối, HĐ trả về nháp.'); loadAll(); } catch(e) { message.error('Lỗi từ chối'); } };
+  const signContract = async (id) => { try { await apiClient.put(`/api/Contracts/${id}/sign`); message.success('Hợp đồng đã được ký kết!'); loadAll(); } catch(e) { message.error('Lỗi ký kết'); } };
+  const issueInvoice = async (id) => { try { await apiClient.put(`/api/Invoices/${id}/issue`); message.success('Đã phát hành hóa đơn!'); loadAll(); } catch(e) { message.error('Lỗi phát hành HĐ'); } };
+
   const contractColumns = [
     { title: 'Số HĐ', dataIndex: 'contractNumber', render: v => <b>{v}</b> },
     { title: 'Khách hàng', dataIndex: 'partyAName' },
@@ -118,20 +123,19 @@ const SalesDashboard = () => {
     }},
     { title: 'Thao tác', key: 'action', render: (_, r) => (
       <Space>
-        <Button size="small" icon={<EyeOutlined />} onClick={() => navigate(`/admin/contracts/create/${r.orderId}?view=${r.id}`)}>Xem</Button>
-        {r.status === 'Draft' && <Button size="small" type="primary" icon={<SendOutlined />} onClick={() => submitContract(r.id)}>Gửi duyệt</Button>}
-        {r.status === 'PendingApproval' && (user.role === 'Admin' || user.role === 'Manager') && (
+        <Button size="small" icon={<EyeOutlined />} onClick={() => navigate(`/admin/contracts/create/${r.maDonHang}?view=${r.maHopDong}`)}>Xem</Button>
+        {r.status === 'Draft' && <Button size="small" type="primary" icon={<SendOutlined />} onClick={() => submitContract(r.maHopDong)}>Gửi duyệt</Button>}
+        {r.status === 'PendingApproval' && (user?.role === 'Admin' || user?.role === 'Manager') && (
           <>
-            <Button size="small" type="primary" style={{ background: '#52c41a' }} icon={<CheckCircleOutlined />} onClick={() => approveContract(r.id)}>Duyệt</Button>
-            <Button size="small" danger onClick={() => rejectContract(r.id)}>Từ chối</Button>
+            <Button size="small" type="primary" style={{ background: '#52c41a' }} icon={<CheckOutlined />} onClick={() => approveContract(r.maHopDong)}>Duyệt</Button>
+            <Button size="small" danger icon={<CloseOutlined />} onClick={() => rejectContract(r.maHopDong)}>Từ chối</Button>
           </>
         )}
-        {r.status === 'Approved' && <Button size="small" type="primary" icon={<EditOutlined />} onClick={() => signContract(r.id)}>Ký kết</Button>}
+        {r.status === 'Approved' && user?.role === 'User' && <Button size="small" type="primary" icon={<SignatureOutlined />} onClick={() => signContract(r.maHopDong)}>Khách hàng Ký</Button>}
       </Space>
     )}
   ];
 
-  // ── Tab 4: Hóa đơn ──
   const invoiceColumns = [
     { title: 'Số HĐ', dataIndex: 'invoiceNumber', render: v => <b>{v}</b> },
     { title: 'Khách hàng', dataIndex: 'buyerName' },
@@ -140,51 +144,71 @@ const SalesDashboard = () => {
     { title: 'Ngày', dataIndex: 'invoiceDate', render: d => moment(d).format('DD/MM/YY') },
     { title: 'Thao tác', key: 'action', render: (_, r) => (
       <Space>
-        <Button size="small" icon={<EyeOutlined />} onClick={() => navigate(`/admin/invoices/create/${r.orderId}?view=${r.id}`)}>Xem</Button>
-        {r.status === 'Draft' && <Button size="small" type="primary" onClick={() => issueInvoice(r.id)}>Phát hành</Button>}
+        <Button size="small" icon={<EyeOutlined />} onClick={() => navigate(`/admin/invoices/create/${r.maDonHang}?view=${r.maHoaDon}`)}>Xem</Button>
+        {r.status === 'Draft' && <Button size="small" type="primary" onClick={() => issueInvoice(r.maHoaDon)}>Phát hành</Button>}
       </Space>
     )}
   ];
 
-  // ── Actions ──
-  const handleUpdateDeliveryStatus = async (deliveryId, action) => {
-    try {
-      await apiClient.put(`/api/DeliveryOrders/${deliveryId}/${action}`);
-      message.success(`Đã cập nhật trạng thái giao hàng!`);
-      loadAll();
-    } catch (err) {
-      message.error(err.response?.data?.message || 'Lỗi cập nhật giao hàng');
-    }
-  };
-
-  const submitContract = async (id) => { await apiClient.put(`/api/Contracts/${id}/submit`); message.success('Đã gửi duyệt!'); loadAll(); };
-  const approveContract = async (id) => { await apiClient.put(`/api/Contracts/${id}/approve`); message.success('Đã duyệt hợp đồng!'); loadAll(); };
-  const rejectContract = async (id) => { await apiClient.put(`/api/Contracts/${id}/reject`, { reason: 'Cần chỉnh sửa' }); message.info('Đã từ chối, HĐ trả về nháp.'); loadAll(); };
-  const signContract = async (id) => { await apiClient.put(`/api/Contracts/${id}/sign`); message.success('Hợp đồng đã được ký kết!'); loadAll(); };
-  const issueInvoice = async (id) => { await apiClient.put(`/api/Invoices/${id}/issue`); message.success('Đã phát hành hóa đơn!'); loadAll(); };
-
   const tabItems = [
-    { key: 'quotes', label: <span><ShoppingCartOutlined /> Báo giá ({acceptedQuotes.length} chờ)</span>, children: <Table columns={quoteColumns} dataSource={quotes} rowKey="id" loading={loading} pagination={{ pageSize: 10 }} /> },
-    { key: 'orders', label: <span><FileTextOutlined /> Đơn hàng ({orders.length})</span>, children: <Table columns={orderColumns} dataSource={orders} rowKey="id" loading={loading} pagination={{ pageSize: 10 }} /> },
-    { key: 'contracts', label: <span><FileTextOutlined /> Hợp đồng ({pendingContracts.length} chờ duyệt)</span>, children: <Table columns={contractColumns} dataSource={contracts} rowKey="id" loading={loading} pagination={{ pageSize: 10 }} /> },
-    { key: 'invoices', label: <span><DollarOutlined /> Hóa đơn ({invoices.length})</span>, children: <Table columns={invoiceColumns} dataSource={invoices} rowKey="id" loading={loading} pagination={{ pageSize: 10 }} /> },
+    { key: 'orders', label: <span><FileTextOutlined /> Đơn hàng ({orders.length})</span>, children: <Table columns={orderColumns} dataSource={orders} rowKey="maDonHang" loading={loading} pagination={{ pageSize: 10 }} /> },
+    { key: 'contracts', label: <span><FileTextOutlined /> Hợp đồng ({contracts.filter(c => c.status === 'PendingApproval').length} chờ duyệt)</span>, children: <Table columns={contractColumns} dataSource={contracts} rowKey="maHopDong" loading={loading} pagination={{ pageSize: 10 }} /> },
+    { key: 'invoices', label: <span><DollarOutlined /> Hóa đơn ({invoices.length})</span>, children: <Table columns={invoiceColumns} dataSource={invoices} rowKey="maHoaDon" loading={loading} pagination={{ pageSize: 10 }} /> },
+    { key: 'debts', label: <span><BarChartOutlined /> Công nợ ({payments.receipts.length} phiếu)</span>, children: <DebtTab receipts={payments.receipts} orders={orders} /> },
   ];
+
+  const pendingContractsCount = contracts.filter(c => c.status === 'PendingApproval').length;
+  const processingOrdersCount = orders.filter(o => o.status === 'Processing').length;
+  const totalRevenue = orders.reduce((sum, o) => sum + (o.tongGiaTri || 0), 0);
+  const totalCollected = payments.receipts.reduce((sum, r) => sum + r.soTien, 0);
 
   return (
     <div style={{ padding: '24px', minHeight: '80vh' }}>
-      <Card style={{ borderRadius: 12, minHeight: 720 }} bodyStyle={{ padding: 24 }}>
+      <Card style={{ borderRadius: 12, minHeight: 720 }} styles={{ body: { padding: 24 } }}>
         <Title level={3} style={{ marginBottom: 24 }}>📊 Dashboard Kinh doanh</Title>
 
         <Row gutter={16} style={{ marginBottom: 24 }}>
-          <Col xs={24} sm={12} lg={6}><Card bordered={false} style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', borderRadius: 12 }}><Statistic title={<span style={{ color: '#fff' }}>Báo giá chờ tạo ĐH</span>} value={acceptedQuotes.length} valueStyle={{ color: '#fff', fontWeight: 700 }} /></Card></Col>
-          <Col xs={24} sm={12} lg={6}><Card bordered={false} style={{ background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', borderRadius: 12 }}><Statistic title={<span style={{ color: '#fff' }}>HĐ chờ duyệt</span>} value={pendingContracts.length} valueStyle={{ color: '#fff', fontWeight: 700 }} /></Card></Col>
-          <Col xs={24} sm={12} lg={6}><Card bordered={false} style={{ background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', borderRadius: 12 }}><Statistic title={<span style={{ color: '#fff' }}>Đơn đang xử lý</span>} value={activeOrders.length} valueStyle={{ color: '#fff', fontWeight: 700 }} /></Card></Col>
-          <Col xs={24} sm={12} lg={6}><Card bordered={false} style={{ background: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)', borderRadius: 12 }}><Statistic title={<span style={{ color: '#fff' }}>Tổng doanh thu</span>} value={orders.filter(o => o.status === 'Completed').reduce((s, o) => s + o.totalAmount, 0)} formatter={v => formatPrice(v)} valueStyle={{ color: '#fff', fontWeight: 700 }} /></Card></Col>
+          <Col span={6}><Card><Statistic title="HĐ chờ duyệt" value={pendingContractsCount} styles={{ content: { color: '#faad14' } }} /></Card></Col>
+          <Col span={6}><Card><Statistic title="Đang xử lý (Kho/KT)" value={processingOrdersCount} styles={{ content: { color: '#1677ff' } }} /></Card></Col>
+          <Col span={6}><Card><Statistic title="Doanh thu tạm tính" value={totalRevenue} styles={{ content: { color: '#cf1322' } }} formatter={v => formatPrice(v)} /></Card></Col>
+          <Col span={6}><Card><Statistic title="Đã thu tiền" value={totalCollected} formatter={v => formatPrice(v)} styles={{ content: { color: '#52c41a' } }} /></Card></Col>
         </Row>
 
         <Tabs activeKey={activeTab} onChange={setActiveTab} items={tabItems} size="large" />
       </Card>
+
+      <Modal title="Cập nhật Trạng thái Đơn hàng" open={statusModalVisible} onOk={handleUpdateOrderStatus} onCancel={() => setStatusModalVisible(false)}>
+        <p>Chọn trạng thái mới cho Đơn hàng <b>{selectedOrder?.orderCode || `ĐH-${selectedOrder?.maDonHang}`}</b>:</p>
+        <Select value={newStatus} onChange={setNewStatus} style={{ width: '100%', marginBottom: 16 }}>
+          <Option value="Created">Vừa tạo</Option>
+          <Option value="Confirmed">Chốt đơn</Option>
+          <Option value="ContractDraft">Đang soạn HĐ</Option>
+          <Option value="ContractSigned">Đã ký HĐ</Option>
+          <Option value="Processing">Đang xử lý (Kho/KT)</Option>
+          <Option value="Delivered_Accepted">Đã nghiệm thu</Option>
+          <Option value="InvoiceIssued">Đã xuất HĐ</Option>
+          <Option value="Completed">Hoàn thành</Option>
+          <Option value="Cancelled">Đã hủy</Option>
+        </Select>
+        <TextArea rows={3} placeholder="Ghi chú nội bộ..." value={statusNote} onChange={e => setStatusNote(e.target.value)} />
+      </Modal>
     </div>
+  );
+};
+
+const DebtTab = ({ receipts, orders }) => {
+  const columns = [
+    { title: 'Mã phiếu', dataIndex: 'maPhieuThu', key: 'id' },
+    { title: 'Ngày thu', dataIndex: 'ngayThu', render: d => moment(d).format('DD/MM/YYYY') },
+    { title: 'Số tiền', dataIndex: 'soTien', render: v => formatPrice(v) },
+    { title: 'Hình thức', dataIndex: 'hinhThucThanhToan' },
+    { title: 'Hợp đồng', dataIndex: 'maHopDong' },
+  ];
+
+  return (
+    <Card size="small" title="Danh sách Phiếu thu">
+      <Table columns={columns} dataSource={receipts} rowKey="maPhieuThu" pagination={{ pageSize: 10 }} />
+    </Card>
   );
 };
 

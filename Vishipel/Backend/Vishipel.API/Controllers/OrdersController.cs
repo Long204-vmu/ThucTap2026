@@ -274,6 +274,34 @@ namespace Vishipel.API.Controllers
             return Ok(new { message = $"Đã cập nhật trạng thái đơn hàng thành {dto.Status}." });
         }
 
+        [HttpPut("{id}/deliver")]
+        [Authorize(Roles = "Admin,Manager,SaleManager,Warehouse")]
+        public async Task<IActionResult> DeliverOrder(int id, [FromBody] OrderDeliveryDto dto)
+        {
+            var order = await _context.DonDatHangs.FindAsync(id);
+            if (order == null) return NotFound("Đơn hàng không tồn tại.");
+
+            order.Status = "Delivering";
+            order.ReceiverName = dto.ReceiverName;
+            order.ReceiverPhone = dto.ReceiverPhone;
+            order.ShippingAddress = dto.ShippingAddress;
+            if (!string.IsNullOrEmpty(dto.Note))
+            {
+                order.Note = (order.Note ?? "") + $"\n[{DateTime.Now:dd/MM/yyyy}] Bắt đầu giao hàng cho {dto.ReceiverName} ({dto.ReceiverPhone}) tại {dto.ShippingAddress}. Ghi chú: {dto.Note}";
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Đã lập thông tin giao hàng và chuyển trạng thái sang Đang giao hàng." });
+        }
+
+        public class OrderDeliveryDto
+        {
+            public string ReceiverName { get; set; } = string.Empty;
+            public string ReceiverPhone { get; set; } = string.Empty;
+            public string ShippingAddress { get; set; } = string.Empty;
+            public string? Note { get; set; }
+        }
+
         public class OrderStatusUpdateDto
         {
             public string Status { get; set; } = string.Empty;

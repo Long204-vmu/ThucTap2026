@@ -22,7 +22,6 @@ namespace Vishipel.Core.Models
         public decimal? TotalAmount { get; set; }
 
         [ForeignKey("MaDonHang")]
-        [JsonIgnore]
         public virtual DonDatHang? DonDatHang { get; set; }
 
         // Alias for dashboard compatibility

@@ -23,10 +23,11 @@ const DeliveryOrderForm = () => {
     try {
       const res = await apiClient.get(`/api/Orders/${orderId}`);
       setOrder(res.data);
+      const kh = res.data.khachHang || {};
       form.setFieldsValue({
-        deliveryAddress: res.data.customer?.address || '',
-        receiverName: res.data.customer?.fullName || '',
-        receiverPhone: res.data.customer?.phone || '',
+        deliveryAddress: res.data.shippingAddress || kh.diaChi || '',
+        receiverName: res.data.receiverName || kh.tenKH || '',
+        receiverPhone: res.data.receiverPhone || kh.soDienThoai || '',
       });
     } catch (err) {
       message.error('Không thể tải thông tin đơn hàng');
@@ -38,14 +39,11 @@ const DeliveryOrderForm = () => {
   const onFinish = async (values) => {
     try {
       setSubmitting(true);
-      await apiClient.post('/api/DeliveryOrders', {
-        orderId: parseInt(orderId),
-        ...values
-      });
-      message.success('Tạo phiếu xuất kho thành công!');
+      await apiClient.put(`/api/Orders/${orderId}/deliver`, values);
+      message.success('Lập phiếu giao hàng thành công! Đơn hàng đã chuyển sang trạng thái Đang giao hàng.');
       navigate('/admin/sales');
     } catch (err) {
-      message.error(err.response?.data?.message || 'Lỗi khi tạo phiếu xuất kho');
+      message.error(err.response?.data?.message || 'Lỗi khi lập phiếu giao hàng');
     } finally {
       setSubmitting(false);
     }
@@ -60,12 +58,12 @@ const DeliveryOrderForm = () => {
         Quay lại Dashboard
       </Button>
       
-      <Card title={<Space><CarOutlined /> Lập phiếu xuất kho</Space>} bordered={false} className="premium-card">
+      <Card title={<Space><CarOutlined /> Lập phiếu giao nhận hàng</Space>} bordered={false} className="premium-card">
         <Descriptions title="Thông tin đơn hàng" bordered size="small" column={1} style={{ marginBottom: 24 }}>
           <Descriptions.Item label="Mã đơn hàng"><b>{order.orderCode}</b></Descriptions.Item>
-          <Descriptions.Item label="Khách hàng">{order.customer?.fullName}</Descriptions.Item>
-          <Descriptions.Item label="Hợp đồng">{order.contract?.contractNumber || <Tag color="error">Chưa có</Tag>}</Descriptions.Item>
-          <Descriptions.Item label="Số thiết bị">{order.items?.length || 0}</Descriptions.Item>
+          <Descriptions.Item label="Khách hàng">{order.khachHang?.tenKH}</Descriptions.Item>
+          <Descriptions.Item label="Hợp đồng">{order.contract?.maHopDong || <Tag color="error">Chưa có</Tag>}</Descriptions.Item>
+          <Descriptions.Item label="Số thiết bị">{order.chiTietDonHangs?.length || 0}</Descriptions.Item>
         </Descriptions>
 
         <Divider />
@@ -101,7 +99,7 @@ const DeliveryOrderForm = () => {
 
           <Form.Item>
             <Button type="primary" htmlType="submit" size="large" icon={<SaveOutlined />} loading={submitting} block>
-              Xác nhận & Xuất kho
+              Xác nhận & Giao hàng
             </Button>
           </Form.Item>
         </Form>
